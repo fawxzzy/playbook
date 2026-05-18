@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { generateContractSnapshots, repoRoot } from './contract-snapshot-lib.mjs';
+import { generateContractSnapshots, normalizeLineEndings, repoRoot } from './contract-snapshot-lib.mjs';
 
 const committedSnapshotDir = path.join(repoRoot, 'tests', 'contracts');
 const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
@@ -25,8 +25,12 @@ for (const file of generatedFiles) {
   const generatedPath = path.join(generatedSnapshotDir, file);
   const committedPath = path.join(committedSnapshotDir, file);
   const generated = fs.readFileSync(generatedPath, 'utf8');
-  const committed = fs.existsSync(committedPath) ? fs.readFileSync(committedPath, 'utf8') : null;
-  if (committed !== generated) {
+  if (!fs.existsSync(committedPath)) {
+    changedFiles.push(file);
+    continue;
+  }
+  const committed = fs.readFileSync(committedPath, 'utf8');
+  if (normalizeLineEndings(committed) !== normalizeLineEndings(generated)) {
     changedFiles.push(file);
   }
 }
