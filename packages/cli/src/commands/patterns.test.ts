@@ -482,6 +482,12 @@ const writeVertaDerivativeDocs = (repo: string): void => {
   );
 };
 
+const writeVertaGateCandidate = (repo: string, name: string, candidate: Record<string, unknown>): string => {
+  const filePath = path.join(repo, name);
+  fs.writeFileSync(filePath, JSON.stringify(candidate, null, 2), 'utf8');
+  return filePath;
+};
+
 describe('runPatterns', () => {
   it('lists pattern knowledge graph nodes as JSON', async () => {
     const repo = createRepo('playbook-cli-patterns-list');
@@ -610,6 +616,228 @@ describe('runPatterns', () => {
       references_derivative_pack: true,
       references_promotion_receipt: true
     });
+
+    logSpy.mockRestore();
+  });
+
+  it('returns go for a valid Playbook-owned Verta seam candidate', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-go');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-go.json', {
+      behavior: 'Validate proposed Verta-derived executable seam records against admitted doctrine and return a deterministic verdict.',
+      ownerRepo: 'playbook',
+      whyItShouldExist: 'The manual planning gate is already in use and should become a repeatable review surface.',
+      sourceProvenance: [
+        'docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md',
+        'docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md',
+        'pnpm playbook patterns verta --json'
+      ],
+      seamBoundary: 'Read-only validator over admitted doctrine and the submitted candidate record. No mutation. No runtime behavior.',
+      inputs: ['candidate record JSON', 'admitted pattern ids', 'promotion receipt metadata'],
+      outputs: ['verdict', 'owner route', 'failed checks', 'missing fields'],
+      rollbackPath: 'Delete the validator command and tests; doctrine docs remain intact.',
+      verification: ['pnpm playbook verify --json', 'pnpm playbook docs audit --ci --json', 'pnpm -r build', 'pnpm test'],
+      whyRawVertaStaysProvenanceOnly: 'The validator reads only admitted derivative doctrine and fails closed if repos/Verta-Core/** appears as source input.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.action).toBe('verta-gate');
+    expect(payload.verdict).toBe('go');
+    expect(payload.owner_route).toBe('playbook');
+    expect(payload.raw_verta_posture).toEqual({
+      status: 'passed',
+      reason: 'Candidate stays within admitted derivative doctrine and keeps raw Verta provenance-only.'
+    });
+    expect(payload.failed_checks).toEqual([]);
+    expect(payload.missing_fields).toEqual([]);
+
+    logSpy.mockRestore();
+  });
+
+  it('rejects a candidate with missing required fields', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-missing');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-missing.json', {
+      behavior: 'Validate Verta seam candidates.',
+      ownerRepo: 'playbook',
+      sourceProvenance: ['docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md'],
+      seamBoundary: 'Read-only validator. No mutation.',
+      inputs: ['candidate record'],
+      outputs: ['verdict'],
+      verification: ['pnpm playbook verify --json'],
+      whyRawVertaStaysProvenanceOnly: 'Only admitted doctrine is read.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verdict).toBe('reject');
+    expect(payload.missing_fields).toContain('why it should exist');
+    expect(payload.missing_fields).toContain('rollback path');
+
+    logSpy.mockRestore();
+  });
+
+  it('rejects candidates that reference raw Verta paths as source provenance', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-raw');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-raw.json', {
+      behavior: 'Revive Verta runtime review support.',
+      ownerRepo: 'playbook',
+      whyItShouldExist: 'This candidate claims direct historical implementation reuse.',
+      sourceProvenance: ['repos/Verta-Core/**'],
+      seamBoundary: 'Read-only interpretation over direct historical code.',
+      inputs: ['raw Verta checkout'],
+      outputs: ['verdict'],
+      rollbackPath: 'Delete the rule.',
+      verification: ['pnpm playbook verify --json'],
+      whyRawVertaStaysProvenanceOnly: 'Not satisfied.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verdict).toBe('reject');
+    expect(payload.raw_verta_posture.status).toBe('failed');
+    expect(payload.failed_checks).toContain('raw-verta-provenance-only');
+
+    logSpy.mockRestore();
+  });
+
+  it('rejects candidates with ambiguous ownership', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-owners');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-owners.json', {
+      behavior: 'Route derivative guidance into multiple owner repos at once.',
+      ownerRepo: 'playbook and lifeline',
+      whyItShouldExist: 'This should fail because the owner seam is not singular.',
+      sourceProvenance: ['docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md'],
+      seamBoundary: 'Read-only guidance.',
+      inputs: ['candidate record'],
+      outputs: ['verdict'],
+      rollbackPath: 'Delete the validator rule.',
+      verification: ['pnpm playbook verify --json'],
+      whyRawVertaStaysProvenanceOnly: 'Raw Verta remains excluded.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verdict).toBe('reject');
+    expect(payload.failed_checks).toContain('single-owner-route');
+
+    logSpy.mockRestore();
+  });
+
+  it('pauses ATLAS-root policy candidates instead of promoting them as executable seams', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-policy');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-policy.json', {
+      behavior: 'Turn Verta portable path discipline into executable validation policy.',
+      ownerRepo: 'ATLAS root, not Playbook',
+      whyItShouldExist: 'Potentially useful but it overlaps existing root path policy.',
+      sourceProvenance: ['deferred Verta doctrine candidate', 'stack path policy'],
+      seamBoundary: 'Policy and validator boundary only. Read-only evaluation of path rules.',
+      inputs: ['stack path policy', 'validator rules'],
+      outputs: ['validation findings'],
+      rollbackPath: 'Revert the validator rule.',
+      verification: ['python .\\ops\\validation\\validate_stack.py --ratchet'],
+      whyRawVertaStaysProvenanceOnly: 'Only safe if rewritten as ATLAS-root policy from admitted doctrine.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verdict).toBe('pause');
+    expect(payload.owner_route).toBe('atlas-root-policy');
+
+    logSpy.mockRestore();
+  });
+
+  it('rejects vague Lifeline runtime candidates without a concrete named behavior', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-lifeline-reject');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-lifeline-reject.json', {
+      behavior: 'Run or revive Verta runtime/operator behavior inside ATLAS.',
+      ownerRepo: 'lifeline',
+      whyItShouldExist: 'Unknown.',
+      sourceProvenance: ['admitted doctrine only'],
+      seamBoundary: 'Runtime/operator behavior.',
+      inputs: ['unknown'],
+      outputs: ['unknown'],
+      rollbackPath: '',
+      verification: '',
+      whyRawVertaStaysProvenanceOnly: 'Cannot prove.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verdict).toBe('reject');
+    expect(payload.owner_route).toBe('lifeline');
+
+    logSpy.mockRestore();
+  });
+
+  it('never returns go for concrete but deferred runtime/operator derivatives', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta-gate-lifeline-pause');
+    writeVertaDerivativeDocs(repo);
+    const candidatePath = writeVertaGateCandidate(repo, 'candidate-lifeline-pause.json', {
+      behavior: 'Wrap a named future Lifeline operator review command in a privileged execution preview surface.',
+      ownerRepo: 'lifeline',
+      whyItShouldExist: 'The behavior is concrete but runtime/operator derivatives remain deferred until a separate owner seam is explicitly selected.',
+      sourceProvenance: ['admitted derivative doctrine only'],
+      seamBoundary: 'Bounded owner seam for runtime/operator preview only.',
+      inputs: ['named operator review record', 'receipt contract summary'],
+      outputs: ['preview verdict', 'receipt plan'],
+      rollbackPath: 'Revert the preview command and remove its tests.',
+      verification: ['pnpm verify', 'pnpm test:privileged-execution-bridge'],
+      whyRawVertaStaysProvenanceOnly: 'The feature reads only admitted derivative doctrine and named local owner inputs.'
+    });
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta', 'gate', '--file', path.basename(candidatePath)], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.verdict).toBe('pause');
+    expect(payload.owner_route).toBe('lifeline');
+    expect(payload.verdict).not.toBe('go');
 
     logSpy.mockRestore();
   });

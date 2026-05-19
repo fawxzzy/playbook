@@ -194,6 +194,57 @@ Governance guarantees:
 - no adapter/parity/execution authority
 - no root-owned behavior
 
+### `patterns verta gate --file <candidate-record.json>`
+
+Validate one proposed Verta-derived executable seam record against the admitted doctrine and return a deterministic verdict:
+
+- `reject`
+- `pause`
+- `go`
+
+JSON output returns:
+
+- `verdict`
+- `owner_route`
+- `satisfied_checks`
+- `failed_checks`
+- `missing_fields`
+- `cited_pattern_ids`
+- `raw_verta_posture`
+- `rollback_confidence`
+- enforced non-goals
+
+Required candidate fields:
+
+- `behavior`
+- `owner repo`
+- `why it should exist`
+- `source/provenance`
+- `seam boundary`
+- `inputs`
+- `outputs`
+- `rollback path`
+- `verification`
+- `why raw Verta stays provenance-only`
+
+Verdict meanings:
+
+- `reject`: missing fields, ambiguous ownership, raw Verta dependency, missing rollback/verification, or seam widening outside the named owner.
+- `pause`: concrete candidate, but it belongs to separate ATLAS-root policy/projection work or remains explicitly deferred by admitted doctrine.
+- `go`: specific behavior, one owner, explicit seam, explicit inputs/outputs, concrete verification, believable rollback, and raw Verta kept provenance-only.
+
+Fail-closed rule:
+
+- any candidate that references `repos/Verta-Core/**`, `repos/Verta-Core.zip`, or equivalent raw historical inputs as active source/owner truth must return `reject`
+
+Governance guarantees:
+
+- validator only; no lane creation
+- no mutation path
+- no runtime/operator widening
+- no raw Verta reads
+- no Lifeline, `_stack`, app repo, or ATLAS-root behavior changes
+
 
 ## Pattern candidate extraction overview
 
@@ -277,6 +328,7 @@ pnpm playbook patterns generalized --json
 pnpm playbook patterns repo-delta repo-a repo-b --json
 pnpm playbook patterns csia --json
 pnpm playbook patterns verta --json
+pnpm playbook patterns verta gate --file ./candidate-record.json --json
 pnpm playbook patterns promote --id <pattern-id> --decision approve --json
 ```
 

@@ -35,6 +35,7 @@ Historical or quarantined source material can still produce reusable doctrine, b
 - **Canonical intake surface**: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md`
 - **Promotion receipt**: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md`
 - **Read-only lookup surface**: `pnpm playbook patterns verta --json`
+- **Planning-gate validator**: `pnpm playbook patterns verta gate --file <candidate-record.json> --json`
 
 Promoted Verta-derived entries:
 
