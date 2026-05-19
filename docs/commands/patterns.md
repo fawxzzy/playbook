@@ -166,6 +166,34 @@ Architecture positioning:
 - Pattern: Frozen core -> doctrine interpretation -> machine-readable overlay.
 - Failure Mode: Letting runtime CSIA output drift from schema/examples turns the overlay into a second model surface.
 
+### `patterns verta`
+
+Expose admitted Verta-derived doctrine through a Playbook-owned read-only lookup surface.
+
+JSON output returns:
+
+- admitted pattern ids
+- short admitted-derivative statements
+- owner repo and seam identity
+- routing and non-goal metadata
+- deferred and rejected candidate classes
+- remote publication metadata from the merged promotion receipt
+
+Read boundary:
+
+- reads only `docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md`
+- reads only `docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md`
+- checks `docs/PATTERNS.md` as the canonical index hook
+- never reads raw `repos/Verta-Core/**` or `repos/Verta-Core.zip`
+
+Governance guarantees:
+
+- read-only lookup/index surface
+- no mutation path
+- no runtime/operator widening
+- no adapter/parity/execution authority
+- no root-owned behavior
+
 
 ## Pattern candidate extraction overview
 
@@ -248,6 +276,7 @@ pnpm playbook patterns portability
 pnpm playbook patterns generalized --json
 pnpm playbook patterns repo-delta repo-a repo-b --json
 pnpm playbook patterns csia --json
+pnpm playbook patterns verta --json
 pnpm playbook patterns promote --id <pattern-id> --decision approve --json
 ```
 

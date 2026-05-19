@@ -34,6 +34,7 @@ Historical or quarantined source material can still produce reusable doctrine, b
 - **Design implication**: Use the derivative pack as the canonical intake and review surface before any runtime, operator, or app seam is considered.
 - **Canonical intake surface**: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md`
 - **Promotion receipt**: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md`
+- **Read-only lookup surface**: `pnpm playbook patterns verta --json`
 
 Promoted Verta-derived entries:
 
