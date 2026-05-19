@@ -12,8 +12,9 @@ This receipt does not promote raw `Verta-Core` source, and it does not authorize
 - date: `2026-05-18`
 - seam id: `verta-derivative-pattern-pack`
 - owner repo: `playbook`
-- reviewer status: `local-reviewed`
-- remote publication status: `not yet pushed or merged`
+- reviewer status: `merged-and-remote-visible`
+- remote publication status: `merged to origin/main and remote-visible`
+- remote merge record: Playbook PR `#14`, merge commit `0d955393`
 
 ## Promoted Pattern IDs
 
@@ -27,6 +28,8 @@ This receipt does not promote raw `Verta-Core` source, and it does not authorize
 | `verta.pattern.review-before-widening.v1` | admitted | reviewed absorption sequencing notes | sequencing-only; no adapter or runtime lane | `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json` |
 | `verta.pattern.single-owner-seam-first.v1` | admitted | reviewed owner-routing and scope-boundary notes | admission-discipline only; no topology mutation | `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json` |
 | `verta.pattern.execution-deferred-without-owner.v1` | admitted | reviewed trust-boundary and seam-selection notes | safety-only; execution remains deferred | `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json` |
+| `verta.pattern.reusable-governance-heuristics.v1` | admitted | reviewed governance notes rewritten as derivative doctrine | governance-only; no policy automation or raw-source lift | `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json` |
+| `verta.pattern.workflow-interpretation-follows-governed-truth.v1` | admitted | reviewed interpretation/absorption notes aligned with Playbook doctrine | interpretation-only; no execution or adapter lane | `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json` |
 
 ## Promotion Tranches
 
@@ -34,14 +37,13 @@ This receipt does not promote raw `Verta-Core` source, and it does not authorize
 | --- | --- | --- |
 | tranche-1 | `verta.pattern.deterministic-first-reuse.v1`, `verta.pattern.bounded-convergence-through-seams.v1`, `verta.pattern.provenance-before-reuse.v1`, `verta.pattern.owner-repo-truth-boundary.v1` | admitted |
 | tranche-2 | `verta.pattern.tranche-based-promotion.v1`, `verta.pattern.review-before-widening.v1`, `verta.pattern.single-owner-seam-first.v1`, `verta.pattern.execution-deferred-without-owner.v1` | admitted |
+| tranche-3 | `verta.pattern.reusable-governance-heuristics.v1`, `verta.pattern.workflow-interpretation-follows-governed-truth.v1` | admitted |
 
 ## Blocking Notes For Patterns Not Promoted
 
 | Candidate class | Current state | Blocking note |
 | --- | --- | --- |
-| portable path discipline | pending | requires Playbook-local wording that does not just mirror ATLAS root path policy |
-| reusable governance heuristics | pending | needs tighter derivative rewrite and narrower proof |
-| workflow interpretation rules | pending | must stay non-executable and show deterministic value first |
+| portable path discipline | deferred | overlaps ATLAS root path policy and validator behavior; reopen only as a Playbook-local docs discipline rewrite |
 | future runtime or operator derivatives | deferred | requires a separate owner seam in Lifeline or `_stack` |
 | raw archive text, secret-bearing material, executable guidance | rejected | outside trust boundary for Playbook doctrine promotion |
 
@@ -56,17 +58,18 @@ This receipt does not promote raw `Verta-Core` source, and it does not authorize
   - `verta.pattern.review-before-widening.v1`
   - `verta.pattern.single-owner-seam-first.v1`
   - `verta.pattern.execution-deferred-without-owner.v1`
+  - `verta.pattern.reusable-governance-heuristics.v1`
+  - `verta.pattern.workflow-interpretation-follows-governed-truth.v1`
 - pending candidate classes:
-  - portable path discipline
-  - reusable governance heuristics
-  - workflow interpretation rules
+  - none in the current Playbook-only doctrine lane
 - rejected or deferred classes:
+  - portable path discipline
   - raw archive text reuse
   - executable guidance
   - secret-bearing operational material
   - topology expansion
   - future runtime or operator derivatives
-- next allowed phase gate: package the local Playbook doctrine work for commit or PR, then stop. Any later adapter, parity, or execution work remains blocked until a separate executable owner seam is explicitly selected.
+- next allowed phase gate: keep the root lock refresh green, then decide whether to pause Playbook doctrine or select the first separate executable owner seam. Any adapter, parity, or execution work remains blocked until that seam is explicitly selected.
 
 ## Review Checklist Status
 
@@ -76,7 +79,7 @@ This receipt does not promote raw `Verta-Core` source, and it does not authorize
 - no executable behavior: yes
 - owner repo confirmed: yes
 - verification command recorded: yes
-- root projection updated if needed: not required for this Playbook-only promotion lane
+- root projection updated if needed: already remote-visible through merged ATLAS PR `#35`
 
 ## Rule
 
