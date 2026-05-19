@@ -109,6 +109,10 @@ type NormalizedCandidateRecord = {
 const VERTA_DERIVATIVE_PACK_RELATIVE_PATH = ['docs', 'contracts', 'VERTA_DERIVATIVE_PATTERN_PACK.md'] as const;
 const VERTA_DERIVATIVE_RECEIPT_RELATIVE_PATH = ['docs', 'contracts', 'VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md'] as const;
 const VERTA_PATTERNS_INDEX_RELATIVE_PATH = ['docs', 'PATTERNS.md'] as const;
+const FORBIDDEN_RAW_VERTA_ROOTS = [
+  path.join('repos', 'Verta-Core'),
+  path.join('repos', 'Verta-Core.zip')
+] as const;
 const RAW_VERTA_REFERENCE_PATTERN = /repos[\\/]+Verta-Core(?:[\\/]|$)|Verta-Core\.zip|raw Verta|raw Verta-Core|unreviewed historical material|extracted raw Verta/i;
 const RAW_VERTA_SAFETY_PATTERN = /\b(forbidden|must not|never|provenance-only|provenance only|quarantined|do not|no raw verta|exclude|fail closed)\b/i;
 const VAGUE_VALUE_PATTERN = /^(unknown|unclear|not stated|tbd|todo|n\/a|na|none|unspecified)$/i;
@@ -395,6 +399,81 @@ const stringifyValue = (value: unknown): string => {
   return String(value);
 };
 
+const normalizeComparisonPath = (value: string): string => {
+  const normalized = path.resolve(value);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+};
+
+const isPathInside = (parent: string, child: string): boolean => {
+  const normalizedParent = normalizeComparisonPath(parent);
+  const normalizedChild = normalizeComparisonPath(child);
+  const relative = path.relative(normalizedParent, normalizedChild);
+
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+};
+
+const getAncestorDirectories = (start: string): string[] => {
+  const ancestors: string[] = [];
+  let cursor = path.resolve(start);
+
+  while (true) {
+    ancestors.push(cursor);
+    const parent = path.dirname(cursor);
+    if (parent === cursor) {
+      break;
+    }
+    cursor = parent;
+  }
+
+  return ancestors;
+};
+
+const safeRealpathSync = (targetPath: string): string => {
+  try {
+    return fs.realpathSync.native(targetPath);
+  } catch {
+    return fs.realpathSync(targetPath);
+  }
+};
+
+const getForbiddenVertaCandidateRoots = (cwd: string): string[] => {
+  const roots = new Set<string>();
+
+  for (const ancestor of getAncestorDirectories(cwd)) {
+    for (const forbiddenRoot of FORBIDDEN_RAW_VERTA_ROOTS) {
+      roots.add(path.join(ancestor, forbiddenRoot));
+    }
+  }
+
+  return [...roots];
+};
+
+const assertSafeCandidateRecordPath = (cwd: string, resolvedPath: string): void => {
+  const forbiddenRoots = getForbiddenVertaCandidateRoots(cwd);
+  const candidateTargets = new Set<string>([resolvedPath]);
+
+  if (fs.existsSync(resolvedPath)) {
+    candidateTargets.add(safeRealpathSync(resolvedPath));
+  }
+
+  for (const forbiddenRoot of forbiddenRoots) {
+    const forbiddenTargets = new Set<string>([forbiddenRoot]);
+    if (fs.existsSync(forbiddenRoot)) {
+      forbiddenTargets.add(safeRealpathSync(forbiddenRoot));
+    }
+
+    for (const candidateTarget of candidateTargets) {
+      for (const forbiddenTarget of forbiddenTargets) {
+        if (isPathInside(forbiddenTarget, candidateTarget)) {
+          throw new Error(
+            'playbook patterns verta gate: candidate record path is inside a quarantined raw Verta surface and cannot be read.'
+          );
+        }
+      }
+    }
+  }
+};
+
 const ownerRouteDefinitions: Array<{ route: VertaGateOwnerRoute; aliases: string[] }> = [
   { route: 'playbook', aliases: ['playbook', 'fawxzzy-playbook'] },
   { route: 'lifeline', aliases: ['lifeline', 'fawxzzy-lifeline'] },
@@ -552,6 +631,7 @@ const parseCandidateRecord = (cwd: string, commandArgs: string[]): CandidateReco
   }
 
   const resolvedPath = path.resolve(cwd, filePath);
+  assertSafeCandidateRecordPath(cwd, resolvedPath);
   if (!fs.existsSync(resolvedPath)) {
     throw new Error(`playbook patterns verta gate: candidate record not found: ${filePath}`);
   }
