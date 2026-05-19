@@ -83,6 +83,8 @@ These are candidate reusable Playbook principles, not proof that all Verta histo
 | `verta.pattern.review-before-widening.v1` | review the derivative doctrine before widening into runtime or adapters | reviewed sequencing rule | visible untrusted -> rewritten derivative | keeps the proof layer ahead of execution authority and migration work |
 | `verta.pattern.single-owner-seam-first.v1` | select one owner seam before derivative widening | reviewed admission discipline | visible untrusted -> rewritten derivative | forces ownership clarity before cross-repo routing or runtime implications |
 | `verta.pattern.execution-deferred-without-owner.v1` | execution-adjacent ideas stay pending until an executable owner seam exists | reviewed safety rule | visible untrusted -> rewritten derivative | prevents silent transfer of historical authority into runtime surfaces |
+| `verta.pattern.reusable-governance-heuristics.v1` | reusable governance heuristics require explicit rewrite and proof | reviewed governance heuristic | visible untrusted -> rewritten derivative | converts historical governance instinct into portable reviewable doctrine without importing raw source |
+| `verta.pattern.workflow-interpretation-follows-governed-truth.v1` | workflow interpretation must remain downstream of governed truth | reviewed workflow interpretation rule | visible untrusted -> rewritten derivative | allows interpretation guidance to become doctrine without creating execution authority |
 
 ### Rejected Patterns
 
@@ -97,9 +99,7 @@ These are candidate reusable Playbook principles, not proof that all Verta histo
 
 | Candidate class | Current state | Next proof needed |
 | --- | --- | --- |
-| portable path discipline | candidate | isolate the Playbook-owned wording from stack-root path policy phrasing, then promote with repo-local proof |
-| reusable governance heuristics | candidate | explicit rewrite plus provenance note and docs review |
-| workflow interpretation rules | candidate | show deterministic value inside Playbook docs or commands without introducing execution authority |
+| portable path discipline | deferred | reopen only if it can be rewritten as Playbook-local documentation discipline without changing ATLAS root path policy or validator behavior |
 | future runtime or operator derivatives | deferred | separate owner-seam selection into Lifeline or `_stack` with new contracts and receipts |
 
 ## Promoted Derivative Entries
@@ -185,6 +185,26 @@ Promotion receipt: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md
 - Verification evidence: `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json`
 - Downstream routing rule: executable derivatives stay deferred to a later Lifeline, `_stack`, or app-owner decision with new contracts and receipts.
 - Non-goals: no operator semantics, no workflow automation promotion, no app implementation guidance.
+
+### `verta.pattern.reusable-governance-heuristics.v1`
+
+- Source / provenance: rewritten from reviewed Verta governance notes and the promoted derivative note set that preserved Verta historical decision rules as visible-untrusted evidence.
+- Trust boundary: governance-only doctrine; no source code, launch behavior, or secret-bearing material is admitted.
+- Admitted derivative statement: governance heuristics become reusable only after they are rewritten as explicit Playbook doctrine with provenance and verification evidence.
+- Owner repo: `playbook`
+- Verification evidence: `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json`
+- Downstream routing rule: heuristics may inform later owner-seam review, but they do not authorize runtime routing or operator action by themselves.
+- Non-goals: no historical-text lift, no policy automation, no executor behavior.
+
+### `verta.pattern.workflow-interpretation-follows-governed-truth.v1`
+
+- Source / provenance: rewritten from reviewed Verta historical notes about guidance, interpretation, and staged absorption, then aligned with existing Playbook interpretation doctrine.
+- Trust boundary: interpretation doctrine only; this pattern does not create workflow execution, adapters, or parity behavior.
+- Admitted derivative statement: workflow interpretation can be promoted as doctrine only when it remains downstream of deterministic governed truth and reviewable evidence.
+- Owner repo: `playbook`
+- Verification evidence: `pnpm playbook verify --json`; `pnpm playbook docs audit --ci --json`
+- Downstream routing rule: interpretation guidance stays in Playbook until a later executable seam is explicitly chosen elsewhere.
+- Non-goals: no runtime orchestration, no `_stack` automation, no Lifeline execution semantics.
 
 ## Proposed ATLAS Registration Shape
 

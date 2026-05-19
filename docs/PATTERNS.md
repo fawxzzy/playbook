@@ -45,6 +45,8 @@ Promoted Verta-derived entries:
 - `verta.pattern.review-before-widening.v1`: Keep doctrine review ahead of adapters, parity, or runtime widening.
 - `verta.pattern.single-owner-seam-first.v1`: Name one owner seam before routing derivative behavior elsewhere.
 - `verta.pattern.execution-deferred-without-owner.v1`: Leave execution-adjacent ideas pending until a separate executable owner seam exists.
+- `verta.pattern.reusable-governance-heuristics.v1`: Promote governance heuristics only after they are rewritten as explicit derivative doctrine with evidence.
+- `verta.pattern.workflow-interpretation-follows-governed-truth.v1`: Keep interpretation doctrine downstream of deterministic governed truth and out of execution lanes.
 
 Failure Mode: Treating historical source presence as permission to promote raw text, source trees, or executable guidance into canonical pattern memory.
 
