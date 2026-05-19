@@ -68,9 +68,86 @@ type VertaLookupPayload = {
   rejected_classes: VertaRejectedClass[];
 };
 
+type VertaGateVerdict = 'reject' | 'pause' | 'go';
+
+type VertaGateOwnerRoute = 'playbook' | 'lifeline' | '_stack' | 'app repo' | 'atlas-root-policy' | 'none';
+
+type VertaGatePayload = {
+  schemaVersion: '1.0';
+  command: 'patterns';
+  action: 'verta-gate';
+  status: 'read-only seam candidate validation';
+  verdict: VertaGateVerdict;
+  owner_route: VertaGateOwnerRoute;
+  satisfied_checks: string[];
+  failed_checks: string[];
+  missing_fields: string[];
+  cited_pattern_ids: string[];
+  raw_verta_posture: {
+    status: 'passed' | 'failed';
+    reason: string;
+  };
+  rollback_confidence: 'none' | 'weak' | 'acceptable' | 'strong';
+  non_goals_enforced: string[];
+};
+
+type CandidateRecord = Record<string, unknown>;
+
+type NormalizedCandidateRecord = {
+  behavior: unknown;
+  ownerRepo: unknown;
+  whyItShouldExist: unknown;
+  sourceProvenance: unknown;
+  seamBoundary: unknown;
+  inputs: unknown;
+  outputs: unknown;
+  rollbackPath: unknown;
+  verification: unknown;
+  whyRawVertaStaysProvenanceOnly: unknown;
+};
+
 const VERTA_DERIVATIVE_PACK_RELATIVE_PATH = ['docs', 'contracts', 'VERTA_DERIVATIVE_PATTERN_PACK.md'] as const;
 const VERTA_DERIVATIVE_RECEIPT_RELATIVE_PATH = ['docs', 'contracts', 'VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md'] as const;
 const VERTA_PATTERNS_INDEX_RELATIVE_PATH = ['docs', 'PATTERNS.md'] as const;
+const RAW_VERTA_REFERENCE_PATTERN = /repos[\\/]+Verta-Core(?:[\\/]|$)|Verta-Core\.zip|raw Verta|raw Verta-Core|unreviewed historical material|extracted raw Verta/i;
+const RAW_VERTA_SAFETY_PATTERN = /\b(forbidden|must not|never|provenance-only|provenance only|quarantined|do not|no raw verta|exclude|fail closed)\b/i;
+const VAGUE_VALUE_PATTERN = /^(unknown|unclear|not stated|tbd|todo|n\/a|na|none|unspecified)$/i;
+
+const readOptionValue = (args: string[], flag: string): string | undefined => {
+  const index = args.indexOf(flag);
+  return index >= 0 ? args[index + 1] : undefined;
+};
+
+const emitVertaError = (cwd: string, options: PatternsOptions, action: 'verta' | 'verta-gate', message: string): number => {
+  if (options.format === 'json') {
+    emitJsonOutput({
+      cwd,
+      command: 'patterns',
+      payload: { schemaVersion: '1.0', command: 'patterns', action, error: message },
+      outFile: options.outFile
+    });
+  } else {
+    console.error(message);
+  }
+
+  return ExitCode.Failure;
+};
+
+const stripGlobalPatternFlags = (commandArgs: string[]): string[] => {
+  const sanitized: string[] = [];
+  for (let index = 0; index < commandArgs.length; index += 1) {
+    const value = commandArgs[index]!;
+    if (value === '--json' || value === '--text' || value === '--quiet') {
+      continue;
+    }
+    if (value === '--out') {
+      index += 1;
+      continue;
+    }
+    sanitized.push(value);
+  }
+  return sanitized;
+};
 
 const readRequiredFile = (cwd: string, relativePath: readonly string[], label: string): string => {
   const filePath = path.join(cwd, ...relativePath);
@@ -225,7 +302,198 @@ const validateReceiptAgainstPack = (packIds: string[], receiptIds: string[]): vo
   }
 };
 
-const buildPayload = (cwd: string): VertaLookupPayload => {
+const normalizeFieldKey = (value: string): string => value.replace(/[^a-z0-9]/gi, '').toLowerCase();
+
+const toCandidateRecord = (value: unknown): CandidateRecord => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('playbook patterns verta gate: candidate record must be a JSON object.');
+  }
+
+  return value as CandidateRecord;
+};
+
+const toNormalizedLookup = (record: CandidateRecord): Map<string, unknown> => {
+  const lookup = new Map<string, unknown>();
+  for (const [key, value] of Object.entries(record)) {
+    lookup.set(normalizeFieldKey(key), value);
+  }
+  return lookup;
+};
+
+const readCandidateField = (lookup: Map<string, unknown>, aliases: readonly string[]): unknown => {
+  for (const alias of aliases) {
+    const value = lookup.get(normalizeFieldKey(alias));
+    if (value !== undefined) {
+      return value;
+    }
+  }
+  return undefined;
+};
+
+const normalizeCandidateRecord = (record: CandidateRecord): NormalizedCandidateRecord => {
+  const lookup = toNormalizedLookup(record);
+  return {
+    behavior: readCandidateField(lookup, ['behavior']),
+    ownerRepo: readCandidateField(lookup, ['owner repo', 'owner_repo', 'ownerRepo', 'owner']),
+    whyItShouldExist: readCandidateField(lookup, ['why it should exist', 'why_it_should_exist', 'whyItShouldExist', 'why']),
+    sourceProvenance: readCandidateField(lookup, ['source/provenance', 'source_provenance', 'sourceProvenance', 'source', 'provenance']),
+    seamBoundary: readCandidateField(lookup, ['seam boundary', 'seam_boundary', 'seamBoundary', 'boundary']),
+    inputs: readCandidateField(lookup, ['inputs']),
+    outputs: readCandidateField(lookup, ['outputs']),
+    rollbackPath: readCandidateField(lookup, ['rollback path', 'rollback_path', 'rollbackPath', 'rollback']),
+    verification: readCandidateField(lookup, ['verification']),
+    whyRawVertaStaysProvenanceOnly: readCandidateField(lookup, [
+      'why raw verta stays provenance-only',
+      'why_raw_verta_stays_provenance_only',
+      'whyRawVertaStaysProvenanceOnly',
+      'raw_verta_provenance_only',
+      'rawVertaProvenanceOnly'
+    ])
+  };
+};
+
+const hasMeaningfulValue = (value: unknown): boolean => {
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+  if (value && typeof value === 'object') {
+    return Object.keys(value).length > 0;
+  }
+  return value !== undefined && value !== null;
+};
+
+const isVagueValue = (value: unknown): boolean => {
+  if (typeof value === 'string') {
+    return VAGUE_VALUE_PATTERN.test(value.trim());
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0 || value.every((entry) => isVagueValue(entry));
+  }
+  if (value && typeof value === 'object') {
+    const entries = Object.values(value);
+    return entries.length === 0 || entries.every((entry) => isVagueValue(entry));
+  }
+  return value === undefined || value === null;
+};
+
+const stringifyValue = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => stringifyValue(entry)).filter(Boolean).join('; ');
+  }
+  if (value && typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return String(value);
+};
+
+const ownerRouteDefinitions: Array<{ route: VertaGateOwnerRoute; aliases: string[] }> = [
+  { route: 'playbook', aliases: ['playbook', 'fawxzzy-playbook'] },
+  { route: 'lifeline', aliases: ['lifeline', 'fawxzzy-lifeline'] },
+  { route: '_stack', aliases: ['_stack'] },
+  { route: 'atlas-root-policy', aliases: ['atlas root', 'atlas-root', 'atlas root policy'] },
+  { route: 'app repo', aliases: ['app repo', 'application repo', 'fawxzzy-fitness', 'fitness', 'fawxzzy-mazer', 'mazer', 'fawxzzy-trove', 'trove'] }
+];
+
+const findRouteMatches = (ownerText: string): VertaGateOwnerRoute[] => {
+  const normalized = ownerText.toLowerCase();
+  return ownerRouteDefinitions
+    .filter(({ aliases }) =>
+      aliases.some((alias) => {
+        const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const positive = new RegExp(`\\b${escapedAlias}\\b`, 'i');
+        const negated = new RegExp(`\\bnot\\s+${escapedAlias}\\b`, 'i');
+        return positive.test(normalized) && !negated.test(normalized);
+      })
+    )
+    .map((entry) => entry.route);
+};
+
+const classifyOwnerRoute = (ownerValue: unknown): { route: VertaGateOwnerRoute; ambiguous: boolean } => {
+  const ownerText = stringifyValue(ownerValue);
+  if (!ownerText) {
+    return { route: 'none', ambiguous: false };
+  }
+
+  const matches = findRouteMatches(ownerText);
+  if (matches.length !== 1) {
+    return { route: matches[0] ?? 'none', ambiguous: matches.length > 1 };
+  }
+
+  return { route: matches[0]!, ambiguous: false };
+};
+
+const usesRawVertaAsInput = (value: unknown): boolean => {
+  const text = stringifyValue(value);
+  if (!text || !RAW_VERTA_REFERENCE_PATTERN.test(text)) {
+    return false;
+  }
+  return !RAW_VERTA_SAFETY_PATTERN.test(text);
+};
+
+const inferRollbackConfidence = (rollbackPath: unknown): VertaGatePayload['rollback_confidence'] => {
+  const text = stringifyValue(rollbackPath).toLowerCase();
+  if (!text) {
+    return 'none';
+  }
+  if (/(delete|remove|revert)/.test(text) && !/(migration|data repair|cleanup needed|manual cleanup)/.test(text)) {
+    return 'strong';
+  }
+  if (/(revert|rollback|remove)/.test(text)) {
+    return 'acceptable';
+  }
+  return isVagueValue(rollbackPath) ? 'weak' : 'acceptable';
+};
+
+const hasConcreteVerification = (verification: unknown): boolean => {
+  if (!hasMeaningfulValue(verification) || isVagueValue(verification)) {
+    return false;
+  }
+  const text = stringifyValue(verification).toLowerCase();
+  return /(pnpm|npm|node|python|vitest|test|build|verify|audit)/.test(text);
+};
+
+const isSpecificBehavior = (behavior: unknown): boolean => {
+  const text = stringifyValue(behavior);
+  return text.length >= 12 && !isVagueValue(behavior);
+};
+
+const hasExplicitIo = (value: unknown): boolean => hasMeaningfulValue(value) && !isVagueValue(value);
+
+const allowsMutationOutsideOwner = (seamBoundary: unknown): boolean => {
+  const text = stringifyValue(seamBoundary).toLowerCase();
+  if (!text) {
+    return true;
+  }
+  if (/(lane creation|create pr|create pull request|start codex|automatic lane|automatic pr)/.test(text)) {
+    return true;
+  }
+  if (/(lifeline|_stack|app repo|atlas root)/.test(text) && /(change|mutat|runtime|operator|adapter|parity|stack lock)/.test(text)) {
+    return true;
+  }
+  return false;
+};
+
+const isReadOnlyOrBoundedSeam = (seamBoundary: unknown): boolean => {
+  const text = stringifyValue(seamBoundary).toLowerCase();
+  if (!text || isVagueValue(seamBoundary)) {
+    return false;
+  }
+  if (allowsMutationOutsideOwner(seamBoundary)) {
+    return false;
+  }
+  return /(read-only|read only|ui\/read-model only|read-model only|bounded to the owner|bounded owner seam|no mutation|no runtime behavior)/.test(text);
+};
+
+const buildLookupPayload = (cwd: string): VertaLookupPayload => {
   const packText = readRequiredFile(cwd, VERTA_DERIVATIVE_PACK_RELATIVE_PATH, 'Verta derivative pattern pack');
   const receiptText = readRequiredFile(cwd, VERTA_DERIVATIVE_RECEIPT_RELATIVE_PATH, 'Verta derivative promotion receipt');
   const patternsIndexText = readRequiredFile(cwd, VERTA_PATTERNS_INDEX_RELATIVE_PATH, 'Playbook pattern index');
@@ -277,6 +545,168 @@ const buildPayload = (cwd: string): VertaLookupPayload => {
   };
 };
 
+const parseCandidateRecord = (cwd: string, commandArgs: string[]): CandidateRecord => {
+  const filePath = readOptionValue(commandArgs, '--file');
+  if (!filePath) {
+    throw new Error('playbook patterns verta gate: requires --file <candidate-record.json>.');
+  }
+
+  const resolvedPath = path.resolve(cwd, filePath);
+  if (!fs.existsSync(resolvedPath)) {
+    throw new Error(`playbook patterns verta gate: candidate record not found: ${filePath}`);
+  }
+
+  try {
+    return toCandidateRecord(JSON.parse(fs.readFileSync(resolvedPath, 'utf8')));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes('candidate record must be a JSON object')) {
+      throw error;
+    }
+    throw new Error(`playbook patterns verta gate: invalid JSON in ${filePath}.`);
+  }
+};
+
+const buildGatePayload = (cwd: string, commandArgs: string[]): VertaGatePayload => {
+  const lookupPayload = buildLookupPayload(cwd);
+  const candidate = normalizeCandidateRecord(parseCandidateRecord(cwd, commandArgs));
+
+  const satisfiedChecks: string[] = [];
+  const failedChecks: string[] = [];
+  const missingFields: string[] = [];
+  const requiredFields: Array<{ label: string; value: unknown }> = [
+    { label: 'behavior', value: candidate.behavior },
+    { label: 'owner repo', value: candidate.ownerRepo },
+    { label: 'why it should exist', value: candidate.whyItShouldExist },
+    { label: 'source/provenance', value: candidate.sourceProvenance },
+    { label: 'seam boundary', value: candidate.seamBoundary },
+    { label: 'inputs', value: candidate.inputs },
+    { label: 'outputs', value: candidate.outputs },
+    { label: 'rollback path', value: candidate.rollbackPath },
+    { label: 'verification', value: candidate.verification },
+    { label: 'why raw Verta stays provenance-only', value: candidate.whyRawVertaStaysProvenanceOnly }
+  ];
+
+  for (const field of requiredFields) {
+    if (!hasMeaningfulValue(field.value)) {
+      missingFields.push(field.label);
+    }
+  }
+  if (missingFields.length === 0) {
+    satisfiedChecks.push('required-fields-present');
+  } else {
+    failedChecks.push('required-fields-present');
+  }
+
+  const owner = classifyOwnerRoute(candidate.ownerRepo);
+  if (owner.route !== 'none' && !owner.ambiguous) {
+    satisfiedChecks.push('single-owner-route');
+  } else {
+    failedChecks.push('single-owner-route');
+  }
+
+  if (isSpecificBehavior(candidate.behavior)) {
+    satisfiedChecks.push('specific-behavior');
+  } else {
+    failedChecks.push('specific-behavior');
+  }
+
+  if (hasExplicitIo(candidate.inputs) && hasExplicitIo(candidate.outputs)) {
+    satisfiedChecks.push('explicit-inputs-and-outputs');
+  } else {
+    failedChecks.push('explicit-inputs-and-outputs');
+  }
+
+  const rollbackConfidence = inferRollbackConfidence(candidate.rollbackPath);
+  if (rollbackConfidence === 'strong' || rollbackConfidence === 'acceptable') {
+    satisfiedChecks.push('rollback-path');
+  } else {
+    failedChecks.push('rollback-path');
+  }
+
+  if (hasConcreteVerification(candidate.verification)) {
+    satisfiedChecks.push('verification-plan');
+  } else {
+    failedChecks.push('verification-plan');
+  }
+
+  if (isReadOnlyOrBoundedSeam(candidate.seamBoundary)) {
+    satisfiedChecks.push('read-only-or-bounded-seam');
+  } else {
+    failedChecks.push('read-only-or-bounded-seam');
+  }
+
+  const rawVertaViolation =
+    usesRawVertaAsInput(candidate.sourceProvenance) ||
+    usesRawVertaAsInput(candidate.inputs) ||
+    usesRawVertaAsInput(candidate.behavior);
+  const rawVertaPosture = rawVertaViolation
+    ? { status: 'failed' as const, reason: 'Candidate references raw Verta as a source, input, or owner truth.' }
+    : { status: 'passed' as const, reason: 'Candidate stays within admitted derivative doctrine and keeps raw Verta provenance-only.' };
+
+  if (rawVertaPosture.status === 'passed') {
+    satisfiedChecks.push('raw-verta-provenance-only');
+  } else {
+    failedChecks.push('raw-verta-provenance-only');
+  }
+
+  const policyCandidate = owner.route === 'atlas-root-policy';
+  const runtimeDeferredCandidate = owner.route === 'lifeline';
+  const stackProjectionCandidate = owner.route === '_stack';
+  const impliedCrossRepoMutation = allowsMutationOutsideOwner(candidate.seamBoundary);
+  if (impliedCrossRepoMutation) {
+    failedChecks.push('no-cross-repo-side-effects');
+  } else {
+    satisfiedChecks.push('no-cross-repo-side-effects');
+  }
+
+  let verdict: VertaGateVerdict = 'go';
+  if (
+    missingFields.length > 0 ||
+    owner.route === 'none' ||
+    owner.ambiguous ||
+    rawVertaPosture.status === 'failed' ||
+    rollbackConfidence === 'none' ||
+    !hasConcreteVerification(candidate.verification) ||
+    impliedCrossRepoMutation ||
+    (!isSpecificBehavior(candidate.behavior) && runtimeDeferredCandidate)
+  ) {
+    verdict = 'reject';
+  } else if (
+    policyCandidate ||
+    stackProjectionCandidate ||
+    runtimeDeferredCandidate ||
+    (owner.route === 'app repo' && !isReadOnlyOrBoundedSeam(candidate.seamBoundary))
+  ) {
+    verdict = 'pause';
+  } else if (
+    owner.route !== 'playbook' && owner.route !== 'app repo'
+  ) {
+    verdict = 'pause';
+  }
+
+  return {
+    schemaVersion: '1.0',
+    command: 'patterns',
+    action: 'verta-gate',
+    status: 'read-only seam candidate validation',
+    verdict,
+    owner_route: owner.route,
+    satisfied_checks: [...new Set(satisfiedChecks)],
+    failed_checks: [...new Set(failedChecks)],
+    missing_fields: missingFields,
+    cited_pattern_ids: lookupPayload.admitted_patterns.map((entry) => entry.pattern_id),
+    raw_verta_posture: rawVertaPosture,
+    rollback_confidence: rollbackConfidence,
+    non_goals_enforced: [
+      'no-raw-verta-reads',
+      'no-mutation-path',
+      'no-runtime-authority-without-owner',
+      'no-lane-creation'
+    ]
+  };
+};
+
 const renderText = (payload: VertaLookupPayload): string => {
   const lines = [
     'Status: read-only admitted doctrine lookup',
@@ -302,17 +732,59 @@ const renderText = (payload: VertaLookupPayload): string => {
   return lines.join('\n');
 };
 
-export const runPatternsVerta = (cwd: string, options: PatternsOptions): number => {
-  const payload = buildPayload(cwd);
+const renderGateText = (payload: VertaGatePayload): string => {
+  const lines = [
+    `Verdict: ${payload.verdict}`,
+    `Owner route: ${payload.owner_route}`,
+    `Raw Verta posture: ${payload.raw_verta_posture.status} (${payload.raw_verta_posture.reason})`
+  ];
 
-  if (options.format === 'json') {
-    emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+  if (payload.failed_checks.length > 0) {
+    lines.push(`Failed checks: ${payload.failed_checks.join(', ')}`);
+  }
+  if (payload.missing_fields.length > 0) {
+    lines.push(`Missing fields: ${payload.missing_fields.join(', ')}`);
+  }
+
+  return lines.join('\n');
+};
+
+export const runPatternsVerta = (cwd: string, commandArgs: string[], options: PatternsOptions): number => {
+  try {
+    const sanitizedArgs = stripGlobalPatternFlags(commandArgs);
+
+    if (sanitizedArgs[0] === 'gate') {
+      const payload = buildGatePayload(cwd, sanitizedArgs.slice(1));
+      if (options.format === 'json') {
+        emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+        return ExitCode.Success;
+      }
+
+      if (!options.quiet) {
+        console.log(renderGateText(payload));
+      }
+      return ExitCode.Success;
+    }
+
+    if (sanitizedArgs.length > 0) {
+      return emitVertaError(cwd, options, 'verta', 'playbook patterns verta: unsupported subcommand. Use gate --file <candidate-record.json> or omit subcommands for doctrine lookup.');
+    }
+
+    const payload = buildLookupPayload(cwd);
+
+    if (options.format === 'json') {
+      emitJsonOutput({ cwd, command: 'patterns', payload, outFile: options.outFile });
+      return ExitCode.Success;
+    }
+
+    if (!options.quiet) {
+      console.log(renderText(payload));
+    }
+
     return ExitCode.Success;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const sanitizedArgs = stripGlobalPatternFlags(commandArgs);
+    return emitVertaError(cwd, options, sanitizedArgs[0] === 'gate' ? 'verta-gate' : 'verta', message);
   }
-
-  if (!options.quiet) {
-    console.log(renderText(payload));
-  }
-
-  return ExitCode.Success;
 };
