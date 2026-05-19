@@ -488,6 +488,24 @@ const writeVertaGateCandidate = (repo: string, name: string, candidate: Record<s
   return filePath;
 };
 
+const createAtlasPlaybookWorkspace = (name: string): {
+  atlasRoot: string;
+  playbookRepo: string;
+  rawVertaRepo: string;
+  rawVertaZip: string;
+} => {
+  const atlasRoot = createRepo(name);
+  const playbookRepo = path.join(atlasRoot, 'repos', 'fawxzzy-playbook');
+  const rawVertaRepo = path.join(atlasRoot, 'repos', 'Verta-Core');
+  const rawVertaZip = path.join(atlasRoot, 'repos', 'Verta-Core.zip');
+
+  fs.mkdirSync(playbookRepo, { recursive: true });
+  fs.mkdirSync(rawVertaRepo, { recursive: true });
+  fs.mkdirSync(path.dirname(rawVertaZip), { recursive: true });
+
+  return { atlasRoot, playbookRepo, rawVertaRepo, rawVertaZip };
+};
+
 describe('runPatterns', () => {
   it('lists pattern knowledge graph nodes as JSON', async () => {
     const repo = createRepo('playbook-cli-patterns-list');
@@ -719,6 +737,70 @@ describe('runPatterns', () => {
     expect(payload.failed_checks).toContain('raw-verta-provenance-only');
 
     logSpy.mockRestore();
+  });
+
+  it('rejects candidate files under raw Verta paths before JSON parsing', async () => {
+    const { playbookRepo, rawVertaRepo } = createAtlasPlaybookWorkspace('playbook-cli-patterns-verta-gate-path-raw');
+    writeVertaDerivativeDocs(playbookRepo);
+    const candidatePath = path.join(rawVertaRepo, 'candidate-inside-raw-verta.json');
+    fs.writeFileSync(candidatePath, '{not valid json', 'utf8');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(playbookRepo, ['verta', 'gate', '--file', '../Verta-Core/candidate-inside-raw-verta.json'], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Failure);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload).toEqual({
+      schemaVersion: '1.0',
+      command: 'patterns',
+      action: 'verta-gate',
+      error: 'playbook patterns verta gate: candidate record path is inside a quarantined raw Verta surface and cannot be read.'
+    });
+
+    logSpy.mockRestore();
+  });
+
+  it('rejects candidate files addressed through the raw Verta zip path before parsing', async () => {
+    const { playbookRepo, rawVertaZip } = createAtlasPlaybookWorkspace('playbook-cli-patterns-verta-gate-path-zip');
+    writeVertaDerivativeDocs(playbookRepo);
+    fs.writeFileSync(rawVertaZip, '{not valid json', 'utf8');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(playbookRepo, ['verta', 'gate', '--file', '../Verta-Core.zip'], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Failure);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.error).toBe(
+      'playbook patterns verta gate: candidate record path is inside a quarantined raw Verta surface and cannot be read.'
+    );
+
+    logSpy.mockRestore();
+  });
+
+  it('prints a clear text-mode error for unsafe raw Verta candidate paths', async () => {
+    const { playbookRepo, rawVertaRepo } = createAtlasPlaybookWorkspace('playbook-cli-patterns-verta-gate-path-text');
+    writeVertaDerivativeDocs(playbookRepo);
+    const candidatePath = path.join(rawVertaRepo, 'candidate-inside-raw-verta.json');
+    fs.writeFileSync(candidatePath, '{not valid json', 'utf8');
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(playbookRepo, ['verta', 'gate', '--file', '../Verta-Core/candidate-inside-raw-verta.json'], {
+      format: 'text',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(errorSpy).toHaveBeenCalledWith(
+      'playbook patterns verta gate: candidate record path is inside a quarantined raw Verta surface and cannot be read.'
+    );
+
+    errorSpy.mockRestore();
   });
 
   it('rejects candidates with ambiguous ownership', async () => {

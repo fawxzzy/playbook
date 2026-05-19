@@ -236,6 +236,7 @@ Verdict meanings:
 Fail-closed rule:
 
 - any candidate that references `repos/Verta-Core/**`, `repos/Verta-Core.zip`, or equivalent raw historical inputs as active source/owner truth must return `reject`
+- any candidate file located under `repos/Verta-Core/**`, at `repos/Verta-Core.zip`, or under an equivalent quarantined raw Verta path is rejected before JSON parsing
 
 Governance guarantees:
 
