@@ -25,6 +25,29 @@ Rule: When a durable shared pattern emerges, update the canonical pattern notes 
 
 Rule: AI workers may suggest consolidation automatically, but they should avoid destructive refactors unless the task explicitly asks for them or the consolidation is small, obvious, and well-tested.
 
+## Provenance-Bounded Derivative Packs
+
+Historical or quarantined source material can still produce reusable doctrine, but only through reviewed derivative pattern packs.
+
+- **Pattern**: Visible-Untrusted -> Reviewed Derivative Pattern Pack.
+- **Definition**: Historical source with explicit untrusted posture may seed reusable pattern doctrine only after reviewed derivative notes isolate the portable principle from the raw source.
+- **Design implication**: Use the derivative pack as the canonical intake and review surface before any runtime, operator, or app seam is considered.
+- **Canonical intake surface**: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md`
+- **Promotion receipt**: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md`
+
+Promoted Verta-derived entries:
+
+- `verta.pattern.deterministic-first-reuse.v1`: Promote deterministic review and reuse discipline before interpretive or runtime widening.
+- `verta.pattern.bounded-convergence-through-seams.v1`: Prefer explicit seams and owner boundaries over broad filesystem absorption.
+- `verta.pattern.provenance-before-reuse.v1`: Reuse only rewritten derivatives with explicit provenance and reviewable trust posture.
+- `verta.pattern.owner-repo-truth-boundary.v1`: Keep executable truth in the owner repo; keep derivative packs and root projection non-executable.
+- `verta.pattern.tranche-based-promotion.v1`: Promote reviewed doctrine by tranche instead of collapsing the whole pack into one trust decision.
+- `verta.pattern.review-before-widening.v1`: Keep doctrine review ahead of adapters, parity, or runtime widening.
+- `verta.pattern.single-owner-seam-first.v1`: Name one owner seam before routing derivative behavior elsewhere.
+- `verta.pattern.execution-deferred-without-owner.v1`: Leave execution-adjacent ideas pending until a separate executable owner seam exists.
+
+Failure Mode: Treating historical source presence as permission to promote raw text, source trees, or executable guidance into canonical pattern memory.
+
 ## System -> Interpretation Gap
 
 A deterministic system can be correct and still be hard to use when its outputs require too much internal system knowledge to interpret.
