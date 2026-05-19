@@ -397,6 +397,91 @@ const writePatternKnowledge = (repo: string): void => {
   );
 };
 
+const writeVertaDerivativeDocs = (repo: string): void => {
+  const contractsDir = path.join(repo, 'docs', 'contracts');
+  fs.mkdirSync(contractsDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(contractsDir, 'VERTA_DERIVATIVE_PATTERN_PACK.md'),
+    `# Verta Derivative Pattern Pack
+
+## Derivative Pattern Review State
+
+### Admitted Patterns
+
+| Pattern ID | Pattern | Admitted derivative | Source posture | Reason admitted |
+| --- | --- | --- | --- | --- |
+| \`verta.pattern.alpha.v1\` | alpha pattern | reviewed doctrine | visible untrusted -> rewritten derivative | deterministic and bounded |
+| \`verta.pattern.beta.v1\` | beta pattern | reviewed doctrine | visible untrusted -> rewritten derivative | preserves provenance |
+
+### Rejected Patterns
+
+| Candidate class | Rejected derivative | Reason rejected |
+| --- | --- | --- |
+| executable guidance | direct runtime reuse | widens execution authority |
+
+### Pending Patterns
+
+| Candidate class | Current state | Next proof needed |
+| --- | --- | --- |
+| portable path discipline | deferred | reopen only as Playbook-local docs discipline |
+| future runtime or operator derivatives | deferred | select a separate executable owner seam |
+
+## Promoted Derivative Entries
+
+### \`verta.pattern.alpha.v1\`
+
+- Source / provenance: rewritten from reviewed derivative notes only.
+- Trust boundary: doctrine only; no raw archive text or code.
+- Admitted derivative statement: promote alpha doctrine as a read-only reusable pattern.
+- Owner repo: \`playbook\`
+- Verification evidence: \`pnpm playbook verify --json\`; \`pnpm playbook docs audit --ci --json\`
+- Downstream routing rule: remains in \`playbook\` until a later executable seam is explicitly selected elsewhere.
+- Non-goals: no runtime behavior, no operator authority, no raw Verta reads.
+
+### \`verta.pattern.beta.v1\`
+
+- Source / provenance: rewritten from reviewed promotion notes and scrub reports.
+- Trust boundary: reviewed derivative doctrine only.
+- Admitted derivative statement: keep beta interpretation downstream of governed truth.
+- Owner repo: \`playbook\`
+- Verification evidence: \`pnpm playbook verify --json\`; \`pnpm playbook docs audit --ci --json\`
+- Downstream routing rule: future execution work requires a separate owner seam and new receipts.
+- Non-goals: no adapter work, no parity work, no runtime control.
+`,
+    'utf8'
+  );
+
+  fs.writeFileSync(
+    path.join(contractsDir, 'VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md'),
+    `# Verta Derivative Pattern Promotion Receipt
+
+- remote publication status: \`merged to origin/main and remote-visible\`
+- remote merge record: Playbook PR \`#14\`, merge commit \`0d955393\`
+
+## Promoted Pattern IDs
+
+| Pattern ID | Status | Source tranche | Boundary note | Verification evidence |
+| --- | --- | --- | --- | --- |
+| \`verta.pattern.alpha.v1\` | admitted | tranche-1 | doctrine-only | \`pnpm playbook verify --json\` |
+| \`verta.pattern.beta.v1\` | admitted | tranche-1 | doctrine-only | \`pnpm playbook verify --json\` |
+`,
+    'utf8'
+  );
+
+  fs.writeFileSync(
+    path.join(repo, 'docs', 'PATTERNS.md'),
+    `# Playbook Patterns
+
+## Provenance-Bounded Derivative Packs
+
+- Canonical intake surface: \`docs/contracts/VERTA_DERIVATIVE_PATTERN_PACK.md\`
+- Promotion receipt: \`docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md\`
+`,
+    'utf8'
+  );
+};
+
 describe('runPatterns', () => {
   it('lists pattern knowledge graph nodes as JSON', async () => {
     const repo = createRepo('playbook-cli-patterns-list');
@@ -482,6 +567,49 @@ describe('runPatterns', () => {
     expect(exitCode).toBe(ExitCode.Success);
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.related).toHaveLength(3);
+
+    logSpy.mockRestore();
+  });
+
+  it('lists admitted verta derivative doctrine through a read-only lookup surface', async () => {
+    const repo = createRepo('playbook-cli-patterns-verta');
+    writeVertaDerivativeDocs(repo);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['verta'], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.action).toBe('verta');
+    expect(payload.owner_repo).toBe('playbook');
+    expect(payload.admitted_count).toBe(2);
+    expect(payload.admitted_patterns.map((entry: { pattern_id: string }) => entry.pattern_id)).toEqual([
+      'verta.pattern.alpha.v1',
+      'verta.pattern.beta.v1'
+    ]);
+    expect(payload.deferred_classes).toEqual([
+      {
+        candidate_class: 'portable path discipline',
+        current_state: 'deferred',
+        next_proof_needed: 'reopen only as Playbook-local docs discipline'
+      },
+      {
+        candidate_class: 'future runtime or operator derivatives',
+        current_state: 'deferred',
+        next_proof_needed: 'select a separate executable owner seam'
+      }
+    ]);
+    expect(payload.publication).toEqual({
+      remote_publication_status: '`merged to origin/main and remote-visible`',
+      remote_merge_record: 'Playbook PR `#14`, merge commit `0d955393`'
+    });
+    expect(payload.index_surface).toEqual({
+      references_derivative_pack: true,
+      references_promotion_receipt: true
+    });
 
     logSpy.mockRestore();
   });
