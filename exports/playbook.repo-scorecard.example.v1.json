@@ -6,8 +6,8 @@
   },
   "overallStatus": "partial",
   "summary": {
-    "verified": 5,
-    "partial": 3,
+    "verified": 6,
+    "partial": 2,
     "missing": 0,
     "notApplicable": 0
   },
@@ -56,13 +56,12 @@
     {
       "id": "docs_governance",
       "title": "Docs governance",
-      "status": "partial",
-      "summary": "Docs audit is enforced, with one known warning still tracked separately.",
+      "status": "verified",
+      "summary": "Docs audit is enforced without false positives from managed AGENTS command sections.",
       "evidence": [
         "AGENTS.md",
         "docs/roadmap/README.md"
-      ],
-      "nextAction": "Keep the AGENTS planning-language warning scoped to a separate cleanup lane."
+      ]
     },
     {
       "id": "workflow_pack_adoption",

@@ -13,8 +13,8 @@ const baseInput = (): RepoScorecardInput => ({
     role: 'governance_owner'
   },
   summary: {
-    verified: 5,
-    partial: 3,
+    verified: 6,
+    partial: 2,
     missing: 0,
     notApplicable: 0
   },
@@ -51,10 +51,9 @@ const baseInput = (): RepoScorecardInput => ({
     {
       id: 'docs_governance',
       title: 'Docs governance',
-      status: 'partial',
-      summary: 'Docs audit is enforced, with one known warning still tracked separately.',
-      evidence: ['AGENTS.md', 'docs/roadmap/README.md'],
-      nextAction: 'Keep the AGENTS planning-language warning scoped to a separate cleanup lane.'
+      status: 'verified',
+      summary: 'Docs audit is enforced without false positives from managed AGENTS command sections.',
+      evidence: ['AGENTS.md', 'docs/roadmap/README.md']
     },
     {
       id: 'workflow_pack_adoption',
@@ -105,7 +104,7 @@ describe('repo scorecard report', () => {
         role: 'governance_owner'
       },
       summary: {
-        score: 13,
+        score: 14,
         maxScore: 16,
         grade: 'b'
       },
@@ -132,12 +131,11 @@ describe('repo scorecard report', () => {
         {
           id: 'docs_governance',
           title: 'Docs governance',
-          status: 'partial',
-          score: 1,
+          status: 'verified',
+          score: 2,
           maxScore: 2,
-          summary: 'Docs audit is enforced, with one known warning still tracked separately.',
-          evidence: ['AGENTS.md', 'docs/roadmap/README.md'],
-          nextAction: 'Keep the AGENTS planning-language warning scoped to a separate cleanup lane.'
+          summary: 'Docs audit is enforced without false positives from managed AGENTS command sections.',
+          evidence: ['AGENTS.md', 'docs/roadmap/README.md']
         },
         {
           id: 'local_verification',

@@ -189,6 +189,38 @@ describe('runDocs', () => {
     );
   });
 
+  it('ignores managed AGENTS sections when scanning for planning-language leakage', async () => {
+    const repo = createFixtureRepo();
+    fs.writeFileSync(
+      path.join(repo, 'AGENTS.md'),
+      [
+        '# AGENTS',
+        '',
+        '<!-- PLAYBOOK:COMMANDS_START -->',
+        '- `contracts`: Emit deterministic contract registry for schemas, artifacts, and roadmap status',
+        '- `story`: Manage the canonical repo-local story backlog state',
+        '<!-- PLAYBOOK:COMMANDS_END -->',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+    const { runDocs } = await import('./docs.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runDocs(repo, ['audit'], { ci: false, format: 'json', quiet: true });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.findings).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: 'docs.idea-leakage.detected',
+          path: 'AGENTS.md'
+        })
+      ])
+    );
+  });
+
   it('fails postmortem docs missing required sections without affecting other docs', async () => {
     const repo = createFixtureRepo();
     fs.mkdirSync(path.join(repo, 'docs', 'postmortems'), { recursive: true });
