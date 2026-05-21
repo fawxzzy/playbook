@@ -6,7 +6,7 @@
     "role": "governance_owner"
   },
   "summary": {
-    "score": 13,
+    "score": 14,
     "maxScore": 16,
     "grade": "b"
   },
@@ -39,15 +39,14 @@
     {
       "id": "docs_governance",
       "title": "Docs governance",
-      "status": "partial",
-      "score": 1,
+      "status": "verified",
+      "score": 2,
       "maxScore": 2,
-      "summary": "Docs audit is enforced, with one known warning still tracked separately.",
+      "summary": "Docs audit is enforced without false positives from managed AGENTS command sections.",
       "evidence": [
         "AGENTS.md",
         "docs/roadmap/README.md"
-      ],
-      "nextAction": "Keep the AGENTS planning-language warning scoped to a separate cleanup lane."
+      ]
     },
     {
       "id": "local_verification",

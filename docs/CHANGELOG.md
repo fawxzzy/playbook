@@ -1,4 +1,20 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.52.2 - 2026-05-21
+- Recommended bump: patch
+- @fawxzzy/playbook: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+
+## 0.52.1 - 2026-05-21
+- Recommended bump: patch
+- @fawxzzy/playbook: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
+
 ## 0.52.1 - 2026-05-21
 - Recommended bump: patch
 - @fawxzzy/playbook: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
@@ -1377,3 +1393,6 @@
 - Pattern: Artifact-rich, prompt-thin orchestration keeps operators fast.
 - Failure Mode: Dumping full machine context into worker prompts lowers signal and increases drift.
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_END -->
+
+- WHAT: Updated `pnpm playbook docs audit` idea-leakage scanning to ignore managed AGENTS command/example sections, added regression coverage for that false-positive path, and refreshed repo scorecard examples to reflect docs governance as verified rather than warning-bearing. WHY: Managed command metadata should not cause AGENTS planning-language warnings, and the support artifacts now match the actual docs-audit contract.
+- WHAT: Recorded the recent stack sustain patterns in `docs/PATTERNS.md`, covering merge-repin-validate archive closure, atomic topology admission, release-safety waves before runtime expansion, and clean-worktree lane execution. WHY: These were reused successfully across ATLAS, Foundation, and Lifeline and are now explicit Playbook doctrine rather than task-local memory.

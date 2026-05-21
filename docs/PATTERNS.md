@@ -52,6 +52,26 @@ Promoted Verta-derived entries:
 
 Failure Mode: Treating historical source presence as permission to promote raw text, source trees, or executable guidance into canonical pattern memory.
 
+## Stack Sustain Patterns
+
+Recent ATLAS-root governance work reinforced a few reusable sustain patterns that Playbook should keep explicit.
+
+- **Pattern**: Archive Governance Becomes Real Only After Merge, Repin, and Full Validation.
+- **Definition**: Enforcement work is not complete when a branch passes targeted tests; it becomes durable only after the merged default branch is repinned and the full validator is green.
+- **Design implication**: Treat post-merge lock refresh and full-validator closeout as part of the governance change, not as optional cleanup.
+
+- **Pattern**: Atomic Topology Admission.
+- **Definition**: A repo is either admitted or deferred across every root truth surface; mixed posture is a governance defect.
+- **Design implication**: Manifest, lock, inventory, README, and owner-usage surfaces should move together as one bounded admission package.
+
+- **Pattern**: Release-Safety Waves Before Runtime Expansion.
+- **Definition**: Harden replay evidence, destructive guardrails, receipt health, and rollback confidence in small merged waves before widening execution authority.
+- **Design implication**: Prefer narrow operator-safety tranches with deterministic verification over broad runtime feature pushes.
+
+- **Pattern**: Clean Worktree Lane Execution.
+- **Definition**: Governance and release-safety lanes should run in clean worktrees when the main checkout carries unrelated local drift.
+- **Design implication**: Keep dirty local state untouched, isolate the tranche, and validate the exact branch or post-merge `main` state you intend to claim.
+
 ## System -> Interpretation Gap
 
 A deterministic system can be correct and still be hard to use when its outputs require too much internal system knowledge to interpret.

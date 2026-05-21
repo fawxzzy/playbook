@@ -15,7 +15,7 @@ pnpm playbook docs consolidate-plan --json
 ## Checks
 
 1. Canonical required-anchor checks for current active docs and roadmap/archive anchors.
-2. Single-roadmap and planning-surface governance (planning language stays on approved planning surfaces).
+2. Single-roadmap and planning-surface governance (planning language stays on approved planning surfaces, while generated managed-command blocks are ignored for leakage checks).
 3. Active-surface package/install consistency (`@fawxzzy/playbook` and no unscoped/legacy package examples).
 4. Active-surface legacy-link detection for superseded compatibility-stub doc paths.
 5. Front-door canonical-ladder drift checks (`ai-context -> ai-contract -> context -> index/query/explain/ask --repo-context -> verify -> plan -> apply -> verify`) with `analyze` treated as compatibility/lightweight.

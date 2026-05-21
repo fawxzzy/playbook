@@ -162,6 +162,8 @@ const IDEA_LEAKAGE_SCAN_PATHS = new Set(['AGENTS.md', 'docs/AI_AGENT_CONTEXT.md'
 const IDEA_LEAKAGE_PATTERN =
   /\b(roadmap|backlog|future\s+(?:feature|features|plan|plans|work)|upcoming|planned|next\s+up|improvement\s+ideas?|migration\s+tracker|cleanup\s+tracker)\b/i;
 
+const MANAGED_SECTION_PATTERN = /<!--\s*PLAYBOOK:[A-Z0-9_]+_START\s*-->[\s\S]*?<!--\s*PLAYBOOK:[A-Z0-9_]+_END\s*-->/giu;
+
 const CLEANUP_CANDIDATE_PATTERN = /(?:UPDATE_ROADMAP|DOCS_MERGE|CONSOLIDATION|CLEANUP|MIGRATION|TRACKER)/i;
 
 const LEGACY_DOC_LINK_PATTERN =
@@ -180,6 +182,8 @@ const PATTERN_STORAGE_CONTRACT_DOCS = [
   'docs/commands/knowledge.md',
   'docs/PLAYBOOK_PRODUCT_ROADMAP.md'
 ] as const;
+
+const stripManagedSectionsForIdeaLeakage = (content: string): string => content.replace(MANAGED_SECTION_PATTERN, '');
 
 const GLOBAL_PATTERN_MEMORY_REPO_LOCAL_PHRASE =
   /global reusable pattern memory[\s\S]{0,200}\.playbook\/memory\/knowledge\/patterns\.json/iu;
@@ -707,7 +711,11 @@ export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
       continue;
     }
 
-    if (IDEA_LEAKAGE_SCAN_PATHS.has(relativePath) && !PLANNING_ALLOWED_PATHS.has(relativePath) && IDEA_LEAKAGE_PATTERN.test(content)) {
+    const ideaLeakageContent = IDEA_LEAKAGE_SCAN_PATHS.has(relativePath)
+      ? stripManagedSectionsForIdeaLeakage(content)
+      : content;
+
+    if (IDEA_LEAKAGE_SCAN_PATHS.has(relativePath) && !PLANNING_ALLOWED_PATHS.has(relativePath) && IDEA_LEAKAGE_PATTERN.test(ideaLeakageContent)) {
       findings.push({
         ruleId: 'docs.idea-leakage.detected',
         level: 'warning',
