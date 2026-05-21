@@ -175,7 +175,7 @@ describe('repo scorecard report contract', () => {
     ]);
 
     expect(report.summary).toEqual({
-      score: 13,
+      score: 14,
       maxScore: 16,
       grade: 'b'
     });

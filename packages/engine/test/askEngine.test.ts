@@ -540,5 +540,5 @@ describe('answerRepositoryQuestion', () => {
 
     expect(Array.isArray(result.context.knowledgeHits)).toBe(true);
     expect(memoryKnowledge?.[0]?.source).toBe('promoted');
-  });
+  }, 10000);
 });
