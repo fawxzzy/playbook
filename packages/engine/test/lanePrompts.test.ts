@@ -34,6 +34,10 @@ describe('lane prompt rendering', () => {
     expect(prompt).toContain('## Shard ownership');
     expect(prompt).toContain('Shard key: packages-engine.');
     expect(prompt).toContain('## Implementation plan');
+    expect(prompt).toContain('## Acceptance Criteria');
+    expect(prompt).toContain('## Expected Changed Paths');
+    expect(prompt).toContain('## Expected Unchanged Paths');
+    expect(prompt).toContain('## Blocked / Skipped Reporting Rules');
     expect(prompt).toContain('## Verification steps');
     expect(prompt).toContain('## Documentation updates');
     expect(prompt).toContain('## Merge notes');

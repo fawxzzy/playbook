@@ -72,6 +72,13 @@ export const compileCodexPrompt = (task: string, decision: RouteDecision, execut
   lines.push('- Keep the human prompt compact; rely on .playbook artifacts for full machine state.');
   lines.push('');
 
+  lines.push('Acceptance Criteria');
+  lines.push('');
+  lines.push('- [scope] The requested implementation stays within the allowed direct-edit surfaces and fragment-only docs remain direct-edit protected.');
+  lines.push('- [verification] The final change is verified with the listed validation steps or any blocked step is reported explicitly.');
+  lines.push('- [docs] Required documentation or singleton-fragment updates are included when the final diff changes workflow, command, or contract behavior.');
+  lines.push('');
+
   lines.push('Allowed direct-edit files / surfaces');
   lines.push('');
   if (directEditSurfaces.length === 0) {
@@ -92,6 +99,41 @@ export const compileCodexPrompt = (task: string, decision: RouteDecision, execut
       lines.push(`- ${surface} (do not edit directly; contribute fragment-ready content only)`);
     }
   }
+  lines.push('');
+
+  lines.push('Expected Changed Paths');
+  lines.push('');
+  if (directEditSurfaces.length === 0) {
+    lines.push('- None until prerequisites are resolved.');
+  } else {
+    for (const surface of directEditSurfaces) {
+      lines.push(`- ${surface}`);
+    }
+  }
+  for (const item of docsUpdates) {
+    if (!directEditSurfaces.includes(item) && !PROTECTED_SINGLETON_DOCS.has(item)) {
+      lines.push(`- ${item}`);
+    }
+  }
+  lines.push('');
+
+  lines.push('Expected Unchanged Paths');
+  lines.push('');
+  if (fragmentOnlyDocs.length === 0) {
+    lines.push('- Any repo path outside Expected Changed Paths should remain unchanged.');
+  } else {
+    for (const surface of fragmentOnlyDocs) {
+      lines.push(`- ${surface} (direct file stays unchanged; contribute fragment-ready content only)`);
+    }
+    lines.push('- Any repo path outside Expected Changed Paths should remain unchanged.');
+  }
+  lines.push('');
+
+  lines.push('Blocked / Skipped Reporting Rules');
+  lines.push('');
+  lines.push('- Mutating Codex tasks are not governed unless they declare explicit acceptance criteria.');
+  lines.push('- Summary text is not proof. Do not claim a criterion is satisfied unless the final diff and verification output prove it.');
+  lines.push('- If any criterion cannot be completed or any expected unchanged path must change, report it as blocked, skipped, or failed with exact path-level justification.');
   lines.push('');
 
   lines.push('Verification steps');

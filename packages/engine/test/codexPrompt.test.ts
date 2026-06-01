@@ -16,6 +16,10 @@ describe('compileCodexPrompt', () => {
     const prompt = compileCodexPrompt(task, decision, plan);
 
     expect(prompt).toContain('Objective');
+    expect(prompt).toContain('Acceptance Criteria');
+    expect(prompt).toContain('Expected Changed Paths');
+    expect(prompt).toContain('Expected Unchanged Paths');
+    expect(prompt).toContain('Blocked / Skipped Reporting Rules');
     expect(prompt).toContain('Allowed direct-edit files / surfaces');
     expect(prompt).toContain('Fragment-only protected docs');
     expect(prompt).toContain('- docs');
@@ -32,6 +36,7 @@ describe('compileCodexPrompt', () => {
     expect(plan.task_family).toBe('cli_command');
     expect(prompt).toContain('packages/cli/src/commands');
     expect(prompt).toContain('Keep the human prompt compact');
+    expect(prompt).toContain('Summary text is not proof.');
     expect(prompt).toContain('No worker launching.');
   });
 

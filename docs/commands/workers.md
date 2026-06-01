@@ -38,6 +38,9 @@ pnpm playbook workers launch-plan --json
 - Assigned prompts stay compact and skimmable; full machine state remains in `.playbook/workset-plan.json`, `.playbook/lane-state.json`, and `.playbook/worker-assignments.json`.
 - Protected singleton docs must be treated as fragment-only contribution targets rather than direct-edit surfaces.
 - Lanes carrying protected-doc fragments stay non-merge-ready until consolidation is planned and applied through the reviewed boundary.
+- Mutating worker prompts must declare `Acceptance Criteria`, `Expected Changed Paths`, `Expected Unchanged Paths`, and `Blocked / Skipped Reporting Rules`.
+- Mutating Codex tasks are not governed unless they declare explicit acceptance criteria.
+- Summary text is not proof; criterion-level completion must be supportable from the final diff and verification output.
 
 Rule — Human prompt surfaces should carry only bounded execution instructions, not full machine state.
 Pattern — Artifact-rich, prompt-thin orchestration keeps operators fast.

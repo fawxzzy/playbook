@@ -104,6 +104,10 @@
 - @zachariahredfield/playbook-node: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
 
 ## Unreleased
+- WHAT: Codex-facing mutating prompt compilation now injects explicit `Acceptance Criteria`, `Expected Changed Paths`, `Expected Unchanged Paths`, and `Blocked / Skipped Reporting Rules` across `route`, `orchestrate`, worker lane prompts, fleet-adoption execution packaging, and the Discord verification template, with focused tests locking the new sections. WHY: Governed completion now stays diff-proof-aware at the prompt boundary instead of relying on summary text or implied path scope.
+- Rule: Mutating Codex tasks are not governed unless they declare explicit acceptance criteria and diff-proof expectations.
+- Pattern: Prompt contract -> expected paths -> blocked/skipped reporting -> diff-backed completion.
+- Failure Mode: Summary-truth drift occurs when a worker summary claims completion without repo-diff proof for the requested edits.
 - WHAT: Froze the reusable Playbook workflow-pack boundary in `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md`, expanded `pnpm playbook contracts --json` to register the local verification receipt schema plus workflow-pack owner docs, and published local verification receipt runtime defaults through the contracts registry. WHY: Downstream repos and operator layers can now adopt one discoverable workflow bundle for verification truth, staged promotion truth, versioning, and consumer boundaries instead of reassembling fragments into repo-local dialects.
 - Rule: Reusable workflow adoption must compose canonical verification, promotion, registry, and consumer contracts instead of creating repo-local workflow dialects.
 - Pattern: Freeze the reusable bundle once, then let downstream repos discover it through the contracts registry.

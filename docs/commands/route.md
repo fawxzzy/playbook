@@ -102,12 +102,22 @@ Compiled prompt sections are deterministic and include:
 
 - Objective
 - Implementation plan
+- Acceptance Criteria
+- Expected Changed Paths
+- Expected Unchanged Paths
+- Blocked / Skipped Reporting Rules
 - Files / surfaces to modify
 - Verification steps
 - Documentation updates
 - Rule / Pattern / Failure Mode
 
 The compiled prompt is guidance-only. It does **not** launch workers, create branches, open PRs, or mutate the repository autonomously.
+
+Governance rule for mutating prompts:
+
+- mutating Codex tasks are not governed unless they declare explicit acceptance criteria
+- summary text is not proof; each satisfied criterion must be supported by the final diff and validation output
+- expected changed and unchanged paths should be explicit so skipped or widened work is reported instead of implied
 
 ## Story-linked planning
 

@@ -98,11 +98,20 @@ Failure Mode — Surface-safe worker lanes still collide if singleton docs remai
 
 ## Worker prompt contract
 
+Governed mutating prompt rule:
+
+- Mutating Codex tasks are not governed unless they declare explicit acceptance criteria and diff-proof expectations.
+- Summary text is not proof; a worker summary cannot stand in for final diff evidence.
+
 Each generated lane prompt includes:
 
 - Objective
 - Why the lane exists
 - Allowed direct-edit files
+- Acceptance Criteria
+- Expected Changed Paths
+- Expected Unchanged Paths
+- Blocked / Skipped Reporting Rules
 - Fragment-only protected singleton docs
 - Forbidden files
 - Shared-file policy

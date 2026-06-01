@@ -172,18 +172,34 @@ Do not hard-code secret values. Do not commit copied secrets.
 - Any old local-only Gateway bot path is disabled for production use.
 - The end-to-end token flow is tested in a real Discord server.
 
-## Acceptance criteria
+## Acceptance Criteria
 
-- The source app remains the identity authority.
-- Discord remains display and transport, not parallel identity truth.
-- Discord access is granted only after one-time token consumption.
-- The interactions endpoint verifies signatures before parsing.
-- The verification flow works without a local always-running Gateway bot.
-- If member numbers are in scope, the repo documents whether they are compact public display slots or stable historical identity numbers.
-- If support or bug reports are in scope, they enter a review queue before becoming repo truth.
-- If release posts are in scope, they are curated user communication rather than raw internal logs.
-- Reused or expired tokens fail.
-- No secret values are committed.
+- [identity-authority] The source app remains the identity authority.
+- [discord-boundary] Discord remains display and transport, not parallel identity truth.
+- [single-use-proof] Discord access is granted only after one-time token consumption.
+- [signature-gate] The interactions endpoint verifies signatures before parsing.
+- [no-local-bot-dependency] The verification flow works without a local always-running Gateway bot.
+- [member-number-doctrine] If member numbers are in scope, the repo documents whether they are compact public display slots or stable historical identity numbers.
+- [review-queue] If support or bug reports are in scope, they enter a review queue before becoming repo truth.
+- [curated-release-copy] If release posts are in scope, they are curated user communication rather than raw internal logs.
+- [token-failure] Reused or expired tokens fail.
+- [secrets] No secret values are committed.
+
+## Expected Changed Paths
+
+- List only the repo-relative auth, API, database, Discord integration, test, and docs paths that the final diff actually needs.
+- Include migration or env-surface files only when the implementation truly changes them.
+
+## Expected Unchanged Paths
+
+- Any repo path outside the declared Expected Changed Paths.
+- Unrelated product features, release ledgers, and deployment surfaces that are not part of the approved verification flow.
+
+## Blocked / Skipped Reporting Rules
+
+- Mutating Codex tasks are not governed unless they declare explicit acceptance criteria.
+- Summary text is not proof. Do not claim a criterion is satisfied unless the final diff and validation evidence prove it.
+- If any criterion cannot be completed, or any expected unchanged path would need to change, report it as blocked, skipped, or failed with the exact reason.
 
 ## Security guardrails
 
