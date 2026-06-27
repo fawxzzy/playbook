@@ -239,8 +239,8 @@ export function createContractFixtureRepo() {
 }
 
 export function runCli(args, fixtureRepo) {
-  const result = spawnSync(PNPM_BIN, ['exec', 'node', cliEntry, ...args], {
-    cwd: fixtureRepo,
+  const result = spawnSync(PNPM_BIN, ['exec', 'node', cliEntry, '--repo', fixtureRepo, ...args], {
+    cwd: repoRoot,
     encoding: 'utf8',
     shell: process.platform === 'win32'
   });

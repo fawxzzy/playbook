@@ -3,6 +3,7 @@ import path from 'node:path';
 import { clearSession, cleanupSessionSnapshots, formatMergeReportMarkdown, importChatTextSnapshot, listOrchestrationExecutionRuns, pinSessionArtifact, readSession, resumeSession, mergeSessionSnapshots, validateSessionSnapshot } from '@zachariahredfield/playbook-engine';
 import { resolveSessionMergeInputs } from './sessionMergeInputs.js';
 import { buildResult, emitResult, ExitCode } from '../lib/cliContract.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import { formatLongitudinalThinText, readLongitudinalStateSummary } from './longitudinalState.js';
 const requireOption = (value, flag) => {
     if (!value) {
@@ -49,17 +50,47 @@ export const runSession = async (cwd, args, options) => {
     }
     if (subcommand === 'show') {
         const session = readSession(cwd);
+        const longitudinalState = readLongitudinalStateSummary(cwd);
+        const doctrine = readContinuityDoctrineSummary();
         if (!session) {
-            emitResult({
-                format: options.format,
-                quiet: options.quiet,
+            const baseResult = buildResult({
                 command: 'session.show',
                 ok: true,
                 exitCode: ExitCode.Success,
                 summary: 'No active repo-scoped session found.',
-                findings: [{ id: 'session.show.empty', level: 'info', message: 'Session artifact does not exist yet.' }],
+                findings: [
+                    { id: 'session.show.empty', level: 'info', message: 'Session artifact does not exist yet.' },
+                    {
+                        id: 'session.show.doctrine',
+                        level: doctrine.registration_state === 'registered' ? 'info' : 'warning',
+                        message: `doctrine=${doctrine.role} registration=${doctrine.registration_state} export=${doctrine.export_path ?? 'none'}`
+                    },
+                    { id: 'session.show.longitudinal', level: 'info', message: formatLongitudinalThinText(longitudinalState) }
+                ],
                 nextActions: ['Use `playbook session pin <artifact>` to create and populate session state.']
             });
+            if (options.format === 'json') {
+                console.log(JSON.stringify({
+                    ...baseResult,
+                    continuity: {
+                        doctrine,
+                        active_session_refs: [],
+                        pinned_evidence_refs: [],
+                        latest_run_id: null,
+                        latest_receipt_refs: [],
+                        missing_session_refs: ['.playbook/session.json'],
+                        stale_or_missing_state: ['session_missing']
+                    },
+                    longitudinal_state: longitudinalState
+                }, null, 2));
+            }
+            else {
+                emitResult({
+                    format: options.format,
+                    quiet: options.quiet,
+                    ...baseResult
+                });
+            }
             return ExitCode.Success;
         }
         const runs = listOrchestrationExecutionRuns(cwd);
@@ -75,6 +106,12 @@ export const runSession = async (cwd, args, options) => {
             .map((entry) => entry.path)
             .sort((left, right) => left.localeCompare(right));
         const staleSignals = [];
+        if (doctrine.registration_state === 'missing') {
+            staleSignals.push('continuity_doctrine_missing');
+        }
+        else if (doctrine.registration_state === 'ambiguous') {
+            staleSignals.push('continuity_doctrine_ambiguous');
+        }
         if (session.selectedRunId && !runs.some((run) => run.run_id === session.selectedRunId)) {
             staleSignals.push('selected_run_missing');
         }
@@ -90,7 +127,6 @@ export const runSession = async (cwd, args, options) => {
         if (latestRun && latestReceiptRefs.length === 0) {
             staleSignals.push('latest_run_missing_receipts');
         }
-        const longitudinalState = readLongitudinalStateSummary(cwd);
         const baseResult = buildResult({
             command: 'session.show',
             ok: true,
@@ -102,6 +138,11 @@ export const runSession = async (cwd, args, options) => {
                 { id: 'session.show.artifacts', level: 'info', message: `pinnedArtifacts=${session.pinnedArtifacts.length}` },
                 { id: 'session.show.refs', level: 'info', message: `activeSessionRefs=${session.evidenceEnvelope.artifacts.filter((entry) => entry.present).length}` },
                 { id: 'session.show.lineage', level: 'info', message: `latestRun=${latestRun?.run_id ?? 'none'} latestReceipts=${latestReceiptRefs.length}` },
+                {
+                    id: 'session.show.doctrine',
+                    level: doctrine.registration_state === 'registered' ? 'info' : 'warning',
+                    message: `doctrine=${doctrine.role} registration=${doctrine.registration_state} export=${doctrine.export_path ?? 'none'}`
+                },
                 { id: 'session.show.continuity', level: staleSignals.length > 0 ? 'warning' : 'info', message: `staleSignals=${staleSignals.join(',') || 'none'}` },
                 { id: 'session.show.longitudinal', level: 'info', message: formatLongitudinalThinText(longitudinalState) }
             ],
@@ -111,6 +152,7 @@ export const runSession = async (cwd, args, options) => {
             console.log(JSON.stringify({
                 ...baseResult,
                 continuity: {
+                    doctrine,
                     active_session_refs: session.evidenceEnvelope.artifacts.filter((entry) => entry.present).map((entry) => entry.path),
                     pinned_evidence_refs: session.pinnedArtifacts.map((entry) => entry.artifact),
                     latest_run_id: latestRun?.run_id ?? null,

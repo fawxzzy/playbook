@@ -99,7 +99,15 @@ const buildAiContextResult = (cwd) => {
         shapingLevel: 'ai-context',
         shapeVersion: '2',
         riskTier: 'ai-context',
-        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json', 'docs/contracts/PLAYBOOK-CONTRACT.md', 'exports/playbook.contract.example.v1.json'],
+        sourceArtifacts: [
+            '.playbook/repo-index.json',
+            '.playbook/repo-graph.json',
+            '.playbook/module-digests.json',
+            '.playbook/runtime-manifests.json',
+            '.playbook/ai-contract.json',
+            'docs/contracts/PLAYBOOK-CONTRACT.md',
+            'exports/playbook.contract.example.v1.json'
+        ],
         buildSnapshot: () => buildAiContextSnapshot(cwd)
     });
     return cached.snapshot;

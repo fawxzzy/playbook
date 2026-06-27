@@ -59,9 +59,10 @@ const resolvePackageJsonPath = (packageName, fromDir) => {
       `const req = createRequire(path.join(${JSON.stringify(fromDir)}, 'package.json'));`,
       `process.stdout.write(req.resolve(${JSON.stringify(spec)}));`
     ].join(' ');
-    const fallback = spawnSync(PNPM_BIN, ['exec', 'node', '-e', resolverScript], {
+    const fallback = spawnSync(PNPM_BIN, ['-C', fromDir, 'exec', 'node', '-e', resolverScript], {
       cwd: repoRoot,
-      encoding: 'utf8'
+      encoding: 'utf8',
+      shell: process.platform === 'win32'
     });
 
     if (fallback.status === 0) {

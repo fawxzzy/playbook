@@ -8,6 +8,7 @@ import { buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildF
 import fs from 'node:fs';
 import path from 'node:path';
 import { previewWorkflowArtifact, stageWorkflowArtifact } from '../lib/workflowPromotion.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import { buildExecutionPlanInterpretation, buildFleetInterpretation, buildProofInterpretation, buildQueueInterpretation, buildReceiptInterpretation, buildRepoStatusInterpretation, buildUpdatedStateInterpretation } from '../lib/interpretation.js';
 import { renderBriefOutput } from '../lib/briefOutput.js';
 import { formatLongitudinalThinText, readLongitudinalStateSummary } from './longitudinalState.js';
@@ -298,6 +299,7 @@ const safeControlPlaneState = (cwd) => {
     }
 };
 const readContinuitySummary = (cwd) => {
+    const doctrine = readContinuityDoctrineSummary();
     const session = readSession(cwd);
     const prReviewLoopPath = path.join(cwd, '.playbook', 'pr-review-loop.json');
     const prReviewLoop = fs.existsSync(prReviewLoopPath)
@@ -312,6 +314,12 @@ const readContinuitySummary = (cwd) => {
         ? Array.from(new Set(Object.values(latestRun.lanes).flatMap((lane) => lane.receipt_refs))).sort((left, right) => left.localeCompare(right))
         : [];
     const staleOrMissingState = [];
+    if (doctrine.registration_state === 'missing') {
+        staleOrMissingState.push('continuity_doctrine_missing');
+    }
+    else if (doctrine.registration_state === 'ambiguous') {
+        staleOrMissingState.push('continuity_doctrine_ambiguous');
+    }
     if (!session) {
         staleOrMissingState.push('session_missing');
     }
@@ -333,6 +341,7 @@ const readContinuitySummary = (cwd) => {
         staleOrMissingState.push('latest_run_missing_receipts');
     }
     return {
+        doctrine,
         active_session_ref: session ? '.playbook/session.json' : null,
         pr_review_loop_ref: prReviewLoop ? '.playbook/pr-review-loop.json' : null,
         pr_review_loop_escalation_state: prReviewLoop?.escalation?.state ?? null,
@@ -571,6 +580,10 @@ export const runStatus = async (cwd, options) => {
                         }, {
                             label: 'Continuity',
                             items: [
+                                `doctrine=${proofResult.continuity.doctrine.role}`,
+                                `doctrine_registration=${proofResult.continuity.doctrine.registration_state}`,
+                                `doctrine_path=${proofResult.continuity.doctrine.path ?? 'none'}`,
+                                `doctrine_export=${proofResult.continuity.doctrine.export_path ?? 'none'}`,
                                 `session=${proofResult.continuity.active_session_ref ?? 'none'}`,
                                 `pr_loop=${proofResult.continuity.pr_review_loop_ref ?? 'none'}`,
                                 `pr_loop_escalation=${proofResult.continuity.pr_review_loop_escalation_state ?? 'none'}`,

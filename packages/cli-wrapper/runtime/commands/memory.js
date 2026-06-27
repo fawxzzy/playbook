@@ -4,6 +4,7 @@ import path from 'node:path';
 import { expandMemoryProvenance, loadCandidateKnowledgeById, lookupMemoryCandidateKnowledge, lookupMemoryEventTimeline, lookupPromotedMemoryKnowledge, promoteMemoryCandidate, retirePromotedKnowledge, resolvePatternKnowledgeStore } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
 import { ExitCode } from '../lib/cliContract.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 const memoryEngine = playbookEngine;
 const printMemoryHelp = () => {
     console.log(`Usage: playbook memory <subcommand> [options]
@@ -163,9 +164,15 @@ const readInteropDerivedCandidateMetadata = (cwd) => {
     const derived = Array.isArray(parsed.interopDerivedCandidates) ? parsed.interopDerivedCandidates : [];
     return new Map(derived.map((entry) => [entry.candidateId, entry]));
 };
+const attachContinuityDoctrine = (payload) => ({
+    ...payload,
+    continuity: {
+        doctrine: readContinuityDoctrineSummary()
+    }
+});
 const emitMemoryResult = (cwd, options, command, payload, textSummary) => {
     if (options.format === 'json') {
-        emitJsonOutput({ cwd, command, payload });
+        emitJsonOutput({ cwd, command, payload: attachContinuityDoctrine(payload) });
         return;
     }
     if (!options.quiet) {
@@ -175,7 +182,11 @@ const emitMemoryResult = (cwd, options, command, payload, textSummary) => {
 const emitMemoryError = (options, subcommand, error) => {
     const message = error instanceof Error ? error.message : String(error);
     if (options.format === 'json') {
-        console.log(JSON.stringify({ schemaVersion: '1.0', command: `memory-${subcommand}`, error: message }, null, 2));
+        console.log(JSON.stringify(attachContinuityDoctrine({
+            schemaVersion: '1.0',
+            command: `memory-${subcommand}`,
+            error: message
+        }), null, 2));
     }
     else {
         console.error(message);
@@ -692,7 +703,7 @@ export const runMemory = async (cwd, args, options) => {
                     }
                 };
                 if (options.format === 'json') {
-                    emitJsonOutput({ cwd, command: 'memory show', payload });
+                    emitJsonOutput({ cwd, command: 'memory show', payload: attachContinuityDoctrine(payload) });
                 }
                 else {
                     emitMemoryResult(cwd, options, 'memory show', payload, `Candidate ${id}: ${candidate.title}`);

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { GLOBAL_PATTERNS_RELATIVE_PATH, materializePatternFromCandidate, resolvePatternKnowledgeStore, materializeStoryFromSource, transitionPatternLifecycle } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { emitPromotionReceipt, stageWorkflowArtifact } from '../lib/workflowPromotion.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 const isPlaybookHomeRoot = (candidateRoot) => {
     const packageJsonPath = path.join(candidateRoot, 'package.json');
     if (!fs.existsSync(packageJsonPath))
@@ -37,11 +38,24 @@ const readOption = (args, name) => {
     const prefixed = args.find((arg) => arg.startsWith(`${name}=`));
     return prefixed ? prefixed.slice(name.length + 1) : undefined;
 };
+const attachContinuityDoctrine = (payload) => ({
+    ...payload,
+    continuity: {
+        doctrine: readContinuityDoctrineSummary()
+    }
+});
 const print = (format, payload) => {
+    if (typeof payload === 'string') {
+        console.log(payload);
+        return;
+    }
+    const normalizedPayload = payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? attachContinuityDoctrine(payload)
+        : payload;
     if (format === 'json')
-        console.log(JSON.stringify(payload, null, 2));
+        console.log(JSON.stringify(normalizedPayload, null, 2));
     else
-        console.log(typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2));
+        console.log(JSON.stringify(normalizedPayload, null, 2));
 };
 const resolveRepoRootById = (playbookHome, cwd, repoId) => {
     const cwdName = path.basename(cwd);

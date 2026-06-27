@@ -106,7 +106,15 @@ export const loadAskRepoContext = (options) => {
         shapingLevel: 'ask-repo-context',
         shapeVersion: '2',
         riskTier: 'repo-context',
-        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json', CONTINUITY_CONTRACT_PATH, CONTINUITY_CONTRACT_EXPORT_PATH],
+        sourceArtifacts: [
+            '.playbook/repo-index.json',
+            '.playbook/repo-graph.json',
+            '.playbook/module-digests.json',
+            '.playbook/runtime-manifests.json',
+            '.playbook/ai-contract.json',
+            CONTINUITY_CONTRACT_PATH,
+            CONTINUITY_CONTRACT_EXPORT_PATH
+        ],
         buildSnapshot: () => {
             const repoIndex = loadRepoIndex(options.cwd);
             const contract = loadAiContract(options.cwd);
@@ -121,7 +129,13 @@ export const loadAskRepoContext = (options) => {
                 'End trusted repository context.'
             ].join('\n');
             return {
-                sources: [REPO_INDEX_PATH, contract.source === 'file' ? AI_CONTRACT_PATH : 'generated-ai-contract-fallback', CONTINUITY_CONTRACT_PATH, CONTINUITY_CONTRACT_EXPORT_PATH, ...(riskAware.source ? [riskAware.source] : [])],
+                sources: [
+                    REPO_INDEX_PATH,
+                    contract.source === 'file' ? AI_CONTRACT_PATH : 'generated-ai-contract-fallback',
+                    CONTINUITY_CONTRACT_PATH,
+                    CONTINUITY_CONTRACT_EXPORT_PATH,
+                    ...(riskAware.source ? [riskAware.source] : [])
+                ],
                 promptContext
             };
         }

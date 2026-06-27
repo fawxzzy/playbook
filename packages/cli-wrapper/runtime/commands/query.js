@@ -1,6 +1,7 @@
 import { queryDependencies, queryImpact, queryRisk, queryDocsCoverage, queryRepositoryIndex, queryRuleOwners, queryModuleOwners, queryTestHotspots, queryPatterns, queryPatternReviewQueue, queryPromotedPatterns, listOrchestrationExecutionRuns, readOrchestrationExecutionRun, readSession, writeControlPlaneState, SUPPORTED_QUERY_FIELDS } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import { formatLongitudinalThinText, readLongitudinalStateSummary } from './longitudinalState.js';
 const toTimeMs = (value) => {
     if (!value)
@@ -17,6 +18,7 @@ const safeControlPlaneState = (cwd) => {
     }
 };
 const buildContinuitySnapshot = (cwd, runs) => {
+    const doctrine = readContinuityDoctrineSummary();
     const session = readSession(cwd);
     const latestRun = [...runs].sort((left, right) => {
         const timeDelta = toTimeMs(right.updated_at) - toTimeMs(left.updated_at);
@@ -28,7 +30,14 @@ const buildContinuitySnapshot = (cwd, runs) => {
             .sort((left, right) => left.localeCompare(right))
         : [];
     if (!session) {
+        const staleSignals = doctrine.registration_state === 'registered'
+            ? ['session_missing']
+            : [
+                doctrine.registration_state === 'missing' ? 'continuity_doctrine_missing' : 'continuity_doctrine_ambiguous',
+                'session_missing'
+            ];
         return {
+            doctrine,
             session: {
                 active: false,
                 sessionId: null,
@@ -42,7 +51,7 @@ const buildContinuitySnapshot = (cwd, runs) => {
                 latestRunUpdatedAt: latestRun?.updated_at ?? null,
                 latestReceiptRefs
             },
-            staleSignals: ['session_missing']
+            staleSignals
         };
     }
     const activeSessionRefs = session.evidenceEnvelope.artifacts
@@ -55,6 +64,12 @@ const buildContinuitySnapshot = (cwd, runs) => {
         .sort((left, right) => left.localeCompare(right));
     const pinnedEvidenceRefs = session.pinnedArtifacts.map((entry) => entry.artifact).sort((left, right) => left.localeCompare(right));
     const staleSignals = [];
+    if (doctrine.registration_state === 'missing') {
+        staleSignals.push('continuity_doctrine_missing');
+    }
+    else if (doctrine.registration_state === 'ambiguous') {
+        staleSignals.push('continuity_doctrine_ambiguous');
+    }
     if (session.selectedRunId && !runs.some((run) => run.run_id === session.selectedRunId)) {
         staleSignals.push('selected_run_missing');
     }
@@ -71,6 +86,7 @@ const buildContinuitySnapshot = (cwd, runs) => {
         staleSignals.push('latest_run_missing_receipts');
     }
     return {
+        doctrine,
         session: {
             active: true,
             sessionId: session.sessionId,
@@ -622,6 +638,7 @@ export const runQuery = async (cwd, commandArgs, options) => {
                     }
                 }
                 console.log(`session=${continuity.session.sessionId ?? 'none'} pinned=${continuity.session.pinnedEvidenceRefs.length} active_refs=${continuity.session.activeSessionRefs.length} missing_refs=${continuity.session.missingSessionRefs.length}`);
+                console.log(`doctrine=${continuity.doctrine.role} registration=${continuity.doctrine.registration_state} path=${continuity.doctrine.path ?? 'none'} export=${continuity.doctrine.export_path ?? 'none'}`);
                 console.log(`lineage latest_run=${continuity.lineage.latestRunId ?? 'none'} latest_receipts=${continuity.lineage.latestReceiptRefs.length} stale=${continuity.staleSignals.length > 0 ? 'yes' : 'no'}`);
                 console.log(formatLongitudinalThinText(longitudinal_state));
             }

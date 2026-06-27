@@ -11,6 +11,13 @@ import { printKnowledgeHelp, printKnowledgePortabilityHelp } from './shared.js';
 import { runKnowledgeStale } from './stale.js';
 import { runKnowledgeSupersession } from './supersession.js';
 import { runKnowledgeTimeline } from './timeline.js';
+import { readContinuityDoctrineSummary } from '../../lib/continuityDoctrine.js';
+const attachContinuityDoctrine = (payload) => ({
+    ...payload,
+    continuity: {
+        doctrine: readContinuityDoctrineSummary()
+    }
+});
 const renderPortabilityText = (payload) => {
     const portability = payload.portability;
     if (!portability || portability.length === 0) {
@@ -280,7 +287,11 @@ export const runKnowledge = async (cwd, args, options) => {
             throw new Error('playbook knowledge: unsupported subcommand. Use list, query, inspect, compare, timeline, provenance, supersession, stale, portability, review, review handoffs, review routes, review followups, or review record.');
         })();
         if (options.format === 'json') {
-            emitJsonOutput({ cwd, command: `knowledge ${subcommand}`, payload });
+            emitJsonOutput({
+                cwd,
+                command: `knowledge ${subcommand}`,
+                payload: attachContinuityDoctrine(payload)
+            });
         }
         else if (!options.quiet) {
             console.log(renderText(subcommand, payload));
@@ -290,7 +301,11 @@ export const runKnowledge = async (cwd, args, options) => {
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (options.format === 'json') {
-            console.log(JSON.stringify({ schemaVersion: '1.0', command: `knowledge-${subcommand}`, error: message }, null, 2));
+            console.log(JSON.stringify(attachContinuityDoctrine({
+                schemaVersion: '1.0',
+                command: `knowledge-${subcommand}`,
+                error: message
+            }), null, 2));
         }
         else {
             console.error(message);
