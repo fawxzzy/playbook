@@ -21,6 +21,13 @@ Control-plane inheritance rule:
 - Consumer integrations inherit shared policy constraints from `docs/architecture/PLAYBOOK_CONTROL_PLANE_ARCHITECTURE.md`.
 - Local repositories still preserve project-local state ownership (`.playbook/*`) and explicit promotion/export decisions.
 
+Continuity-contract inheritance rule:
+
+- Consumer integrations that expose handoff, restart, promotion-routing, or memory-boundary behavior must discover the core continuity contract through `pnpm playbook contracts --json` and resolve it through `artifacts.contractRoles` with `role: "core_continuity_doctrine"` instead of depending on path recall alone.
+- Consumers that need the machine-readable owner doctrine should read the paired `exportPath` from that same `artifacts.contractRoles` row instead of hard-coding `exports/playbook.contract.example.v1.json` separately.
+- Consumers that start from the convergence source-inventory or repo-scorecard artifact families may also reuse their additive `contractExportPath` / `contractExportPaths` metadata when the cited evidence already resolves to the canonical continuity doctrine.
+- Consumer integrations must not restate the structured-handoff fields, promotion-target rules, or transcript-versus-memory rules as a divergent local contract.
+
 ## 1) Integration Model
 
 ### Playbook Core (shared upstream)
@@ -172,6 +179,7 @@ Boundary rules:
 - Only sanitized reusable patterns are promotable upstream; raw repo-local knowledge is not.
 - Promoted/transferable patterns must retain evidence lineage/provenance while preserving privacy and scoped ownership boundaries.
 - Promotion/transfer workflows must preserve source artifact and command-output provenance so downstream consumers can audit trust decisions.
+- If a consumer workflow emits structured handoffs or restart summaries, it must inherit the owner continuity doctrine from the registry-published `core_continuity_doctrine` contract instead of inventing a local handoff contract with renamed or partial fields.
 - Repo-local longitudinal memory (`.playbook/` runtime state, recurring findings, remediation history, approval history) remains repository-scoped by default.
 - Candidate knowledge (including imported reusable patterns) is not enforceable governance until explicit human review promotes it.
 - Stale or contradicted promoted knowledge must be demotable/supersedable through explicit review.

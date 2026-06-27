@@ -57,6 +57,15 @@ describe('runContext', () => {
     expect(runtimeManifests.manifestsCount).toBe(0);
     expect(runtimeManifests.manifests).toEqual([]);
 
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
+
     const riskAwareContext = payload.riskAwareContext as Record<string, unknown> | null;
     expect(riskAwareContext).toBeNull();
 

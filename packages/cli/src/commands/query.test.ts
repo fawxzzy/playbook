@@ -387,6 +387,12 @@ describe('runQuery', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.type).toBe('runs');
     expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      },
       session: {
         active: true,
         sessionId: 'session-test',

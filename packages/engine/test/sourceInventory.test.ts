@@ -32,6 +32,8 @@ const baseRows = (): ConvergenceSourceInventorySourceRowInput[] => [
     id: 'playbook-contract',
     repo: 'fawxzzy/fawxzzy-playbook',
     path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+    contractRole: 'core_continuity_doctrine',
+    contractExportPath: 'exports/playbook.contract.example.v1.json',
     classification: 'owner_contract',
     migrationDecision: 'migrate',
     rationale: 'Already Playbook owner truth and should remain canonical.',
@@ -148,6 +150,8 @@ describe('convergence source inventory report', () => {
           id: 'playbook-contract',
           repo: 'fawxzzy/fawxzzy-playbook',
           path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+          contractRole: 'core_continuity_doctrine',
+          contractExportPath: 'exports/playbook.contract.example.v1.json',
           sourceClassification: 'owner_contract',
           sourceClass: 'owner_contract',
           migrationDecision: 'migrate',
@@ -251,5 +255,63 @@ describe('convergence source inventory report', () => {
     expect(normalizeConvergenceSourceClass('initiative_memory')).toBe('root_projection');
     expect(normalizeConvergenceSourceDecision('stay_owner_repo')).toBe('do_not_migrate');
     expect(normalizeConvergenceSourceDecision('reject')).toBe('do_not_migrate');
+  });
+
+  it('fails closed when declared contractRole drifts from the tagged owner contract path', () => {
+    const report = buildConvergenceSourceInventoryReport([
+      {
+        ...baseRows()[2],
+        contractRole: 'core_continuity_doctrine'
+      },
+      {
+        ...baseRows()[0],
+        contractRole: 'core_continuity_doctrine'
+      }
+    ]);
+
+    expect(report.status).toBe('blocked');
+    expect(report.sources).toHaveLength(1);
+    expect(report.sources[0]?.id).toBe('playbook-contract');
+    expect(report.blocked).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'contract-role-mismatch',
+          field: 'contractRole',
+          sourceId: 'atlas-playbook-ingest'
+        })
+      ])
+    );
+  });
+
+  it('adds semantic contract roles when a source row points at a tagged owner contract', () => {
+    const report = buildConvergenceSourceInventoryReport([baseRows()[2]]);
+
+    expect(report.sources).toEqual([
+      expect.objectContaining({
+        id: 'playbook-contract',
+        contractRole: 'core_continuity_doctrine',
+        contractExportPath: 'exports/playbook.contract.example.v1.json'
+      })
+    ]);
+  });
+
+  it('fails closed when declared contractExportPath drifts from the tagged owner contract path', () => {
+    const report = buildConvergenceSourceInventoryReport([
+      {
+        ...baseRows()[2],
+        contractExportPath: 'exports/incorrect.contract.example.v1.json'
+      }
+    ]);
+
+    expect(report.status).toBe('blocked');
+    expect(report.blocked).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'contract-export-path-mismatch',
+          field: 'contractExportPath',
+          sourceId: 'playbook-contract'
+        })
+      ])
+    );
   });
 });

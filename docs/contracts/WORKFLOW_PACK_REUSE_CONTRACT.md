@@ -10,6 +10,7 @@ The reusable workflow pack is the combination of:
 
 - local-first verification truth
 - staged workflow promotion truth
+- continuity-doctrine inheritance for structured handoff and promotion targets
 - deterministic export/discovery surfaces
 - additive schema/version governance
 - consumer usage rules
@@ -53,6 +54,18 @@ This contract owns staged candidate -> validation -> promotion metadata for repo
 
 Consumers should discover workflow-pack schemas, runtime defaults, and contract-doc availability through the contract registry instead of hard-coding file inventories in each downstream repo.
 
+### 4. Continuity doctrine foundation
+
+- Owner contract: `docs/contracts/PLAYBOOK-CONTRACT.md`
+- Discovery path: `pnpm playbook contracts --json`
+- Registry role: `core_continuity_doctrine`
+- Required continuity rules:
+  - structured handoff stays required for meaningful Codex or ChatGPT work
+  - promotion targets stay explicit instead of inferred from transcript residue
+  - raw transcript stays trace-only and not canonical memory
+
+Consumers that reuse workflow-pack verification or promotion contracts and also expose continuity, handoff, or restart semantics must inherit these rules from the registry-published owner contract resolved through `artifacts.contractRoles` -> `core_continuity_doctrine` instead of creating a repo-local continuity dialect. If they need the machine-readable continuity export too, they should take it from the paired `exportPath` on that same registry row.
+
 ## Inputs and outputs
 
 The reusable workflow pack has these input/output rules:
@@ -74,6 +87,7 @@ The reusable workflow pack has these input/output rules:
 - Shared downstream rules: `docs/CONSUMER_INTEGRATION_CONTRACT.md`
 - Consumer repos must treat Playbook as shared core plus project-local `.playbook/*` state.
 - Consumer repos and stack operators must not duplicate or reinterpret workflow-pack contracts into divergent local specs.
+- Consumer repos and stack operators must also inherit the core continuity doctrine from the registry-published `core_continuity_doctrine` contract when they expose structured handoff or promotion-routing behavior.
 - Compatibility mirrors are allowed only when they preserve the same canonical fields, types, and semantics.
 - If a downstream surface cannot consume the canonical contract directly, it may publish a mirror or projection only as a clearly declared compatibility layer, not as new owner truth.
 - The reusable `.github/actions/atlas-ui-proof/action.yml` surface is one such compatibility layer: it consumes ATLAS-owned semantic drift and visual proof, then exposes a derived completion-facing summary without redefining Playbook verification truth.

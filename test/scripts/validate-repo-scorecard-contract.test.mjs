@@ -113,3 +113,35 @@ test('validator fails when summary counts drift from dimension statuses', () => 
     fs.rmSync(fixtureRoot, { recursive: true, force: true });
   }
 });
+
+test('validator fails when declared contractRoles drift from the evidence-derived role set', () => {
+  const fixtureRoot = createFixture();
+
+  try {
+    const example = readFixtureJson(fixtureRoot, 'playbook.repo-scorecard.example.v1.json');
+    example.dimensions[1].contractRoles = ['core_continuity_doctrine'];
+    writeFixtureJson(fixtureRoot, 'playbook.repo-scorecard.example.v1.json', example);
+
+    const result = runValidator(fixtureRoot);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /contractRoles/);
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+});
+
+test('validator fails when declared contractExportPaths drift from the evidence-derived export set', () => {
+  const fixtureRoot = createFixture();
+
+  try {
+    const example = readFixtureJson(fixtureRoot, 'playbook.repo-scorecard.example.v1.json');
+    example.dimensions[1].contractExportPaths = ['exports/playbook.contract.example.v1.json'];
+    writeFixtureJson(fixtureRoot, 'playbook.repo-scorecard.example.v1.json', example);
+
+    const result = runValidator(fixtureRoot);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /contractExportPaths/);
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+});

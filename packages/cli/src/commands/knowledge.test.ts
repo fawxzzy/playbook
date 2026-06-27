@@ -16,6 +16,14 @@ const writeReviewQueueArtifact = vi.fn();
 const REVIEW_QUEUE_RELATIVE_PATH = '.playbook/review-queue.json';
 const existsSync = vi.fn();
 const readFileSync = vi.fn();
+const CONTRACT_ROLE_REGISTRATIONS = [
+  {
+    role: 'core_continuity_doctrine',
+    path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+    exportPath: 'exports/playbook.contract.example.v1.json'
+  }
+];
+const CORE_CONTINUITY_DOCTRINE_ROLE = 'core_continuity_doctrine';
 
 vi.mock('@zachariahredfield/playbook-engine', () => ({
   knowledgeList,
@@ -30,7 +38,9 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   readPortabilityOutcomesArtifact,
   buildReviewQueue,
   writeReviewQueueArtifact,
-  REVIEW_QUEUE_RELATIVE_PATH
+  REVIEW_QUEUE_RELATIVE_PATH,
+  CONTRACT_ROLE_REGISTRATIONS,
+  CORE_CONTINUITY_DOCTRINE_ROLE
 }));
 
 
@@ -180,6 +190,14 @@ describe('runKnowledge', () => {
     expect(payload.command).toBe('knowledge-list');
     expect(payload.knowledge).toHaveLength(1);
     expect(payload).not.toHaveProperty('longitudinal_state');
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
     logSpy.mockRestore();
   });
 
@@ -489,6 +507,32 @@ describe('runKnowledge', () => {
     expect(String(errorSpy.mock.calls[0]?.[0])).toContain('missing artifact at .playbook/transfer-plans.json');
 
     errorSpy.mockRestore();
+  });
+
+  it('emits doctrine continuity in machine-readable failure envelopes', async () => {
+    const { runKnowledge } = await import('./knowledge.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    readCrossRepoPatternsArtifact.mockImplementation(() => {
+      throw new Error('playbook patterns: missing artifact at .playbook/cross-repo-patterns.json. Run "playbook patterns cross-repo" first.');
+    });
+
+    const exitCode = await runKnowledge('/repo', ['portability', '--view', 'outcomes'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('knowledge-portability');
+    expect(payload.error).toContain('missing artifact at .playbook/cross-repo-patterns.json');
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
+
+    logSpy.mockRestore();
   });
 
 

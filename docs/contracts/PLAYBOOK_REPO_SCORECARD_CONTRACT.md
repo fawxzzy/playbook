@@ -58,7 +58,13 @@ Each dimension must include:
 
 Optional:
 
+- `contractRoles` when a dimension cites a semantically tagged owner contract and downstream consumers need semantic resolution in addition to path evidence
+- `contractExportPaths` when a dimension cites a semantically tagged owner contract and downstream consumers also need the paired canonical machine export path without doing a second registry lookup
 - `nextAction` when the posture is not yet `verified`
+
+Rule: `contractRoles` is additive metadata, not a replacement for repo-relative evidence paths.
+Rule: if `contractRoles` is declared, it must agree with the role set implied by the cited evidence paths.
+Rule: if `contractExportPaths` is declared, it must agree with the export-path set implied by the cited evidence paths.
 
 ## Promotion path
 

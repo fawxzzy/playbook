@@ -103,4 +103,34 @@ describe('resolveContextSnapshotCache', () => {
     expect(repoScoped.cache.cacheKey).not.toBe(moduleScoped.cache.cacheKey);
     expect(repoScoped.cache.snapshotPath).not.toBe(moduleScoped.cache.snapshotPath);
   });
+
+  it('invalidates when the shaped output contract version changes', () => {
+    const repo = createRepo();
+
+    const first = resolveContextSnapshotCache({
+      projectRoot: repo,
+      scope: { kind: 'repo', id: 'root' },
+      shapingLevel: 'context',
+      shapeVersion: '1',
+      riskTier: 'context',
+      sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+      buildSnapshot: () => ({ version: 1 })
+    });
+
+    const second = resolveContextSnapshotCache({
+      projectRoot: repo,
+      scope: { kind: 'repo', id: 'root' },
+      shapingLevel: 'context',
+      shapeVersion: '2',
+      riskTier: 'context',
+      sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+      buildSnapshot: () => ({ version: 2 })
+    });
+
+    expect(first.cache.reused).toBe(false);
+    expect(second.cache.reused).toBe(false);
+    expect(second.cache.invalidationReason).toBe('cache-miss');
+    expect(second.snapshot).toEqual({ version: 2 });
+    expect(second.cache.cacheKey).not.toBe(first.cache.cacheKey);
+  });
 });

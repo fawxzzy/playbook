@@ -130,6 +130,23 @@
               "minLength": 1
             }
           },
+          "contractRoles": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "enum": [
+                "core_continuity_doctrine"
+              ]
+            }
+          },
+          "contractExportPaths": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "nextAction": {
             "type": "string",
             "minLength": 1
@@ -159,6 +176,8 @@
         "code": {
           "enum": [
             "command-availability-claim",
+            "contract-export-path-mismatch",
+            "contract-role-mismatch",
             "duplicate-dimension-id",
             "invalid-dimension-id",
             "invalid-repo-id",

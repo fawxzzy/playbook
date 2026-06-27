@@ -1,4 +1,31 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.52.3 - 2026-06-19
+- Recommended bump: patch
+- @fawxzzy/playbook: 0.52.2 -> 0.52.3 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.52.2 -> 0.52.3 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.52.2 -> 0.52.3 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.52.2 -> 0.52.3 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.52.2 -> 0.52.3 (playbook-installable-workspace)
+- WHAT: Added continuity-doctrine carry-forward to `pnpm playbook ask ... --repo-context`, preserving the canonical `core_continuity_doctrine` role, owner contract path, and canonical export path inside the trusted prompt-context bundle and repo-context source list. WHY: AI-facing repo-context hydration can now recover the same doctrine pairing directly instead of relying on later reconstruction from adjacent bootstrap surfaces.
+- WHAT: Added additive continuity-doctrine bootstrap metadata to `pnpm playbook ai-context`, `pnpm playbook ai-contract`, and `pnpm playbook context`, exposing the canonical `core_continuity_doctrine` role plus its registered owner contract path, canonical export path, and fail-closed registration state. WHY: Bootstrap consumers can now recover doctrine identity directly from the recommended startup command family instead of stitching it back together from a later registry lookup or separate proof surface.
+- WHAT: Added additive continuity-doctrine bootstrap metadata to `pnpm playbook query runs` and `pnpm playbook session show`, exposing the canonical `core_continuity_doctrine` role plus its registered owner contract path, canonical export path, and fail-closed registration state alongside existing continuity lineage. WHY: Runtime continuity consumers can now recover doctrine identity from the same run-inspection and session-inspection surfaces they already use, instead of reconstructing it from a separate registry lookup after loading lineage state.
+- WHAT: Added additive continuity-doctrine bootstrap metadata to `pnpm playbook status proof`, exposing the canonical `core_continuity_doctrine` role plus its registered owner contract path, canonical export path, and fail-closed registration state inside `continuity.doctrine`. WHY: External bootstrap consumers can now recover the continuity doctrine identity directly from the proof surface instead of stitching it back together from a separate registry lookup after reading continuity lineage.
+- WHAT: Added additive paired `contractExportPath` / `contractExportPaths` metadata to the published convergence source-inventory and repo-scorecard input/report families, with fail-closed validator and builder checks that reject drift from the tagged owner contract evidence. WHY: Downstream consumers that start from higher-level continuity or posture reports can now recover the canonical machine export directly instead of doing a second registry lookup after resolving the semantic role.
+- WHAT: Added additive paired `exportPath` metadata to the registry-published `core_continuity_doctrine` lookup row and tagged contract entry in `pnpm playbook contracts --json`. WHY: Downstream continuity consumers can now recover both the human owner contract and its canonical machine export from one semantic registry lookup instead of stitching them together from separate conventions.
+- WHAT: Added additive `continuity_requirements.contract_role` metadata to the canonical Playbook contract export schema/example and tightened the export test around it. WHY: Consumers can now recover the owner continuity doctrine identity directly from the contract export instead of needing separate path or registry context first.
+- WHAT: Added additive semantic continuity-role metadata to the published source-inventory and repo-scorecard input contract examples, and fail-closed validator/builder checks that reject declared continuity roles when they drift from the tagged owner-truth paths or evidence set. WHY: Continuity doctrine identity now survives authoring and validation end to end instead of appearing only after report projection.
+- WHAT: Added additive semantic continuity-role metadata to the convergence source-inventory and repo-scorecard report families, deriving `contractRole` / `contractRoles` from tagged owner-contract evidence while preserving existing repo-relative path evidence. WHY: Machine-consumed inventory and posture surfaces can now resolve the canonical continuity doctrine semantically instead of treating `docs/contracts/PLAYBOOK-CONTRACT.md` as a path-only convention.
+- WHAT: Added additive machine-readable contract-role metadata to `pnpm playbook contracts --json`, tagging `docs/contracts/PLAYBOOK-CONTRACT.md` as `core_continuity_doctrine` while preserving the existing registry shape and path-based discovery. WHY: Downstream continuity, handoff, and promotion-routing consumers now have a semantic discovery hook for the canonical owner doctrine instead of inferring it only from file paths.
+- WHAT: Added additive `artifacts.contractRoles` role-to-path lookup rows to the contracts registry and updated operator docs to resolve the continuity doctrine through that lookup. WHY: Downstream tooling can now discover the canonical owner continuity contract directly by semantic role without scanning the full contracts inventory first.
+
+## 0.52.2 - 2026-06-19
+- Recommended bump: patch
+- @fawxzzy/playbook: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
+
 ## 0.52.1 - 2026-06-05
 - Recommended bump: patch
 - @fawxzzy/playbook: 0.52.0 -> 0.52.1 (playbook-installable-workspace)
@@ -112,6 +139,7 @@
 - @zachariahredfield/playbook-node: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
 
 ## Unreleased
+- WHAT: Added additive `continuity.doctrine` metadata to `pnpm playbook memory --json`, `pnpm playbook knowledge --json`, and `pnpm playbook promote --json`, including deterministic failure envelopes. WHY: Capture, retrieval, and promotion consumers can now recover the canonical continuity doctrine identity from the same machine-readable seams they already automate instead of reconstructing it from adjacent bootstrap or registry surfaces.
 - WHAT: Codex-facing mutating prompt compilation now injects explicit `Acceptance Criteria`, `Expected Changed Paths`, `Expected Unchanged Paths`, and `Blocked / Skipped Reporting Rules` across `route`, `orchestrate`, worker lane prompts, fleet-adoption execution packaging, and the Discord verification template, with focused tests locking the new sections. WHY: Governed completion now stays diff-proof-aware at the prompt boundary instead of relying on summary text or implied path scope.
 - Rule: Mutating Codex tasks are not governed unless they declare explicit acceptance criteria and diff-proof expectations.
 - Pattern: Prompt contract -> expected paths -> blocked/skipped reporting -> diff-backed completion.

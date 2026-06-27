@@ -67,6 +67,7 @@ Owner repos keep owner truth. Playbook defines the contract for convergence, but
 
 ## Continuity Model
 
+- Published semantic role: `core_continuity_doctrine`.
 - Raw transcript is traceability, not canonical memory.
 - Structured handoff is required for meaningful Codex or ChatGPT work.
 - Durable outputs promote into initiative, working memory, plan, knowledge, or receipt surfaces.
@@ -119,5 +120,7 @@ Downstream consumers should read:
 - Human contract: `docs/contracts/PLAYBOOK-CONTRACT.md`
 - Schema: `exports/playbook.contract.schema.v1.json`
 - Example export: `exports/playbook.contract.example.v1.json`
+
+The published export also carries `continuity_requirements.contract_role: "core_continuity_doctrine"` so downstream readers can resolve the owner continuity doctrine semantically from the export itself instead of relying on path recall alone.
 
 Consumers should reference these files directly and add their own evidence locally. They should not copy the contract into a second canonical store.

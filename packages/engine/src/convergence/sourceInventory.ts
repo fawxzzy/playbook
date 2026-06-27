@@ -1,3 +1,10 @@
+import {
+  getContractArtifactExportPathForPath,
+  getContractArtifactRoleForPath,
+  isContractArtifactRole,
+  type ContractArtifactRole
+} from '../contracts/contractRoles.js';
+
 export const CONVERGENCE_SOURCE_INVENTORY_REPORT_SCHEMA_VERSION = 'playbook.convergence.source-inventory.report.v1' as const;
 
 export const CONVERGENCE_SOURCE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -47,6 +54,8 @@ export type ConvergenceSourceInventorySourceRowInput = {
   id: string;
   repo: string;
   path: string;
+  contractRole?: ContractArtifactRole;
+  contractExportPath?: string;
   classification: ConvergenceSourceInventoryInputClassification;
   migrationDecision: ConvergenceSourceInventoryInputDecision;
   rationale: string;
@@ -56,6 +65,8 @@ export type ConvergenceSourceInventorySourceRowInput = {
 
 export type ConvergenceSourceInventoryIssueCode =
   | 'command-availability-claim'
+  | 'contract-export-path-mismatch'
+  | 'contract-role-mismatch'
   | 'duplicate-source-id'
   | 'invalid-source-id'
   | 'missing-field'
@@ -74,6 +85,8 @@ export type ConvergenceSourceInventoryReportRow = {
   id: string;
   repo: string;
   path: string;
+  contractRole?: ContractArtifactRole;
+  contractExportPath?: string;
   sourceClassification: ConvergenceSourceInventoryInputClassification;
   sourceClass: ConvergenceSourceInventorySourceClass;
   migrationDecision: ConvergenceSourceInventoryDecision;
@@ -265,6 +278,41 @@ export const buildConvergenceSourceInventoryReport = (
       return;
     }
 
+    const derivedContractRole = getContractArtifactRoleForPath(sourcePath);
+    const derivedContractExportPath = getContractArtifactExportPathForPath(sourcePath);
+
+    if (Object.prototype.hasOwnProperty.call(row, 'contractRole')) {
+      const declaredContractRole = row.contractRole;
+      if (!isContractArtifactRole(declaredContractRole) || declaredContractRole !== derivedContractRole) {
+        addIssue(blocked, {
+          code: 'contract-role-mismatch',
+          message:
+            derivedContractRole === undefined
+              ? `Source ${JSON.stringify(sourceId)} declares contractRole ${JSON.stringify(declaredContractRole)} but path ${JSON.stringify(sourcePath)} resolves to no published contract role.`
+              : `Source ${JSON.stringify(sourceId)} declares contractRole ${JSON.stringify(declaredContractRole)} but path ${JSON.stringify(sourcePath)} resolves to ${JSON.stringify(derivedContractRole)}.`,
+          sourceId,
+          field: 'contractRole'
+        });
+        rowBlocked = true;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(row, 'contractExportPath')) {
+      const declaredContractExportPath = row.contractExportPath;
+      if (!isNonEmptyString(declaredContractExportPath) || declaredContractExportPath !== derivedContractExportPath) {
+        addIssue(blocked, {
+          code: 'contract-export-path-mismatch',
+          message:
+            derivedContractExportPath === undefined
+              ? `Source ${JSON.stringify(sourceId)} declares contractExportPath ${JSON.stringify(declaredContractExportPath)} but path ${JSON.stringify(sourcePath)} resolves to no published contract export path.`
+              : `Source ${JSON.stringify(sourceId)} declares contractExportPath ${JSON.stringify(declaredContractExportPath)} but path ${JSON.stringify(sourcePath)} resolves to ${JSON.stringify(derivedContractExportPath)}.`,
+          sourceId,
+          field: 'contractExportPath'
+        });
+        rowBlocked = true;
+      }
+    }
+
     const normalizedDecision = normalizeConvergenceSourceDecision(row.migrationDecision);
     if (['migrate', 'template'].includes(normalizedDecision) && !isNonEmptyString(row.targetSurface)) {
       addIssue(blocked, {
@@ -284,6 +332,8 @@ export const buildConvergenceSourceInventoryReport = (
       id: sourceId,
       repo,
       path: sourcePath,
+      contractRole: derivedContractRole,
+      contractExportPath: derivedContractExportPath,
       sourceClassification: row.classification,
       sourceClass: normalizeConvergenceSourceClass(row.classification),
       migrationDecision: normalizedDecision,

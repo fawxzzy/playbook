@@ -1,5 +1,6 @@
 import { loadAiContract } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 const renderText = (result) => {
     console.log('AI Repository Contract');
     console.log('');
@@ -28,6 +29,11 @@ const renderText = (result) => {
     console.log(`  Require index before query: ${result.contract.rules.requireIndexBeforeQuery ? 'yes' : 'no'}`);
     console.log(`  Prefer Playbook commands over ad hoc inspection: ${result.contract.rules.preferPlaybookCommandsOverAdHocInspection ? 'yes' : 'no'}`);
     console.log(`  Allow direct edits without plan: ${result.contract.rules.allowDirectEditsWithoutPlan ? 'yes' : 'no'}`);
+    console.log('');
+    console.log('Continuity Bootstrap');
+    console.log(`  Doctrine: ${result.continuity.doctrine.role} (${result.continuity.doctrine.registration_state})`);
+    console.log(`  Contract path: ${result.continuity.doctrine.path ?? 'none'}`);
+    console.log(`  Contract export: ${result.continuity.doctrine.export_path ?? 'none'}`);
 };
 export const runAiContract = async (cwd, options) => {
     try {
@@ -36,7 +42,10 @@ export const runAiContract = async (cwd, options) => {
             schemaVersion: '1.0',
             command: 'ai-contract',
             source: loaded.source,
-            contract: loaded.contract
+            contract: loaded.contract,
+            continuity: {
+                doctrine: readContinuityDoctrineSummary()
+            }
         };
         if (options.format === 'json') {
             console.log(JSON.stringify(result, null, 2));

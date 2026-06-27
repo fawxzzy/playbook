@@ -31,8 +31,29 @@ const classifyProofFailureDomains = vi.fn();
 const listOrchestrationExecutionRuns = vi.fn();
 const readSession = vi.fn();
 const writeControlPlaneState = vi.fn();
+const CORE_CONTINUITY_DOCTRINE_ROLE = 'core_continuity_doctrine';
+const contractRoleRegistrations: Array<{ role: string; path: string; exportPath: string }> = [];
 
-vi.mock('@zachariahredfield/playbook-engine', () => ({ buildRepoAdoptionReadiness, buildFleetAdoptionReadinessSummary, buildFleetAdoptionWorkQueue, buildFleetCodexExecutionPlan, buildFleetExecutionReceipt, buildFleetUpdatedAdoptionState, deriveNextAdoptionQueueFromUpdatedState, buildMemoryPressureStatusArtifact, loadConfig, runBootstrapProof, readProofParallelWorkSummary, defaultBootstrapCliResolutionCommands, classifyProofFailureDomains, listOrchestrationExecutionRuns, readSession, writeControlPlaneState }));
+vi.mock('@zachariahredfield/playbook-engine', () => ({
+  buildRepoAdoptionReadiness,
+  buildFleetAdoptionReadinessSummary,
+  buildFleetAdoptionWorkQueue,
+  buildFleetCodexExecutionPlan,
+  buildFleetExecutionReceipt,
+  buildFleetUpdatedAdoptionState,
+  deriveNextAdoptionQueueFromUpdatedState,
+  buildMemoryPressureStatusArtifact,
+  loadConfig,
+  runBootstrapProof,
+  readProofParallelWorkSummary,
+  defaultBootstrapCliResolutionCommands,
+  classifyProofFailureDomains,
+  listOrchestrationExecutionRuns,
+  readSession,
+  writeControlPlaneState,
+  CORE_CONTINUITY_DOCTRINE_ROLE,
+  CONTRACT_ROLE_REGISTRATIONS: contractRoleRegistrations
+}));
 
 const makeAnalyzeReport = (overrides?: Partial<AnalyzeReport>): AnalyzeReport => ({
   repoPath: '/tmp/repo',
@@ -55,6 +76,12 @@ const makeVerifyReport = (overrides?: Partial<VerifyReport>): VerifyReport => ({
 
 describe('runStatus', () => {
   beforeEach(() => {
+    contractRoleRegistrations.length = 0;
+    contractRoleRegistrations.push({
+      role: CORE_CONTINUITY_DOCTRINE_ROLE,
+      path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+      exportPath: 'exports/playbook.contract.example.v1.json'
+    });
     collectDoctorReport.mockReset();
     collectAnalyzeReport.mockReset();
     collectVerifyReport.mockReset();
@@ -844,10 +871,48 @@ describe('runStatus', () => {
     expect(payload.proof.summary.what_next).toBe('Run `pnpm playbook init`.');
     expect(payload.parallel_work.next_action).toBe('Run `pnpm playbook apply --from-plan .playbook/docs-consolidation-plan.json`.');
     expect(payload.continuity).toMatchObject({
+      doctrine: {
+        role: CORE_CONTINUITY_DOCTRINE_ROLE,
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      },
       pinned_evidence_refs: expect.any(Array),
       latest_receipt_refs: expect.any(Array),
       stale_or_missing_state: expect.any(Array)
     });
+
+    logSpy.mockRestore();
+  });
+
+  it('fails closed in proof continuity when the doctrine registration is ambiguous', async () => {
+    const { runStatus } = await import('./status.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    contractRoleRegistrations.push({
+      role: CORE_CONTINUITY_DOCTRINE_ROLE,
+      path: 'docs/contracts/PLAYBOOK-CONTRACT-DUPLICATE.md',
+      exportPath: 'exports/playbook.contract.duplicate.example.v1.json'
+    });
+
+    const exitCode = await runStatus(process.cwd(), {
+      ci: false,
+      format: 'json',
+      quiet: false,
+      scope: 'proof',
+      proofPolicy: 'report'
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.mode).toBe('proof');
+    expect(payload.continuity.doctrine).toEqual({
+      role: CORE_CONTINUITY_DOCTRINE_ROLE,
+      path: null,
+      export_path: null,
+      registration_state: 'ambiguous'
+    });
+    expect(payload.continuity.stale_or_missing_state).toContain('continuity_doctrine_ambiguous');
 
     logSpy.mockRestore();
   });
@@ -1303,6 +1368,10 @@ describe('runStatus', () => {
     expect(output).toContain('Failure ownership');
     expect(output).toContain('Continuity');
     expect(output).toContain('Scope');
+    expect(output).toContain(`- doctrine=${CORE_CONTINUITY_DOCTRINE_ROLE}`);
+    expect(output).toContain('- doctrine_registration=registered');
+    expect(output).toContain('- doctrine_path=docs/contracts/PLAYBOOK-CONTRACT.md');
+    expect(output).toContain('- doctrine_export=exports/playbook.contract.example.v1.json');
     expect(output).toContain('- present=2');
     expect(output).toContain('- violated=0');
     expect(output).toContain('- budget=within_budget');

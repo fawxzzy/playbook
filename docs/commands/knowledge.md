@@ -2,6 +2,8 @@
 
 Inspect normalized knowledge artifacts through read-only deterministic surfaces.
 
+Machine-readable `--json` output now carries additive `continuity.doctrine` metadata so knowledge inspection and deterministic failure envelopes preserve the canonical `core_continuity_doctrine` role, owner contract path, export path, and registration state alongside the existing read-only payloads.
+
 Command boundary:
 - `pnpm playbook memory ...` is the raw lifecycle/review/mutation surface for memory artifacts.
 - `pnpm playbook knowledge ...` is the normalized read-only inspection/query surface.

@@ -24,6 +24,12 @@ Canonical commandless scorecard exports now also include:
 - `exports/playbook.repo-scorecard.report.schema.v1.json`
 - `exports/playbook.repo-scorecard.report.example.v1.json`
 
+When an input or report artifact cites a semantically tagged owner contract, published examples may also preserve additive `contractRole` / `contractRoles` metadata so downstream readers can resolve continuity doctrine semantically instead of by path convention alone.
+
+Those same artifacts may also preserve paired `contractExportPath` / `contractExportPaths` metadata so downstream readers can recover the canonical machine export directly from the report family instead of doing a second registry lookup.
+
+The canonical Playbook contract export also publishes `continuity_requirements.contract_role: "core_continuity_doctrine"` so continuity-aware consumers can recover the owner doctrine identity directly from the export itself.
+ 
 Canonical commandless golden-path template exports now also include:
 
 - `exports/playbook.golden-path-template.schema.v1.json`

@@ -184,6 +184,10 @@ describe('convergence source inventory report contract', () => {
 
     expect(report.sources.every((entry) => !path.isAbsolute(entry.path))).toBe(true);
     expect(report.sources.every((entry) => !entry.path.includes('\\'))).toBe(true);
+    expect(report.sources.find((entry) => entry.id === 'playbook-contract')?.contractRole).toBe('core_continuity_doctrine');
+    expect(report.sources.find((entry) => entry.id === 'playbook-contract')?.contractExportPath).toBe(
+      'exports/playbook.contract.example.v1.json'
+    );
     expect(collectForbiddenFieldPaths(report)).toEqual([]);
   });
 });

@@ -36,7 +36,14 @@ The reusable workflow-pack discovery surface is also exposed here. In particular
 - local verification receipt runtime defaults
 - local verification receipt schema registration
 - workflow promotion schema registrations
-- selected owner docs for workflow-pack reuse, versioning, and consumer integration boundaries
+- selected owner docs for workflow-pack reuse, versioning, consumer integration boundaries, and the core Playbook continuity contract
+- machine-readable contract roles when a downstream consumer must discover a specific owner contract semantically rather than by path convention alone
+- a compact `artifacts.contractRoles` lookup for direct role-to-path resolution of semantically important owner contracts, including a paired canonical `exportPath` when a role also has one machine export
+
+The current role-tagged contract is:
+
+- `docs/contracts/PLAYBOOK-CONTRACT.md` with `role: "core_continuity_doctrine"`
+- paired export: `exports/playbook.contract.example.v1.json`
 
 Use `pnpm playbook schema contracts --json` to validate output shape.
 

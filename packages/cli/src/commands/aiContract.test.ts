@@ -19,6 +19,14 @@ describe('runAiContract', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0])) as Record<string, unknown>;
     expect(payload.command).toBe('ai-contract');
     expect(payload.source).toBe('generated');
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
 
     const contract = payload.contract as Record<string, unknown>;
     expect(contract.schemaVersion).toBe('1.0');

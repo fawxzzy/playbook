@@ -20,6 +20,7 @@ const example = JSON.parse(fs.readFileSync(examplePath, 'utf8')) as {
   canonical_principles: Array<{ id: string }>;
   patterns: Array<{ id: string }>;
   continuity_requirements: {
+    contract_role: string;
     raw_transcript_role: string;
     raw_transcript_is_primary_memory: boolean;
     structured_handoff_required: boolean;
@@ -52,6 +53,7 @@ describe('playbook contract export', () => {
   });
 
   it('keeps the required continuity layers explicit', () => {
+    expect(example.continuity_requirements.contract_role).toBe('core_continuity_doctrine');
     expect(example.continuity_requirements.raw_transcript_role).toBe('trace_only');
     expect(example.continuity_requirements.raw_transcript_is_primary_memory).toBe(false);
     expect(example.continuity_requirements.structured_handoff_required).toBe(true);

@@ -1,11 +1,15 @@
 import { loadAiContract } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
+import { readContinuityDoctrineSummary, type ContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 
 type AiContractCommandResult = {
   schemaVersion: '1.0';
   command: 'ai-contract';
   source: 'file' | 'generated';
   contract: ReturnType<typeof loadAiContract>['contract'];
+  continuity: {
+    doctrine: ContinuityDoctrineSummary;
+  };
 };
 
 const renderText = (result: AiContractCommandResult): void => {
@@ -40,6 +44,11 @@ const renderText = (result: AiContractCommandResult): void => {
     }`
   );
   console.log(`  Allow direct edits without plan: ${result.contract.rules.allowDirectEditsWithoutPlan ? 'yes' : 'no'}`);
+  console.log('');
+  console.log('Continuity Bootstrap');
+  console.log(`  Doctrine: ${result.continuity.doctrine.role} (${result.continuity.doctrine.registration_state})`);
+  console.log(`  Contract path: ${result.continuity.doctrine.path ?? 'none'}`);
+  console.log(`  Contract export: ${result.continuity.doctrine.export_path ?? 'none'}`);
 };
 
 export const runAiContract = async (cwd: string, options: { format: 'text' | 'json'; quiet: boolean }): Promise<number> => {
@@ -49,7 +58,10 @@ export const runAiContract = async (cwd: string, options: { format: 'text' | 'js
       schemaVersion: '1.0',
       command: 'ai-contract',
       source: loaded.source,
-      contract: loaded.contract
+      contract: loaded.contract,
+      continuity: {
+        doctrine: readContinuityDoctrineSummary()
+      }
     };
 
     if (options.format === 'json') {

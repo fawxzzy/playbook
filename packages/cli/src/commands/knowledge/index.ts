@@ -11,6 +11,18 @@ import { printKnowledgeHelp, printKnowledgePortabilityHelp, type KnowledgeComman
 import { runKnowledgeStale } from './stale.js';
 import { runKnowledgeSupersession } from './supersession.js';
 import { runKnowledgeTimeline } from './timeline.js';
+import { readContinuityDoctrineSummary, type ContinuityDoctrineSummary } from '../../lib/continuityDoctrine.js';
+
+type KnowledgePayload = Record<string, unknown>;
+
+const attachContinuityDoctrine = <TPayload extends KnowledgePayload>(
+  payload: TPayload
+): TPayload & { continuity: { doctrine: ContinuityDoctrineSummary } } => ({
+  ...payload,
+  continuity: {
+    doctrine: readContinuityDoctrineSummary()
+  }
+});
 
 const renderPortabilityText = (payload: Record<string, unknown>): string => {
   const portability = payload.portability as Array<Record<string, unknown>> | undefined;
@@ -333,7 +345,11 @@ export const runKnowledge = async (cwd: string, args: string[], options: Knowled
     })();
 
     if (options.format === 'json') {
-      emitJsonOutput({ cwd, command: `knowledge ${subcommand}`, payload });
+      emitJsonOutput({
+        cwd,
+        command: `knowledge ${subcommand}`,
+        payload: attachContinuityDoctrine(payload as KnowledgePayload)
+      });
     } else if (!options.quiet) {
       console.log(renderText(subcommand, payload as Record<string, unknown>));
     }
@@ -342,7 +358,17 @@ export const runKnowledge = async (cwd: string, args: string[], options: Knowled
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (options.format === 'json') {
-      console.log(JSON.stringify({ schemaVersion: '1.0', command: `knowledge-${subcommand}`, error: message }, null, 2));
+      console.log(
+        JSON.stringify(
+          attachContinuityDoctrine({
+            schemaVersion: '1.0',
+            command: `knowledge-${subcommand}`,
+            error: message
+          }),
+          null,
+          2
+        )
+      );
     } else {
       console.error(message);
     }

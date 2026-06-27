@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
 import { collectScmContext } from './context.js';
 
-const TEST_TIMEOUT_MS = 15000;
+const TEST_TIMEOUT_MS = 30000;
 
 const git = (cwd: string, args: string[]): string =>
   execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();

@@ -39,6 +39,14 @@ describe('runPromote', () => {
     const payload = JSON.parse(String(logSpy.mock.calls.at(-1)?.[0]));
     expect(payload.story.provenance.source_ref).toContain('/story-candidates/');
     expect(payload.receipt.outcome).toBe('promoted');
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
     expect(JSON.parse(fs.readFileSync(path.join(repo, '.playbook/stories.json'), 'utf8')).stories).toHaveLength(1);
     expect(JSON.parse(fs.readFileSync(path.join(repo, '.playbook/promotion-receipts.json'), 'utf8')).receipts).toHaveLength(1);
     expect(fs.existsSync(path.join(home, 'patterns.json'))).toBe(false);
@@ -274,5 +282,26 @@ describe('runPromote', () => {
       'promote-pattern-supersede:promoted',
       'promote-pattern-supersede:noop'
     ]);
+  });
+
+  it('emits doctrine continuity in promote failure envelopes', () => {
+    const home = mkd('playbook-home-promote-missing-');
+    process.env.PLAYBOOK_HOME = home;
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = runPromote(home, ['pattern', 'global/pattern-candidates/not-real'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+
+    const payload = JSON.parse(String(logSpy.mock.calls.at(-1)?.[0]));
+    expect(payload.command).toBe('promote');
+    expect(payload.error).toContain('missing global pattern candidates artifact');
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
   });
 });

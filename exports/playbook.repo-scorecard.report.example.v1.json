@@ -71,6 +71,12 @@
       "evidence": [
         "docs/contracts/PLAYBOOK-CONTRACT.md",
         "docs/roadmap/ROADMAP.json"
+      ],
+      "contractRoles": [
+        "core_continuity_doctrine"
+      ],
+      "contractExportPaths": [
+        "exports/playbook.contract.example.v1.json"
       ]
     },
     {

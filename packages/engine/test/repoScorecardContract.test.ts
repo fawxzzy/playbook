@@ -182,6 +182,10 @@ describe('repo scorecard report contract', () => {
 
     expect(report.dimensions.every((entry) => entry.evidence.every((evidencePath) => !path.isAbsolute(evidencePath)))).toBe(true);
     expect(report.dimensions.every((entry) => entry.evidence.every((evidencePath) => !evidencePath.includes('\\')))).toBe(true);
+    expect(report.dimensions.find((entry) => entry.id === 'owner_truth')?.contractRoles).toEqual(['core_continuity_doctrine']);
+    expect(report.dimensions.find((entry) => entry.id === 'owner_truth')?.contractExportPaths).toEqual([
+      'exports/playbook.contract.example.v1.json'
+    ]);
     expect(collectForbiddenFieldPaths(report)).toEqual([]);
   });
 });

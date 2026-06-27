@@ -102,6 +102,8 @@ describe('ask --repo-context', () => {
     expect(payload.context.sources).toContainEqual({ type: 'module', name: 'workouts' });
     expect(payload.context.sources).toContainEqual({ type: 'module-digest', path: '.playbook/module-digests.json' });
     expect(payload.context.sources).toContainEqual({ type: 'ai-contract', path: 'generated-ai-contract-fallback' });
+    expect(payload.repoContext.sources).toContain('docs/contracts/PLAYBOOK-CONTRACT.md');
+    expect(payload.repoContext.sources).toContain('exports/playbook.contract.example.v1.json');
 
     logSpy.mockRestore();
   });
@@ -124,7 +126,13 @@ describe('ask --repo-context', () => {
     expect(payload.mode).toBe('concise');
     expect(payload.repoContext).toMatchObject({
       enabled: true,
-      sources: ['.playbook/repo-index.json', 'generated-ai-contract-fallback', '.playbook/module-digests.json']
+      sources: [
+        '.playbook/repo-index.json',
+        'generated-ai-contract-fallback',
+        'docs/contracts/PLAYBOOK-CONTRACT.md',
+        'exports/playbook.contract.example.v1.json',
+        '.playbook/module-digests.json'
+      ]
     });
     expect(payload.repoContext.cacheLifecycle.indexPath).toBe('.playbook/context/cache-index.json');
     expect(payload.scope).toEqual({
@@ -138,6 +146,7 @@ describe('ask --repo-context', () => {
     expect(payload.context.sources).toContainEqual({ type: 'repo-index', path: '.playbook/repo-index.json' });
     expect(payload.context.sources).toContainEqual({ type: 'repo-graph', path: '.playbook/repo-graph.json' });
     expect(payload.context.sources).toContainEqual({ type: 'ai-contract', path: 'generated-ai-contract-fallback' });
+    expect(String(payload.answer)).toContain('users');
 
     logSpy.mockRestore();
   });

@@ -21,7 +21,8 @@ Top-level object fields:
   - `commands`: deterministic list of CLI schema targets discoverable via `schema`
 - `artifacts`:
   - `runtimeDefaults`: deterministic runtime artifact contract defaults and producers
-  - `contracts`: deterministic list of selected docs contract files with structured availability
+  - `contracts`: deterministic list of selected docs contract files with structured availability and optional machine-readable roles plus optional paired export paths
+  - `contractRoles`: deterministic role-to-path lookup rows for semantically important owner contracts, including the paired canonical machine export path when one exists
 - `roadmap`:
   - `path`: fixed `docs/roadmap/ROADMAP.json`
   - `availability`: structured availability state
@@ -35,6 +36,7 @@ The registry is the canonical discovery surface for the reusable workflow-pack b
 Registered workflow-pack docs include:
 
 - `docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md`
+- `docs/contracts/PLAYBOOK-CONTRACT.md`
 - `docs/contracts/WORKFLOW_PROMOTION_CONTRACT.md`
 - `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md`
 - `docs/CONSUMER_INTEGRATION_CONTRACT.md`
@@ -46,6 +48,14 @@ Registered runtime defaults include the local-first verification receipt artifac
 - `.playbook/local-verification-receipts.json`
 
 Workflow promotion remains a shared contract even when the committed output path varies by workflow. Consumers should discover the contract/schema through the registry and read the promoted artifact path from the workflow promotion payload itself.
+
+The registry also publishes the core Playbook owner contract so downstream consumers can discover the structured handoff, promotion-target, and duplicate-truth rules through the same canonical registry path instead of relying on ad hoc links.
+
+When a registered contract owns a special downstream adoption role, the entry may also publish a machine-readable `role` field. Current role values:
+
+- `core_continuity_doctrine`: marks the canonical owner continuity contract (`docs/contracts/PLAYBOOK-CONTRACT.md`) that downstream handoff, restart, or promotion-routing surfaces must inherit instead of restating locally
+
+The registry also publishes a compact `artifacts.contractRoles` lookup so downstream tooling can resolve semantically important owner contracts directly by role without scanning the full contracts list first. When a role also has one canonical machine export, that same row publishes `exportPath` so consumers can recover both the human contract and the machine export from one lookup.
 
 
 ## Schema registrations
@@ -85,6 +95,9 @@ Availability object variants:
 Current usage:
 
 - Contract document entries under `artifacts.contracts[*].availability`
+- Contract role tagging under `artifacts.contracts[*].role`
+- Paired canonical machine export path under `artifacts.contracts[*].exportPath` when present
+- Direct semantic owner-contract lookup under `artifacts.contractRoles[*]`
 - Roadmap availability under `roadmap.availability`
 
 ## Versioning and compatibility policy

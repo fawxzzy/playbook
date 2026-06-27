@@ -10,6 +10,7 @@ import {
 } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { emitPromotionReceipt, stageWorkflowArtifact } from '../lib/workflowPromotion.js';
+import { readContinuityDoctrineSummary, type ContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 
 const isPlaybookHomeRoot = (candidateRoot: string): boolean => {
   const packageJsonPath = path.join(candidateRoot, 'package.json');
@@ -43,9 +44,28 @@ const readOption = (args: string[], name: string): string | undefined => {
   return prefixed ? prefixed.slice(name.length + 1) : undefined;
 };
 
+const attachContinuityDoctrine = <TPayload extends Record<string, unknown>>(
+  payload: TPayload
+): TPayload & { continuity: { doctrine: ContinuityDoctrineSummary } } => ({
+  ...payload,
+  continuity: {
+    doctrine: readContinuityDoctrineSummary()
+  }
+});
+
 const print = (format: 'text' | 'json', payload: unknown): void => {
-  if (format === 'json') console.log(JSON.stringify(payload, null, 2));
-  else console.log(typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2));
+  if (typeof payload === 'string') {
+    console.log(payload);
+    return;
+  }
+
+  const normalizedPayload =
+    payload && typeof payload === 'object' && !Array.isArray(payload)
+      ? attachContinuityDoctrine(payload as Record<string, unknown>)
+      : payload;
+
+  if (format === 'json') console.log(JSON.stringify(normalizedPayload, null, 2));
+  else console.log(JSON.stringify(normalizedPayload, null, 2));
 };
 
 type PromoteOptions = { format: 'text' | 'json'; quiet: boolean };

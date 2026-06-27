@@ -48,6 +48,8 @@ declare module "@zachariahredfield/playbook-engine" {
   export const readProofParallelWorkSummary: (...args: any[]) => any;
   export const resolveBootstrapCliAvailability: (...args: any[]) => any;
   export const defaultBootstrapCliResolutionCommands: (...args: any[]) => any;
+  export const CORE_CONTINUITY_DOCTRINE_ROLE: 'core_continuity_doctrine';
+  export const CONTRACT_ROLE_REGISTRATIONS: Array<{ role: string; path: string; exportPath: string }>;
   export type BootstrapCliResolutionCommand = any;
   export type FailureDomainSummary = any;
   export const buildFleetAdoptionReadinessSummary: (...args: any[]) => any;

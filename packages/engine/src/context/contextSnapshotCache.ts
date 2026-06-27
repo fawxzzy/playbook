@@ -33,6 +33,7 @@ export type ContextCacheIndexEntry = {
   cacheKey: string;
   scope: ContextCacheScope;
   shapingLevel: string;
+  shapeVersion: string;
   riskTier: string;
   generatedAt: string;
   lastValidatedAt: string;
@@ -54,6 +55,7 @@ export type ContextCacheMetadata = {
   reused: boolean;
   scope: ContextCacheScope;
   shapingLevel: string;
+  shapeVersion: string;
   riskTier: string;
   generatedAt: string;
   invalidationReason: ContextCacheInvalidationReason;
@@ -67,6 +69,7 @@ export type ResolveContextSnapshotCacheOptions<T> = {
   projectRoot: string;
   scope: ContextCacheScope;
   shapingLevel: string;
+  shapeVersion?: string;
   riskTier: string;
   sourceArtifacts: string[];
   maxAgeMs?: number;
@@ -118,8 +121,8 @@ const computeSourceFingerprints = (projectRoot: string, sourceArtifacts: string[
     };
   });
 
-const cacheKeyFor = (scope: ContextCacheScope, shapingLevel: string, riskTier: string): string =>
-  sha256(JSON.stringify({ scope, shapingLevel, riskTier })).slice(0, 32);
+const cacheKeyFor = (scope: ContextCacheScope, shapingLevel: string, shapeVersion: string, riskTier: string): string =>
+  sha256(JSON.stringify({ scope, shapingLevel, shapeVersion, riskTier })).slice(0, 32);
 
 const defaultSnapshotPath = (cacheKey: string): string => `${CONTEXT_CACHE_SNAPSHOTS_DIR_RELATIVE_PATH}/${cacheKey}.json`;
 
@@ -137,8 +140,9 @@ const nowAfter = (leftIso: string, right: Date): boolean => {
 export const resolveContextSnapshotCache = <T>(options: ResolveContextSnapshotCacheOptions<T>): ResolveContextSnapshotCacheResult<T> => {
   const now = new Date();
   const maxAgeMs = options.maxAgeMs ?? DEFAULT_MAX_AGE_MS;
+  const shapeVersion = options.shapeVersion ?? '1';
   const sourceFingerprints = computeSourceFingerprints(options.projectRoot, options.sourceArtifacts);
-  const cacheKey = cacheKeyFor(options.scope, options.shapingLevel, options.riskTier);
+  const cacheKey = cacheKeyFor(options.scope, options.shapingLevel, shapeVersion, options.riskTier);
   const index = readIndex(options.projectRoot);
   const existing = index?.entries.find((entry) => entry.cacheKey === cacheKey);
 
@@ -150,6 +154,7 @@ export const resolveContextSnapshotCache = <T>(options: ResolveContextSnapshotCa
     existing.scope.kind !== options.scope.kind ||
     existing.scope.id !== options.scope.id ||
     existing.shapingLevel !== options.shapingLevel ||
+    existing.shapeVersion !== shapeVersion ||
     existing.riskTier !== options.riskTier
   ) {
     invalidationReason = 'cache-key-collision';
@@ -188,6 +193,7 @@ export const resolveContextSnapshotCache = <T>(options: ResolveContextSnapshotCa
         reused: true,
         scope: options.scope,
         shapingLevel: options.shapingLevel,
+        shapeVersion,
         riskTier: options.riskTier,
         generatedAt: updatedEntry.generatedAt,
         invalidationReason: 'none',
@@ -211,6 +217,7 @@ export const resolveContextSnapshotCache = <T>(options: ResolveContextSnapshotCa
     cacheKey,
     scope: options.scope,
     shapingLevel: options.shapingLevel,
+    shapeVersion,
     riskTier: options.riskTier,
     generatedAt,
     lastValidatedAt: generatedAt,
@@ -237,6 +244,7 @@ export const resolveContextSnapshotCache = <T>(options: ResolveContextSnapshotCa
       reused: false,
       scope: options.scope,
       shapingLevel: options.shapingLevel,
+      shapeVersion,
       riskTier: options.riskTier,
       generatedAt,
       invalidationReason,

@@ -1,10 +1,12 @@
 import { ExitCode } from '../lib/cliContract.js';
 import { MODULE_DIGESTS_RELATIVE_PATH, buildRiskAwareContextSummary, readConsumedRuntimeManifestsArtifact, readModuleDigestsArtifact, resolveContextSnapshotCache, RUNTIME_MANIFESTS_RELATIVE_PATH } from '@zachariahredfield/playbook-engine';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import { listRegisteredCommands } from './index.js';
 const buildContextSnapshot = (cwd) => {
     const runtimeManifestArtifact = readConsumedRuntimeManifestsArtifact(cwd);
     const moduleDigests = readModuleDigestsArtifact(cwd);
     const riskAwareContext = buildRiskAwareContextSummary(cwd);
+    const doctrine = readContinuityDoctrineSummary();
     return {
         schemaVersion: '1.0',
         command: 'context',
@@ -31,6 +33,9 @@ const buildContextSnapshot = (cwd) => {
             manifestsCount: runtimeManifestArtifact.manifests.length,
             manifests: runtimeManifestArtifact.manifests
         },
+        continuity: {
+            doctrine
+        },
         cli: {
             commands: listRegisteredCommands().map((entry) => entry.name)
         },
@@ -42,8 +47,9 @@ const buildContextResult = (cwd) => {
         projectRoot: cwd,
         scope: { kind: 'repo', id: 'root' },
         shapingLevel: 'context',
+        shapeVersion: '2',
         riskTier: 'context',
-        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json'],
+        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', 'docs/contracts/PLAYBOOK-CONTRACT.md', 'exports/playbook.contract.example.v1.json'],
         buildSnapshot: () => buildContextSnapshot(cwd)
     });
     return cached.snapshot;
@@ -76,6 +82,11 @@ const printText = (result) => {
     console.log('Runtime Manifests');
     console.log(`Artifact: ${result.runtimeManifests.artifact}`);
     console.log(`Manifests: ${result.runtimeManifests.manifestsCount}`);
+    console.log('');
+    console.log('Continuity Bootstrap');
+    console.log(`Doctrine: ${result.continuity.doctrine.role} (${result.continuity.doctrine.registration_state})`);
+    console.log(`Contract path: ${result.continuity.doctrine.path ?? 'none'}`);
+    console.log(`Contract export: ${result.continuity.doctrine.export_path ?? 'none'}`);
     console.log('');
     console.log('Risk-aware Context Shaping');
     console.log(`Available: ${result.riskAwareContext ? 'yes' : 'no'}`);

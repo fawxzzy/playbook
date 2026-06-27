@@ -1619,7 +1619,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
       artifacts: {
         type: 'object',
         additionalProperties: false,
-        required: ['runtimeDefaults', 'contracts'],
+        required: ['runtimeDefaults', 'contracts', 'contractRoles'],
         properties: {
           runtimeDefaults: {
             type: 'array',
@@ -1641,6 +1641,12 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               required: ['path', 'availability'],
               properties: {
                 path: { type: 'string' },
+                role: {
+                  enum: ['core_continuity_doctrine']
+                },
+                exportPath: {
+                  type: 'string'
+                },
                 availability: {
                   oneOf: [
                     {
@@ -1662,6 +1668,21 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
                     }
                   ]
                 }
+              }
+            }
+          },
+          contractRoles: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['role', 'path', 'exportPath'],
+              properties: {
+                role: {
+                  enum: ['core_continuity_doctrine']
+                },
+                path: { type: 'string' },
+                exportPath: { type: 'string' }
               }
             }
           }

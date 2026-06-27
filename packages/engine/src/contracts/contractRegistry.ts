@@ -1,5 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  CONTRACT_ROLE_REGISTRATIONS,
+  type ContractArtifactRole,
+  type ContractRoleRegistration
+} from './contractRoles.js';
 
 type AvailabilityReason = 'missing' | 'not_applicable' | 'parse_error' | 'not_initialized';
 
@@ -24,6 +29,14 @@ type RuntimeDefaultArtifact = {
 type ContractArtifact = {
   path: string;
   availability: AvailabilityState;
+  role?: ContractArtifactRole;
+  exportPath?: string;
+};
+
+type ContractArtifactRegistration = {
+  path: string;
+  role?: ContractArtifactRole;
+  exportPath?: string;
 };
 
 type RoadmapFeatureStatus = {
@@ -45,6 +58,7 @@ export type ContractRegistryPayload = {
   artifacts: {
     runtimeDefaults: RuntimeDefaultArtifact[];
     contracts: ContractArtifact[];
+    contractRoles: ContractRoleRegistration[];
   };
   roadmap: RoadmapRegistry;
 };
@@ -101,14 +115,15 @@ const runtimeDefaults: RuntimeDefaultArtifact[] = [
   { path: '.playbook/stories.json', producer: 'story' }
 ];
 
-const contractArtifacts = [
-  'docs/CONSUMER_INTEGRATION_CONTRACT.md',
-  'docs/contracts/ARTIFACT_EVOLUTION_POLICY.md',
-  'docs/contracts/COMMAND_CONTRACTS_V1.md',
-  'docs/contracts/CONTRACT_REGISTRY_V1.md',
-  'docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md',
-  'docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md',
-  'docs/contracts/WORKFLOW_PROMOTION_CONTRACT.md'
+const contractArtifacts: readonly ContractArtifactRegistration[] = [
+  { path: 'docs/CONSUMER_INTEGRATION_CONTRACT.md' },
+  { path: 'docs/contracts/ARTIFACT_EVOLUTION_POLICY.md' },
+  { path: 'docs/contracts/COMMAND_CONTRACTS_V1.md' },
+  { path: 'docs/contracts/CONTRACT_REGISTRY_V1.md' },
+  { path: 'docs/contracts/LOCAL_VERIFICATION_RECEIPT_CONTRACT.md' },
+  ...CONTRACT_ROLE_REGISTRATIONS,
+  { path: 'docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md' },
+  { path: 'docs/contracts/WORKFLOW_PROMOTION_CONTRACT.md' }
 ] as const;
 const trackedRoadmapFeatures = ['PB-V04-ANALYZEPR-001', 'PB-V04-PLAN-APPLY-001', 'PB-V1-DELIVERY-SYSTEM-001'] as const;
 
@@ -181,10 +196,20 @@ export const buildContractRegistry = (cwd: string): ContractRegistryPayload => (
   },
   artifacts: {
     runtimeDefaults: [...runtimeDefaults],
-    contracts: [...contractArtifacts].sort((left, right) => left.localeCompare(right)).map((contractPath) => ({
-      path: contractPath,
-      availability: getAvailabilityForPath(path.join(cwd, contractPath))
-    }))
+    contracts: [...contractArtifacts]
+      .sort((left, right) => left.path.localeCompare(right.path))
+      .map((contractArtifact) => ({
+        ...contractArtifact,
+        availability: getAvailabilityForPath(path.join(cwd, contractArtifact.path))
+      })),
+    contractRoles: [...contractArtifacts]
+      .filter((contractArtifact): contractArtifact is ContractArtifactRegistration & { role: ContractArtifactRole } => contractArtifact.role !== undefined)
+      .map((contractArtifact) => ({
+        role: contractArtifact.role,
+        path: contractArtifact.path,
+        exportPath: contractArtifact.exportPath ?? 'exports/playbook.contract.example.v1.json'
+      }))
+      .sort((left, right) => left.role.localeCompare(right.role))
   },
   roadmap: buildRoadmapRegistry(cwd)
 });

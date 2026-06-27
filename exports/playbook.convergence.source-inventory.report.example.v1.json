@@ -89,6 +89,8 @@
       "id": "playbook-contract",
       "repo": "fawxzzy/fawxzzy-playbook",
       "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
+      "contractRole": "core_continuity_doctrine",
+      "contractExportPath": "exports/playbook.contract.example.v1.json",
       "sourceClassification": "owner_contract",
       "sourceClass": "owner_contract",
       "migrationDecision": "migrate",

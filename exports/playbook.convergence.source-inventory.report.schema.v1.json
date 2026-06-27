@@ -87,6 +87,15 @@
             "type": "string",
             "minLength": 1
           },
+          "contractRole": {
+            "enum": [
+              "core_continuity_doctrine"
+            ]
+          },
+          "contractExportPath": {
+            "type": "string",
+            "minLength": 1
+          },
           "sourceClassification": {
             "enum": [
               "owner_contract",
@@ -160,6 +169,8 @@
         "code": {
           "enum": [
             "command-availability-claim",
+            "contract-export-path-mismatch",
+            "contract-role-mismatch",
             "duplicate-source-id",
             "invalid-source-id",
             "missing-field",

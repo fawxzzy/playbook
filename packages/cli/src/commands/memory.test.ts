@@ -18,6 +18,14 @@ const expandMemoryProvenance = vi.fn();
 const loadCandidateKnowledgeById = vi.fn();
 const promoteMemoryCandidate = vi.fn();
 const retirePromotedKnowledge = vi.fn();
+const CONTRACT_ROLE_REGISTRATIONS = [
+  {
+    role: 'core_continuity_doctrine',
+    path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+    exportPath: 'exports/playbook.contract.example.v1.json'
+  }
+];
+const CORE_CONTINUITY_DOCTRINE_ROLE = 'core_continuity_doctrine';
 
 vi.mock('@zachariahredfield/playbook-engine', () => ({
   lookupMemoryEventTimeline,
@@ -33,7 +41,9 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   expandMemoryProvenance,
   loadCandidateKnowledgeById,
   promoteMemoryCandidate,
-  retirePromotedKnowledge
+  retirePromotedKnowledge,
+  CONTRACT_ROLE_REGISTRATIONS,
+  CORE_CONTINUITY_DOCTRINE_ROLE
 }));
 
 describe('runMemory', () => {
@@ -49,6 +59,14 @@ describe('runMemory', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.command).toBe('memory-events');
     expect(payload.events).toHaveLength(1);
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
 
     logSpy.mockRestore();
   });
@@ -661,6 +679,14 @@ describe('runMemory', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.command).toBe('memory-replay-promotion');
     expect(payload.error).toContain('missing required artifact .playbook/replay-promotion-system.json');
+    expect(payload.continuity).toEqual({
+      doctrine: {
+        role: 'core_continuity_doctrine',
+        path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+        export_path: 'exports/playbook.contract.example.v1.json',
+        registration_state: 'registered'
+      }
+    });
     logSpy.mockRestore();
   });
 

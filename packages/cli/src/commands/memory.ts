@@ -13,11 +13,14 @@ import {
 } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
 import { ExitCode } from '../lib/cliContract.js';
+import { readContinuityDoctrineSummary, type ContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 
 type MemoryOptions = {
   format: 'text' | 'json';
   quiet: boolean;
 };
+
+type MemoryPayload = Record<string, unknown>;
 
 type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'outcome-feedback' | 'policy-improvement' | 'compaction' | 'pressure' | 'replay-promotion' | 'show' | 'promote' | 'retire';
 type MemoryPressureBand = 'normal' | 'warm' | 'pressure' | 'critical';
@@ -252,15 +255,24 @@ const readInteropDerivedCandidateMetadata = (cwd: string): Map<string, InteropDe
   return new Map(derived.map((entry) => [entry.candidateId, entry] as const));
 };
 
+const attachContinuityDoctrine = <TPayload extends MemoryPayload>(
+  payload: TPayload
+): TPayload & { continuity: { doctrine: ContinuityDoctrineSummary } } => ({
+  ...payload,
+  continuity: {
+    doctrine: readContinuityDoctrineSummary()
+  }
+});
+
 const emitMemoryResult = (
   cwd: string,
   options: MemoryOptions,
   command: string,
-  payload: Record<string, unknown>,
+  payload: MemoryPayload,
   textSummary: string
 ): void => {
   if (options.format === 'json') {
-    emitJsonOutput({ cwd, command, payload });
+    emitJsonOutput({ cwd, command, payload: attachContinuityDoctrine(payload) });
     return;
   }
 
@@ -272,7 +284,17 @@ const emitMemoryResult = (
 const emitMemoryError = (options: MemoryOptions, subcommand: string, error: unknown): void => {
   const message = error instanceof Error ? error.message : String(error);
   if (options.format === 'json') {
-    console.log(JSON.stringify({ schemaVersion: '1.0', command: `memory-${subcommand}`, error: message }, null, 2));
+    console.log(
+      JSON.stringify(
+        attachContinuityDoctrine({
+          schemaVersion: '1.0',
+          command: `memory-${subcommand}`,
+          error: message
+        }),
+        null,
+        2
+      )
+    );
   } else {
     console.error(message);
   }
@@ -956,7 +978,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
         };
 
         if (options.format === 'json') {
-          emitJsonOutput({ cwd, command: 'memory show', payload });
+          emitJsonOutput({ cwd, command: 'memory show', payload: attachContinuityDoctrine(payload) });
         } else {
           emitMemoryResult(cwd, options, 'memory show', payload, `Candidate ${id}: ${candidate.title}`);
         }

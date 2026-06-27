@@ -25,6 +25,9 @@ const requiredDimensions = [
 ];
 const forbiddenCommandClaimFields = new Set(['command', 'commands', 'commandAvailability', 'commandStatus', 'availability']);
 const forbiddenUnstableFieldNames = new Set(['generatedAt', 'createdAt', 'updatedAt', 'timestamp', 'absolutePath', 'localPath', 'workspaceRoot']);
+const continuityContractPath = 'docs/contracts/PLAYBOOK-CONTRACT.md';
+const continuityContractRole = 'core_continuity_doctrine';
+const continuityContractExportPath = 'exports/playbook.contract.example.v1.json';
 
 const fail = (message) => {
   console.error(`repo-scorecard-contract: ${message}`);
@@ -216,6 +219,36 @@ for (const [index, dimension] of example.dimensions.entries()) {
     }
     if (path.isAbsolute(evidencePath) || /^[A-Za-z]:[\\/]/.test(evidencePath)) {
       fail(`${context}.evidence must use repo-relative paths`);
+    }
+  }
+
+  const derivedContractRoles = dimension.evidence.includes(continuityContractPath) ? [continuityContractRole] : [];
+  const derivedContractExportPaths = dimension.evidence.includes(continuityContractPath) ? [continuityContractExportPath] : [];
+  if (Object.prototype.hasOwnProperty.call(dimension, 'contractRoles')) {
+    if (
+      !Array.isArray(dimension.contractRoles) ||
+      dimension.contractRoles.length !== derivedContractRoles.length ||
+      dimension.contractRoles.some((role, index) => role !== derivedContractRoles[index])
+    ) {
+      fail(
+        derivedContractRoles.length === 0
+          ? `${context}.contractRoles declares semantic roles but evidence resolves to no published contract roles`
+          : `${context}.contractRoles must equal ${JSON.stringify(derivedContractRoles)} for the declared evidence`
+      );
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(dimension, 'contractExportPaths')) {
+    if (
+      !Array.isArray(dimension.contractExportPaths) ||
+      dimension.contractExportPaths.length !== derivedContractExportPaths.length ||
+      dimension.contractExportPaths.some((exportPath, index) => exportPath !== derivedContractExportPaths[index])
+    ) {
+      fail(
+        derivedContractExportPaths.length === 0
+          ? `${context}.contractExportPaths declares semantic export paths but evidence resolves to no published contract export paths`
+          : `${context}.contractExportPaths must equal ${JSON.stringify(derivedContractExportPaths)} for the declared evidence`
+      );
     }
   }
 }

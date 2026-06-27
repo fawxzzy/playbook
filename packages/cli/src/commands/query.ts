@@ -29,6 +29,7 @@ import {
 } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
+import { readContinuityDoctrineSummary, type ContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import { formatLongitudinalThinText, readLongitudinalStateSummary } from './longitudinalState.js';
 
 type QueryOptions = {
@@ -51,6 +52,7 @@ type QueryResult = {
 };
 
 type ContinuitySnapshot = {
+  doctrine: ContinuityDoctrineSummary;
   session: {
     active: boolean;
     sessionId: string | null;
@@ -93,6 +95,7 @@ const buildContinuitySnapshot = (
   cwd: string,
   runs: ReturnType<typeof listOrchestrationExecutionRuns>
 ): ContinuitySnapshot => {
+  const doctrine = readContinuityDoctrineSummary();
   const session = readSession(cwd) as SessionLike | null;
   const latestRun = [...runs].sort((left, right) => {
     const timeDelta = toTimeMs(right.updated_at) - toTimeMs(left.updated_at);
@@ -106,7 +109,14 @@ const buildContinuitySnapshot = (
     : [];
 
   if (!session) {
+    const staleSignals = doctrine.registration_state === 'registered'
+      ? ['session_missing']
+      : [
+          doctrine.registration_state === 'missing' ? 'continuity_doctrine_missing' : 'continuity_doctrine_ambiguous',
+          'session_missing'
+        ];
     return {
+      doctrine,
       session: {
         active: false,
         sessionId: null,
@@ -120,7 +130,7 @@ const buildContinuitySnapshot = (
         latestRunUpdatedAt: latestRun?.updated_at ?? null,
         latestReceiptRefs
       },
-      staleSignals: ['session_missing']
+      staleSignals
     };
   }
 
@@ -135,6 +145,11 @@ const buildContinuitySnapshot = (
   const pinnedEvidenceRefs = session.pinnedArtifacts.map((entry: { artifact: string }) => entry.artifact).sort((left, right) => left.localeCompare(right));
 
   const staleSignals: string[] = [];
+  if (doctrine.registration_state === 'missing') {
+    staleSignals.push('continuity_doctrine_missing');
+  } else if (doctrine.registration_state === 'ambiguous') {
+    staleSignals.push('continuity_doctrine_ambiguous');
+  }
   if (session.selectedRunId && !runs.some((run: { run_id: string }) => run.run_id === session.selectedRunId)) {
     staleSignals.push('selected_run_missing');
   }
@@ -152,6 +167,7 @@ const buildContinuitySnapshot = (
   }
 
   return {
+    doctrine,
     session: {
       active: true,
       sessionId: session.sessionId,
@@ -789,6 +805,9 @@ export const runQuery = async (cwd: string, commandArgs: string[], options: Quer
         }
         console.log(
           `session=${continuity.session.sessionId ?? 'none'} pinned=${continuity.session.pinnedEvidenceRefs.length} active_refs=${continuity.session.activeSessionRefs.length} missing_refs=${continuity.session.missingSessionRefs.length}`
+        );
+        console.log(
+          `doctrine=${continuity.doctrine.role} registration=${continuity.doctrine.registration_state} path=${continuity.doctrine.path ?? 'none'} export=${continuity.doctrine.export_path ?? 'none'}`
         );
         console.log(
           `lineage latest_run=${continuity.lineage.latestRunId ?? 'none'} latest_receipts=${continuity.lineage.latestReceiptRefs.length} stale=${continuity.staleSignals.length > 0 ? 'yes' : 'no'}`

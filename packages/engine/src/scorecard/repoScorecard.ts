@@ -1,3 +1,12 @@
+import {
+  getContractArtifactExportPathsForPaths,
+  getContractArtifactRolesForPaths,
+  isContractArtifactRole,
+  normalizeContractArtifactExportPaths,
+  normalizeContractArtifactRoles,
+  type ContractArtifactRole
+} from '../contracts/contractRoles.js';
+
 export const REPO_SCORECARD_REPORT_SCHEMA_VERSION = 'playbook.repo-scorecard.report.v1' as const;
 
 export const REPO_SCORECARD_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -19,6 +28,8 @@ export type RepoScorecardDimensionId =
 
 export type RepoScorecardIssueCode =
   | 'command-availability-claim'
+  | 'contract-export-path-mismatch'
+  | 'contract-role-mismatch'
   | 'duplicate-dimension-id'
   | 'invalid-dimension-id'
   | 'invalid-repo-id'
@@ -40,6 +51,8 @@ export type RepoScorecardDimensionInput = {
   status: RepoScorecardStatus | string;
   summary: string;
   evidence: string[];
+  contractRoles?: ContractArtifactRole[];
+  contractExportPaths?: string[];
   nextAction?: string;
 } & Record<string, unknown>;
 
@@ -65,6 +78,8 @@ export type RepoScorecardDimensionReportRow = {
   maxScore: number;
   summary: string;
   evidence: string[];
+  contractRoles?: ContractArtifactRole[];
+  contractExportPaths?: string[];
   nextAction?: string;
 };
 
@@ -261,6 +276,56 @@ export const buildRepoScorecardReport = (input: RepoScorecardInput): RepoScoreca
     }
 
     const { score, maxScore } = scoreRepoScorecardDimensionStatus(row.status);
+    const contractRoles = getContractArtifactRolesForPaths(row.evidence);
+    const contractExportPaths = getContractArtifactExportPathsForPaths(row.evidence);
+    if (Object.prototype.hasOwnProperty.call(row, 'contractRoles')) {
+      const declaredContractRoles =
+        Array.isArray(row.contractRoles) && row.contractRoles.every((entry) => isContractArtifactRole(entry))
+          ? normalizeContractArtifactRoles(row.contractRoles)
+          : undefined;
+
+      if (
+        declaredContractRoles === undefined ||
+        declaredContractRoles.length !== contractRoles.length ||
+        declaredContractRoles.some((role, index) => role !== contractRoles[index])
+      ) {
+        addIssue(blocked, {
+          code: 'contract-role-mismatch',
+          message:
+            contractRoles.length === 0
+              ? `Dimension ${JSON.stringify(dimensionId)} declares contractRoles but its evidence resolves to no published contract roles.`
+              : `Dimension ${JSON.stringify(dimensionId)} declares contractRoles ${JSON.stringify(row.contractRoles)} but its evidence resolves to ${JSON.stringify(contractRoles)}.`,
+          dimensionId,
+          field: 'contractRoles'
+        });
+        continue;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(row, 'contractExportPaths')) {
+      const declaredContractExportPaths =
+        Array.isArray(row.contractExportPaths) && row.contractExportPaths.every((entry) => isNonEmptyString(entry))
+          ? normalizeContractArtifactExportPaths(row.contractExportPaths)
+          : undefined;
+
+      if (
+        declaredContractExportPaths === undefined ||
+        declaredContractExportPaths.length !== contractExportPaths.length ||
+        declaredContractExportPaths.some((exportPath, index) => exportPath !== contractExportPaths[index])
+      ) {
+        addIssue(blocked, {
+          code: 'contract-export-path-mismatch',
+          message:
+            contractExportPaths.length === 0
+              ? `Dimension ${JSON.stringify(dimensionId)} declares contractExportPaths but its evidence resolves to no published contract export paths.`
+              : `Dimension ${JSON.stringify(dimensionId)} declares contractExportPaths ${JSON.stringify(row.contractExportPaths)} but its evidence resolves to ${JSON.stringify(contractExportPaths)}.`,
+          dimensionId,
+          field: 'contractExportPaths'
+        });
+        continue;
+      }
+    }
+
     validRows.push({
       id: dimensionId,
       title: row.title,
@@ -269,6 +334,8 @@ export const buildRepoScorecardReport = (input: RepoScorecardInput): RepoScoreca
       maxScore,
       summary: row.summary,
       evidence: [...row.evidence],
+      contractRoles: contractRoles.length > 0 ? contractRoles : undefined,
+      contractExportPaths: contractExportPaths.length > 0 ? contractExportPaths : undefined,
       nextAction: isNonEmptyString(row.nextAction) ? row.nextAction : undefined
     });
   }

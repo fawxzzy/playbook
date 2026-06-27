@@ -2,6 +2,8 @@
 
 Make promotion doctrine explicit at the lifecycle seam where inspectable candidates become canonical artifacts.
 
+Machine-readable `--json` output now carries additive `continuity.doctrine` metadata so promotion success and deterministic failure envelopes preserve the canonical `core_continuity_doctrine` role, owner contract path, export path, and registration state alongside the staged promotion payloads.
+
 ## What this command owns
 
 `pnpm playbook promote` is the explicit top-level promotion surface for moving reviewed candidates into canonical artifacts when the source and target are already known.

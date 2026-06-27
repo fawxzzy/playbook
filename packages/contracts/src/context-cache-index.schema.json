@@ -17,6 +17,7 @@
           "cacheKey",
           "scope",
           "shapingLevel",
+          "shapeVersion",
           "riskTier",
           "generatedAt",
           "lastValidatedAt",
@@ -37,6 +38,7 @@
             }
           },
           "shapingLevel": { "type": "string" },
+          "shapeVersion": { "type": "string" },
           "riskTier": { "type": "string" },
           "generatedAt": { "type": "string" },
           "lastValidatedAt": { "type": "string" },

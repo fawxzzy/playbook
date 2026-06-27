@@ -1,9 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildRiskAwareContextSummary, loadAiContract, resolveContextSnapshotCache } from '@zachariahredfield/playbook-engine';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 const REPO_INDEX_PATH = '.playbook/repo-index.json';
 const AI_CONTRACT_PATH = '.playbook/ai-contract.json';
 const MODULE_DIGESTS_PATH = '.playbook/module-digests.json';
+const CONTINUITY_CONTRACT_PATH = 'docs/contracts/PLAYBOOK-CONTRACT.md';
+const CONTINUITY_CONTRACT_EXPORT_PATH = 'exports/playbook.contract.example.v1.json';
 const ensureStringArray = (value) => Array.isArray(value) ? value.filter((entry) => typeof entry === 'string') : [];
 const toModuleSummary = (modules) => {
     if (!Array.isArray(modules)) {
@@ -51,6 +54,15 @@ const renderAiContractSummary = (contract) => [
     `AI contract intelligence sources: repoIndex=${contract.intelligence_sources.repoIndex}, moduleOwners=${contract.intelligence_sources.moduleOwners}`,
     `AI contract rule: prefer Playbook commands over ad-hoc inspection = ${contract.rules.preferPlaybookCommandsOverAdHocInspection ? 'true' : 'false'}`
 ];
+const renderContinuityDoctrineSummary = () => {
+    const doctrine = readContinuityDoctrineSummary();
+    return [
+        `Continuity doctrine role: ${doctrine.role}`,
+        `Continuity doctrine registration: ${doctrine.registration_state}`,
+        `Continuity doctrine contract path: ${doctrine.path ?? 'none'}`,
+        `Continuity doctrine contract export: ${doctrine.export_path ?? 'none'}`
+    ];
+};
 const renderRiskAwareSummary = (projectRoot) => {
     const shaped = buildRiskAwareContextSummary(projectRoot);
     if (!shaped) {
@@ -92,8 +104,9 @@ export const loadAskRepoContext = (options) => {
         projectRoot: options.cwd,
         scope: { kind: 'repo', id: 'root' },
         shapingLevel: 'ask-repo-context',
+        shapeVersion: '2',
         riskTier: 'repo-context',
-        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json'],
+        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json', CONTINUITY_CONTRACT_PATH, CONTINUITY_CONTRACT_EXPORT_PATH],
         buildSnapshot: () => {
             const repoIndex = loadRepoIndex(options.cwd);
             const contract = loadAiContract(options.cwd);
@@ -102,12 +115,13 @@ export const loadAskRepoContext = (options) => {
                 'Trusted repository context:',
                 ...renderRepoIndexSummary(repoIndex),
                 ...renderAiContractSummary(contract.contract),
+                ...renderContinuityDoctrineSummary(),
                 ...riskAware.lines,
                 `AI contract source: ${contract.source === 'file' ? AI_CONTRACT_PATH : 'generated fallback (run `playbook ai-contract --json` to inspect/commit explicit contract)'}`,
                 'End trusted repository context.'
             ].join('\n');
             return {
-                sources: [REPO_INDEX_PATH, contract.source === 'file' ? AI_CONTRACT_PATH : 'generated-ai-contract-fallback', ...(riskAware.source ? [riskAware.source] : [])],
+                sources: [REPO_INDEX_PATH, contract.source === 'file' ? AI_CONTRACT_PATH : 'generated-ai-contract-fallback', CONTINUITY_CONTRACT_PATH, CONTINUITY_CONTRACT_EXPORT_PATH, ...(riskAware.source ? [riskAware.source] : [])],
                 promptContext
             };
         }

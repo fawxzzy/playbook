@@ -237,6 +237,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "contract_role",
         "raw_transcript_role",
         "raw_transcript_is_primary_memory",
         "structured_handoff_required",
@@ -244,6 +245,10 @@
         "required_handoff_fields"
       ],
       "properties": {
+        "contract_role": {
+          "type": "string",
+          "enum": ["core_continuity_doctrine"]
+        },
         "raw_transcript_role": {
           "type": "string",
           "enum": ["trace_only", "trace_plus_search", "discouraged"]

@@ -58,6 +58,15 @@
             "type": "string",
             "minLength": 1
           },
+          "contractRole": {
+            "enum": [
+              "core_continuity_doctrine"
+            ]
+          },
+          "contractExportPath": {
+            "type": "string",
+            "minLength": 1
+          },
           "classification": {
             "enum": [
               "owner_contract",

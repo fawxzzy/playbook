@@ -38,6 +38,7 @@ import type { AnalyzeReport } from './analyze.js';
 import type { VerifyReport } from './verify.js';
 import { previewWorkflowArtifact, stageWorkflowArtifact } from '../lib/workflowPromotion.js';
 import type { WorkflowPromotion } from '../lib/workflowPromotion.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import {
   buildExecutionPlanInterpretation,
   buildFleetInterpretation,
@@ -151,6 +152,12 @@ type StatusProofResult = {
   domainBlockers: FailureDomainSummary['domainBlockers'];
   domainNextActions: FailureDomainSummary['domainNextActions'];
   continuity: {
+    doctrine: {
+      role: ReturnType<typeof readContinuityDoctrineSummary>['role'];
+      path: string | null;
+      export_path: string | null;
+      registration_state: 'registered' | 'missing' | 'ambiguous';
+    };
     active_session_ref: string | null;
     pr_review_loop_ref: string | null;
     pr_review_loop_escalation_state: string | null;
@@ -533,6 +540,7 @@ const safeControlPlaneState = (cwd: string): ControlPlaneStateArtifact | null =>
 };
 
 const readContinuitySummary = (cwd: string): StatusProofResult['continuity'] => {
+  const doctrine = readContinuityDoctrineSummary();
   const session = readSession(cwd) as SessionLike | null;
   const prReviewLoopPath = path.join(cwd, '.playbook', 'pr-review-loop.json');
   const prReviewLoop = fs.existsSync(prReviewLoopPath)
@@ -548,6 +556,11 @@ const readContinuitySummary = (cwd: string): StatusProofResult['continuity'] => 
     : [];
 
   const staleOrMissingState: string[] = [];
+  if (doctrine.registration_state === 'missing') {
+    staleOrMissingState.push('continuity_doctrine_missing');
+  } else if (doctrine.registration_state === 'ambiguous') {
+    staleOrMissingState.push('continuity_doctrine_ambiguous');
+  }
   if (!session) {
     staleOrMissingState.push('session_missing');
   } else {
@@ -569,6 +582,7 @@ const readContinuitySummary = (cwd: string): StatusProofResult['continuity'] => 
   }
 
   return {
+    doctrine,
     active_session_ref: session ? '.playbook/session.json' : null,
     pr_review_loop_ref: prReviewLoop ? '.playbook/pr-review-loop.json' : null,
     pr_review_loop_escalation_state: prReviewLoop?.escalation?.state ?? null,
@@ -818,6 +832,10 @@ export const runStatus = async (cwd: string, options: StatusOptions): Promise<nu
           }, {
             label: 'Continuity',
             items: [
+              `doctrine=${proofResult.continuity.doctrine.role}`,
+              `doctrine_registration=${proofResult.continuity.doctrine.registration_state}`,
+              `doctrine_path=${proofResult.continuity.doctrine.path ?? 'none'}`,
+              `doctrine_export=${proofResult.continuity.doctrine.export_path ?? 'none'}`,
               `session=${proofResult.continuity.active_session_ref ?? 'none'}`,
               `pr_loop=${proofResult.continuity.pr_review_loop_ref ?? 'none'}`,
               `pr_loop_escalation=${proofResult.continuity.pr_review_loop_escalation_state ?? 'none'}`,

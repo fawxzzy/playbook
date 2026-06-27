@@ -135,6 +135,15 @@
         }
       },
       {
+        "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
+        "role": "core_continuity_doctrine",
+        "exportPath": "exports/playbook.contract.example.v1.json",
+        "availability": {
+          "available": false,
+          "reason": "missing"
+        }
+      },
+      {
         "path": "docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md",
         "availability": {
           "available": false,
@@ -147,6 +156,13 @@
           "available": false,
           "reason": "missing"
         }
+      }
+    ],
+    "contractRoles": [
+      {
+        "role": "core_continuity_doctrine",
+        "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
+        "exportPath": "exports/playbook.contract.example.v1.json"
       }
     ]
   },

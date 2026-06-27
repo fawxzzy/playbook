@@ -178,7 +178,7 @@ pnpm playbook verify --local-only --json
 
 If the repository defines `package.json#scripts.verify:local`, Playbook uses that command as the local verification gate. The receipt written to `.playbook/local-verification-receipt.json` is the source of truth for verification in this mode.
 
-For downstream discovery of the reusable workflow-pack bundle, run `pnpm playbook contracts --json` and consume the registered workflow-pack docs plus schema entries rather than hard-coding artifact assumptions in each consumer repo.
+For downstream discovery of the reusable workflow-pack bundle, run `pnpm playbook contracts --json` and consume the registered workflow-pack docs, the role-tagged `docs/contracts/PLAYBOOK-CONTRACT.md` continuity contract (`role: "core_continuity_doctrine"`), and the schema entries rather than hard-coding artifact assumptions in each consumer repo or restating structured-handoff and promotion-target rules in a local dialect.
 
 When a downstream control plane needs one completion-facing signal for UI work, prefer the read-only ATLAS proof summary projection over inventing a repo-local status dialect. The Playbook reusable action only consumes that projection; it does not redefine verification truth or move UI ownership into Playbook.
 

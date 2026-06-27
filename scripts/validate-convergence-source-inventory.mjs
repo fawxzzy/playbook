@@ -16,6 +16,9 @@ const examplePath = path.resolve(repoRoot, readOption('--example') ?? 'exports/p
 const stableIdPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const requiredSourceStringFields = ['id', 'repo', 'path', 'classification', 'migrationDecision', 'rationale'];
 const forbiddenCommandClaimFields = new Set(['command', 'commands', 'commandAvailability', 'commandStatus', 'availability']);
+const continuityContractPath = 'docs/contracts/PLAYBOOK-CONTRACT.md';
+const continuityContractRole = 'core_continuity_doctrine';
+const continuityContractExportPath = 'exports/playbook.contract.example.v1.json';
 
 const fail = (message) => {
   console.error(`convergence-source-inventory: ${message}`);
@@ -163,6 +166,28 @@ for (const [index, source] of example.sources.entries()) {
   for (const forbiddenField of forbiddenCommandClaimFields) {
     if (Object.prototype.hasOwnProperty.call(source, forbiddenField)) {
       fail(`${context} must not claim command availability via ${JSON.stringify(forbiddenField)}`);
+    }
+  }
+
+  const derivedContractRole = source.path === continuityContractPath ? continuityContractRole : null;
+  const derivedContractExportPath = source.path === continuityContractPath ? continuityContractExportPath : null;
+  if (Object.prototype.hasOwnProperty.call(source, 'contractRole')) {
+    if (source.contractRole !== derivedContractRole) {
+      fail(
+        derivedContractRole === null
+          ? `${context}.contractRole declares ${JSON.stringify(source.contractRole)} but ${JSON.stringify(source.path)} resolves to no published contract role`
+          : `${context}.contractRole must equal ${JSON.stringify(derivedContractRole)} for ${JSON.stringify(source.path)}`
+      );
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(source, 'contractExportPath')) {
+    if (source.contractExportPath !== derivedContractExportPath) {
+      fail(
+        derivedContractExportPath === null
+          ? `${context}.contractExportPath declares ${JSON.stringify(source.contractExportPath)} but ${JSON.stringify(source.path)} resolves to no published contract export path`
+          : `${context}.contractExportPath must equal ${JSON.stringify(derivedContractExportPath)} for ${JSON.stringify(source.path)}`
+      );
     }
   }
 

@@ -96,3 +96,35 @@ test('validator fails when a source row claims command availability', () => {
     fs.rmSync(fixtureRoot, { recursive: true, force: true });
   }
 });
+
+test('validator fails when a declared contractRole drifts from the tagged owner contract path', () => {
+  const fixtureRoot = createFixture();
+
+  try {
+    const example = readFixtureExample(fixtureRoot);
+    example.sources[0].contractRole = 'core_continuity_doctrine';
+    writeFixtureExample(fixtureRoot, example);
+
+    const result = runValidator(fixtureRoot);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /contractRole/);
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+});
+
+test('validator fails when a declared contractExportPath drifts from the tagged owner contract path', () => {
+  const fixtureRoot = createFixture();
+
+  try {
+    const example = readFixtureExample(fixtureRoot);
+    example.sources[1].contractExportPath = 'exports/incorrect.contract.example.v1.json';
+    writeFixtureExample(fixtureRoot, example);
+
+    const result = runValidator(fixtureRoot);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /contractExportPath/);
+  } finally {
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
+});

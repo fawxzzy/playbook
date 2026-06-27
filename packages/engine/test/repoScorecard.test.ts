@@ -24,7 +24,9 @@ const baseInput = (): RepoScorecardInput => ({
       title: 'Owner truth',
       status: 'verified',
       summary: 'Canonical contract and roadmap owner surfaces are published and versioned.',
-      evidence: ['docs/contracts/PLAYBOOK-CONTRACT.md', 'docs/roadmap/ROADMAP.json']
+      evidence: ['docs/contracts/PLAYBOOK-CONTRACT.md', 'docs/roadmap/ROADMAP.json'],
+      contractRoles: ['core_continuity_doctrine'],
+      contractExportPaths: ['exports/playbook.contract.example.v1.json']
     },
     {
       id: 'command_truth',
@@ -155,7 +157,9 @@ describe('repo scorecard report', () => {
           score: 2,
           maxScore: 2,
           summary: 'Canonical contract and roadmap owner surfaces are published and versioned.',
-          evidence: ['docs/contracts/PLAYBOOK-CONTRACT.md', 'docs/roadmap/ROADMAP.json']
+          evidence: ['docs/contracts/PLAYBOOK-CONTRACT.md', 'docs/roadmap/ROADMAP.json'],
+          contractRoles: ['core_continuity_doctrine'],
+          contractExportPaths: ['exports/playbook.contract.example.v1.json']
         },
         {
           id: 'roadmap_governance',
@@ -283,5 +287,58 @@ describe('repo scorecard report', () => {
     expect(deriveRepoScorecardGrade(10, 16)).toBe('c');
     expect(deriveRepoScorecardGrade(7, 16)).toBe('d');
     expect(deriveRepoScorecardGrade(4, 16)).toBe('f');
+  });
+
+  it('adds semantic contract roles when a dimension cites a tagged owner contract', () => {
+    const report = buildRepoScorecardReport(baseInput());
+
+    expect(report.dimensions.find((dimension) => dimension.id === 'owner_truth')).toEqual(
+      expect.objectContaining({
+        contractRoles: ['core_continuity_doctrine'],
+        contractExportPaths: ['exports/playbook.contract.example.v1.json']
+      })
+    );
+  });
+
+  it('fails closed when declared contractRoles drift from the evidence-derived owner role set', () => {
+    const input = baseInput();
+    input.dimensions[1] = {
+      ...input.dimensions[1],
+      contractRoles: ['core_continuity_doctrine']
+    };
+
+    const report = buildRepoScorecardReport(input);
+
+    expect(report.status).toBe('blocked');
+    expect(report.blocked).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'contract-role-mismatch',
+          dimensionId: 'command_truth',
+          field: 'contractRoles'
+        })
+      ])
+    );
+  });
+
+  it('fails closed when declared contractExportPaths drift from the evidence-derived owner export set', () => {
+    const input = baseInput();
+    input.dimensions[1] = {
+      ...input.dimensions[1],
+      contractExportPaths: ['exports/playbook.contract.example.v1.json']
+    };
+
+    const report = buildRepoScorecardReport(input);
+
+    expect(report.status).toBe('blocked');
+    expect(report.blocked).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'contract-export-path-mismatch',
+          dimensionId: 'command_truth',
+          field: 'contractExportPaths'
+        })
+      ])
+    );
   });
 });

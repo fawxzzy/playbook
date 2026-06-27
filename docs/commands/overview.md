@@ -63,3 +63,9 @@ Pattern: reviewed intent before execution. In automation, generate plan output f
 - The CLI help output is authoritative for command and flag discovery (`playbook --help`, `playbook <command> --help`).
 - Use `pnpm playbook rules` to discover active deterministic rules.
 - Use `pnpm playbook explain <rule>` and `pnpm playbook explain architecture` to retrieve deterministic rule and repository-intelligence explanations.
+
+## Bootstrap continuity doctrine
+
+- Bootstrap-oriented command surfaces should preserve the continuity doctrine pairing directly when they already act as recommended startup context for agents or operators.
+- `pnpm playbook ai-context --json`, `pnpm playbook ai-contract --json`, and `pnpm playbook context --json` now each include additive `continuity.doctrine` metadata with the canonical `core_continuity_doctrine` role, registered owner contract path, canonical export path, and fail-closed registration state.
+- Pattern: bootstrap context -> doctrine pairing -> one-surface startup retrieval.

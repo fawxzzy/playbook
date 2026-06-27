@@ -198,6 +198,7 @@
     }
   ],
   "continuity_requirements": {
+    "contract_role": "core_continuity_doctrine",
     "raw_transcript_role": "trace_only",
     "raw_transcript_is_primary_memory": false,
     "structured_handoff_required": true,

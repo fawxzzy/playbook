@@ -2,6 +2,8 @@
 
 Inspect and review repository memory artifacts using thin, deterministic CLI surfaces.
 
+Machine-readable `--json` output now carries additive `continuity.doctrine` metadata so memory inspection and deterministic failure envelopes preserve the canonical `core_continuity_doctrine` role, owner contract path, export path, and registration state alongside the existing memory payloads.
+
 ## Subcommands
 
 ### `memory events`

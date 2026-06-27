@@ -57,6 +57,28 @@ describe('runContracts', () => {
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('control-plane');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('multi-repo-control-plane-read-interface');
     expect((schemas.commandOutputs as Array<{ id: string }>).map((entry) => entry.id)).toContain('workspace-governance');
+
+    const artifacts = payload.artifacts as Record<string, unknown>;
+    expect(Array.isArray(artifacts.contracts)).toBe(true);
+    expect((artifacts.contracts as Array<{ path: string }>).map((entry) => entry.path)).toContain(
+      'docs/contracts/PLAYBOOK-CONTRACT.md'
+    );
+    expect(
+      (artifacts.contracts as Array<{ path: string; role?: string }>).find(
+        (entry) => entry.path === 'docs/contracts/PLAYBOOK-CONTRACT.md'
+      )?.role
+    ).toBe('core_continuity_doctrine');
+    expect(Array.isArray(artifacts.contractRoles)).toBe(true);
+    expect(artifacts.contractRoles).toContainEqual({
+      role: 'core_continuity_doctrine',
+      path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+      exportPath: 'exports/playbook.contract.example.v1.json'
+    });
+    expect(
+      (artifacts.contracts as Array<{ path: string; exportPath?: string }>).find(
+        (entry) => entry.path === 'docs/contracts/PLAYBOOK-CONTRACT.md'
+      )?.exportPath
+    ).toBe('exports/playbook.contract.example.v1.json');
   });
 
   it('keeps schema registration identifiers and paths stable', async () => {

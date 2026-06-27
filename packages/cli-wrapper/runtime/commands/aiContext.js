@@ -2,12 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { MODULE_DIGESTS_RELATIVE_PATH, buildRiskAwareContextSummary, readConsumedRuntimeManifestsArtifact, readModuleDigestsArtifact, resolveContextSnapshotCache, RUNTIME_MANIFESTS_RELATIVE_PATH } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
+import { readContinuityDoctrineSummary } from '../lib/continuityDoctrine.js';
 import { listRegisteredCommands } from './index.js';
 const buildAiContextSnapshot = (cwd) => {
     const indexFile = path.join(cwd, '.playbook', 'repo-index.json');
     const runtimeManifestArtifact = readConsumedRuntimeManifestsArtifact(cwd);
     const moduleDigests = readModuleDigestsArtifact(cwd);
     const riskAwareContext = buildRiskAwareContextSummary(cwd);
+    const doctrine = readContinuityDoctrineSummary();
     return {
         schemaVersion: '1.0',
         command: 'ai-context',
@@ -37,6 +39,9 @@ const buildAiContextSnapshot = (cwd) => {
             artifact: RUNTIME_MANIFESTS_RELATIVE_PATH,
             manifestsCount: runtimeManifestArtifact.manifests.length,
             manifests: runtimeManifestArtifact.manifests
+        },
+        continuity: {
+            doctrine
         },
         operatingLadder: {
             preferredCommandOrder: [
@@ -92,8 +97,9 @@ const buildAiContextResult = (cwd) => {
         projectRoot: cwd,
         scope: { kind: 'repo', id: 'root' },
         shapingLevel: 'ai-context',
+        shapeVersion: '2',
         riskTier: 'ai-context',
-        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json'],
+        sourceArtifacts: ['.playbook/repo-index.json', '.playbook/repo-graph.json', '.playbook/module-digests.json', '.playbook/runtime-manifests.json', '.playbook/ai-contract.json', 'docs/contracts/PLAYBOOK-CONTRACT.md', 'exports/playbook.contract.example.v1.json'],
         buildSnapshot: () => buildAiContextSnapshot(cwd)
     });
     return cached.snapshot;
@@ -126,6 +132,11 @@ const printText = (result) => {
     console.log('Runtime Manifests');
     console.log(`Artifact: ${result.runtimeManifests.artifact}`);
     console.log(`Manifests: ${result.runtimeManifests.manifestsCount}`);
+    console.log('');
+    console.log('Continuity Bootstrap');
+    console.log(`Doctrine: ${result.continuity.doctrine.role} (${result.continuity.doctrine.registration_state})`);
+    console.log(`Contract path: ${result.continuity.doctrine.path ?? 'none'}`);
+    console.log(`Contract export: ${result.continuity.doctrine.export_path ?? 'none'}`);
     console.log('');
     console.log('Risk-aware Context Shaping');
     console.log(`Available: ${result.riskAwareContext ? 'yes' : 'no'}`);
