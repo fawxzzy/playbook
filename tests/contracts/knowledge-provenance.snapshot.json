@@ -189,5 +189,13 @@
         "inspectionCategory": "candidate-knowledge"
       }
     ]
+  },
+  "continuity": {
+    "doctrine": {
+      "role": "core_continuity_doctrine",
+      "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
+      "export_path": "exports/playbook.contract.example.v1.json",
+      "registration_state": "registered"
+    }
   }
 }

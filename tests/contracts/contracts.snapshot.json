@@ -135,8 +135,8 @@
         }
       },
       {
-        "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
         "role": "core_continuity_doctrine",
+        "path": "docs/contracts/PLAYBOOK-CONTRACT.md",
         "exportPath": "exports/playbook.contract.example.v1.json",
         "availability": {
           "available": false,
