@@ -1,13 +1,19 @@
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const rawArgs = process.argv.slice(2);
 const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;
 const hasExplicitFileParallelism = args.some((arg) => arg.startsWith('--fileParallelism'));
 const hasExplicitPool = args.some((arg) => arg.startsWith('--pool'));
+const PNPM_BIN = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, '..', '..', '..');
 
-const run = (command, commandArgs) => spawnSync(command, commandArgs, {
+const run = (command, commandArgs, options = {}) => spawnSync(command, commandArgs, {
   stdio: 'inherit',
-  shell: process.platform === 'win32'
+  shell: process.platform === 'win32',
+  ...options
 });
 
 const exitWith = (result) => {
@@ -27,5 +33,9 @@ if (process.platform === 'win32' && !hasExplicitPool) {
   defaultVitestArgs.push('--pool=threads');
 }
 
-const result = run('vitest', [...defaultVitestArgs, ...args]);
+const result = run(
+  PNPM_BIN,
+  ['exec', 'vitest', ...defaultVitestArgs, '--root', 'packages/engine', ...args],
+  { cwd: repoRoot }
+);
 exitWith(result);
