@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   createPatternPortabilityContract,
@@ -8,9 +9,12 @@ import {
   writeCrossRepoPatternEvidenceArtifact
 } from './patternPortabilityContract.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 describe('pattern portability contract', () => {
   it('defines required contract schema fields', () => {
-    const schemaPath = path.join(process.cwd(), '..', 'contracts', 'src', 'pattern-portability.schema.json');
+    const schemaPath = path.resolve(__dirname, '..', '..', '..', 'contracts', 'src', 'pattern-portability.schema.json');
     const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8')) as {
       required: string[];
       properties: Record<string, unknown>;

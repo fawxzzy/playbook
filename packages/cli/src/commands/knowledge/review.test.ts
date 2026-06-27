@@ -12,6 +12,14 @@ const buildReviewDownstreamFollowupsArtifact = vi.fn();
 const writeReviewDownstreamFollowupsArtifact = vi.fn();
 const existsSync = vi.fn();
 const readFileSync = vi.fn();
+const CONTRACT_ROLE_REGISTRATIONS = [
+  {
+    role: 'core_continuity_doctrine',
+    path: 'docs/contracts/PLAYBOOK-CONTRACT.md',
+    exportPath: 'exports/playbook.contract.example.v1.json'
+  }
+];
+const CORE_CONTINUITY_DOCTRINE_ROLE = 'core_continuity_doctrine';
 
 vi.mock('@zachariahredfield/playbook-engine', () => ({
   buildReviewQueue,
@@ -27,7 +35,9 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   KNOWLEDGE_REVIEW_RECEIPTS_RELATIVE_PATH: '.playbook/knowledge-review-receipts.json',
   REVIEW_HANDOFFS_RELATIVE_PATH: '.playbook/review-handoffs.json',
   REVIEW_HANDOFF_ROUTES_RELATIVE_PATH: '.playbook/review-handoff-routes.json',
-  REVIEW_DOWNSTREAM_FOLLOWUPS_RELATIVE_PATH: '.playbook/review-downstream-followups.json'
+  REVIEW_DOWNSTREAM_FOLLOWUPS_RELATIVE_PATH: '.playbook/review-downstream-followups.json',
+  CONTRACT_ROLE_REGISTRATIONS,
+  CORE_CONTINUITY_DOCTRINE_ROLE
 }));
 
 vi.mock('node:fs', () => ({

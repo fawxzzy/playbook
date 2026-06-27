@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.build.json",
     "build:js": "pnpm exec tsc -p tsconfig.build.json",
     "build:types": "pnpm exec tsc -p tsconfig.build.json",
-    "test": "pnpm exec vitest run --passWithNoTests"
+    "test": "node ../../scripts/run-workspace-vitest.mjs run --passWithNoTests"
   },
   "publishConfig": {
     "access": "public"
