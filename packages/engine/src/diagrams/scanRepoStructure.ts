@@ -1,8 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
-import { minimatch } from 'minimatch';
 import type { DiagramOptions, StructureModel } from './types.js';
 import { discoverWorkspaces } from './scanWorkspaceDeps.js';
+import { matchesFileOrDirectoryGlob } from '../util/globs.js';
 import { toPosixPath } from '../util/paths.js';
 
 const DEFAULT_INCLUDE_DIRS = ['apps', 'packages', 'tools', 'src'];
@@ -12,7 +12,7 @@ export const scanRepoStructure = (root: string, options: DiagramOptions = {}): S
   const includeDirs = options.includeDirs ?? DEFAULT_INCLUDE_DIRS;
   const excludes = options.excludeGlobs ?? DEFAULT_EXCLUDES;
   const isExcluded = (value: string): boolean =>
-    excludes.some((glob) => minimatch(value, glob, { dot: true }) || minimatch(`${value}/`, glob, { dot: true }));
+    excludes.some((glob) => matchesFileOrDirectoryGlob(value, glob));
 
   const topLevelDirs = includeDirs
     .filter((dir) => fs.existsSync(path.join(root, dir)))

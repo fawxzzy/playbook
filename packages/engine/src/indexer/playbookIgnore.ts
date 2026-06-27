@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { minimatch } from 'minimatch';
+import { matchesFileOrDirectoryGlob } from '../util/globs.js';
 import { toPosixPath } from '../util/paths.js';
 
 const DEFAULT_PLAYBOOK_IGNORE = [
@@ -569,11 +569,10 @@ export const applySafePlaybookIgnoreRecommendations = (repoRoot: string): Playbo
 
 export const isPlaybookIgnored = (relativePath: string, rules: PlaybookIgnoreRule[]): boolean => {
   const candidate = toPosixPath(relativePath).replace(/^\.\//, '');
-  const candidateAsDir = candidate.endsWith('/') ? candidate : `${candidate}/`;
 
   let ignored = false;
   for (const rule of rules) {
-    const matched = minimatch(candidate, rule.pattern, { dot: true }) || minimatch(candidateAsDir, rule.pattern, { dot: true });
+    const matched = matchesFileOrDirectoryGlob(candidate, rule.pattern);
     if (!matched) {
       continue;
     }

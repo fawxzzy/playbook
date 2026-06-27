@@ -1,4 +1,4 @@
-import { minimatch } from 'minimatch';
+import { matchesFileOrDirectoryGlob } from '../../util/globs.js';
 import { mergeChangelogConfig } from './config.js';
 import type {
   ChangelogCategory,
@@ -154,7 +154,7 @@ const getKeywordMatches = (
 };
 
 const matchPathRule = (pathValue: string, rule: ChangelogPathRule): boolean =>
-  minimatch(pathValue, rule.pattern, { dot: true }) || minimatch(`${pathValue}/`, rule.pattern, { dot: true });
+  matchesFileOrDirectoryGlob(pathValue, rule.pattern);
 
 const getPathMatches = (
   rawChange: RawChangelogChange,

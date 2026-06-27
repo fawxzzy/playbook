@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { minimatch } from 'minimatch';
 import type { DiagramOptions, WorkspaceNode } from './types.js';
+import { matchesAny } from '../util/globs.js';
 
 const DEFAULT_EXCLUDES = ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**', '**/.next/**'];
 const IMPORT_RE = /from\s+['\"]([^'\"]+)['\"]|import\(['\"]([^'\"]+)['\"]\)/g;
@@ -15,13 +15,13 @@ const listFiles = (root: string, dir: string, excludes: string[]): string[] => {
     const current = stack.pop();
     if (!current) continue;
     const relCurrent = path.relative(root, current).split(path.sep).join('/');
-    if (relCurrent && excludes.some((glob) => minimatch(relCurrent, glob, { dot: true }))) continue;
+    if (relCurrent && matchesAny(relCurrent, excludes)) continue;
 
     const entries = fs.readdirSync(current, { withFileTypes: true });
     for (const entry of entries) {
       const child = path.join(current, entry.name);
       const relChild = path.relative(root, child).split(path.sep).join('/');
-      if (excludes.some((glob) => minimatch(relChild, glob, { dot: true }))) continue;
+      if (matchesAny(relChild, excludes)) continue;
       if (entry.isDirectory()) stack.push(child);
       if (entry.isFile() && /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(entry.name)) results.push(relChild);
     }

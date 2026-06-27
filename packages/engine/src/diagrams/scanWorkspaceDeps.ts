@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { minimatch } from 'minimatch';
 import type { DependencyModel, DiagramOptions, WorkspaceNode } from './types.js';
+import { matchesFileOrDirectoryGlob } from '../util/globs.js';
 import { toPosixPath } from '../util/paths.js';
 
 const DEFAULT_EXCLUDES = ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/build/**', '**/.next/**'];
@@ -54,7 +54,7 @@ const expandWorkspacePattern = (root: string, pattern: string, excludes: string[
     .map((entry) => toPosixPath(path.join(normalized, entry.name)));
 
   return entries.filter((entryPath) => {
-    if (excludes.some((glob) => minimatch(entryPath, glob, { dot: true }) || minimatch(`${entryPath}/`, glob, { dot: true }))) return false;
+    if (excludes.some((glob) => matchesFileOrDirectoryGlob(entryPath, glob))) return false;
     return fs.existsSync(path.join(root, entryPath, 'package.json'));
   });
 };
