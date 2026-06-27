@@ -2109,17 +2109,35 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
       {
         type: 'object',
         additionalProperties: false,
-        required: ['schemaVersion', 'command', 'error'],
+        required: ['schemaVersion', 'command', 'error', 'continuity'],
         properties: {
           schemaVersion: { const: '1.0' },
           command: { enum: ['knowledge-list', 'knowledge-query', 'knowledge-inspect', 'knowledge-compare', 'knowledge-timeline', 'knowledge-provenance', 'knowledge-supersession', 'knowledge-stale'] },
-          error: { type: 'string' }
+          error: { type: 'string' },
+          continuity: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['doctrine'],
+            properties: {
+              doctrine: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['role', 'path', 'export_path', 'registration_state'],
+                properties: {
+                  role: { enum: ['core_continuity_doctrine'] },
+                  path: { type: ['string', 'null'] },
+                  export_path: { type: ['string', 'null'] },
+                  registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+                }
+              }
+            }
+          }
         }
       },
       {
         type: 'object',
         additionalProperties: false,
-        required: ['schemaVersion', 'command', 'filters', 'summary', 'inspection', 'knowledge'],
+        required: ['schemaVersion', 'command', 'filters', 'summary', 'inspection', 'knowledge', 'continuity'],
         properties: {
           schemaVersion: { const: '1.0' },
           command: { enum: ['knowledge-list', 'knowledge-query', 'knowledge-timeline', 'knowledge-stale'] },
@@ -2129,13 +2147,31 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           knowledge: {
             type: 'array',
             items: knowledgeRecordSchema
+          },
+          continuity: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['doctrine'],
+            properties: {
+              doctrine: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['role', 'path', 'export_path', 'registration_state'],
+                properties: {
+                  role: { enum: ['core_continuity_doctrine'] },
+                  path: { type: ['string', 'null'] },
+                  export_path: { type: ['string', 'null'] },
+                  registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+                }
+              }
+            }
           }
         }
       },
       {
         type: 'object',
         additionalProperties: false,
-        required: ['schemaVersion', 'command', 'leftId', 'rightId', 'comparison', 'inspection'],
+        required: ['schemaVersion', 'command', 'leftId', 'rightId', 'comparison', 'inspection', 'continuity'],
         properties: {
           schemaVersion: { const: '1.0' },
           command: { const: 'knowledge-compare' },
@@ -2169,13 +2205,31 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               rightCategory: knowledgeInspectionCategorySchema,
               categoryMatch: { type: 'boolean' }
             }
+          },
+          continuity: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['doctrine'],
+            properties: {
+              doctrine: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['role', 'path', 'export_path', 'registration_state'],
+                properties: {
+                  role: { enum: ['core_continuity_doctrine'] },
+                  path: { type: ['string', 'null'] },
+                  export_path: { type: ['string', 'null'] },
+                  registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+                }
+              }
+            }
           }
         }
       },
       {
         type: 'object',
         additionalProperties: false,
-        required: ['schemaVersion', 'command', 'id', 'inspection', 'knowledge'],
+        required: ['schemaVersion', 'command', 'id', 'inspection', 'knowledge', 'continuity'],
         properties: {
           schemaVersion: { const: '1.0' },
           command: { const: 'knowledge-inspect' },
@@ -2189,13 +2243,31 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               staleOrSuperseded: { type: 'boolean' }
             }
           },
-          knowledge: knowledgeRecordSchema
+          knowledge: knowledgeRecordSchema,
+          continuity: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['doctrine'],
+            properties: {
+              doctrine: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['role', 'path', 'export_path', 'registration_state'],
+                properties: {
+                  role: { enum: ['core_continuity_doctrine'] },
+                  path: { type: ['string', 'null'] },
+                  export_path: { type: ['string', 'null'] },
+                  registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+                }
+              }
+            }
+          }
         }
       },
       {
         type: 'object',
         additionalProperties: false,
-        required: ['schemaVersion', 'command', 'id', 'inspection', 'provenance'],
+        required: ['schemaVersion', 'command', 'id', 'inspection', 'provenance', 'continuity'],
         properties: {
           schemaVersion: { const: '1.0' },
           command: { const: 'knowledge-provenance' },
@@ -2217,13 +2289,31 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               evidence: { type: 'array', items: knowledgeRecordSchema },
               relatedRecords: { type: 'array', items: knowledgeRecordSchema }
             }
+          },
+          continuity: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['doctrine'],
+            properties: {
+              doctrine: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['role', 'path', 'export_path', 'registration_state'],
+                properties: {
+                  role: { enum: ['core_continuity_doctrine'] },
+                  path: { type: ['string', 'null'] },
+                  export_path: { type: ['string', 'null'] },
+                  registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+                }
+              }
+            }
           }
         }
       },
       {
         type: 'object',
         additionalProperties: false,
-        required: ['schemaVersion', 'command', 'id', 'inspection', 'supersession'],
+        required: ['schemaVersion', 'command', 'id', 'inspection', 'supersession', 'continuity'],
         properties: {
           schemaVersion: { const: '1.0' },
           command: { const: 'knowledge-supersession' },
@@ -2244,6 +2334,24 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               record: knowledgeRecordSchema,
               supersedes: { type: 'array', items: knowledgeRecordSchema },
               supersededBy: { type: 'array', items: knowledgeRecordSchema }
+            }
+          },
+          continuity: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['doctrine'],
+            properties: {
+              doctrine: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['role', 'path', 'export_path', 'registration_state'],
+                properties: {
+                  role: { enum: ['core_continuity_doctrine'] },
+                  path: { type: ['string', 'null'] },
+                  export_path: { type: ['string', 'null'] },
+                  registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+                }
+              }
             }
           }
         }
