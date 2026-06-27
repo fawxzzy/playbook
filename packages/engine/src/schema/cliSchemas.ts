@@ -712,7 +712,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
     title: 'PlaybookContextOutput',
     type: 'object',
     additionalProperties: false,
-    required: ['schemaVersion', 'command', 'architecture', 'workflow', 'repositoryIntelligence', 'controlPlaneArtifacts', 'runtimeManifests', 'cli', 'riskAwareContext'],
+    required: ['schemaVersion', 'command', 'architecture', 'workflow', 'repositoryIntelligence', 'controlPlaneArtifacts', 'runtimeManifests', 'continuity', 'cli', 'riskAwareContext'],
     properties: {
       schemaVersion: { type: 'string' },
       command: { const: 'context' },
@@ -764,6 +764,24 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           manifests: { type: 'array', items: { type: 'object', additionalProperties: true } }
         }
       },
+      continuity: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['doctrine'],
+        properties: {
+          doctrine: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['role', 'path', 'export_path', 'registration_state'],
+            properties: {
+              role: { enum: ['core_continuity_doctrine'] },
+              path: { type: ['string', 'null'] },
+              export_path: { type: ['string', 'null'] },
+              registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+            }
+          }
+        }
+      },
       cli: {
         type: 'object',
         additionalProperties: false,
@@ -785,7 +803,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
     title: 'PlaybookAiContractOutput',
     type: 'object',
     additionalProperties: false,
-    required: ['schemaVersion', 'command', 'source', 'contract'],
+    required: ['schemaVersion', 'command', 'source', 'contract', 'continuity'],
     properties: {
       schemaVersion: { const: '1.0' },
       command: { const: 'ai-contract' },
@@ -915,6 +933,24 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
             properties: {
               ruleOwnersQuery: { type: 'string' },
               moduleOwnersQuery: { type: 'string' }
+            }
+          }
+        }
+      },
+      continuity: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['doctrine'],
+        properties: {
+          doctrine: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['role', 'path', 'export_path', 'registration_state'],
+            properties: {
+              role: { enum: ['core_continuity_doctrine'] },
+              path: { type: ['string', 'null'] },
+              export_path: { type: ['string', 'null'] },
+              registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
             }
           }
         }
@@ -2365,6 +2401,7 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
       'repositoryIntelligence',
       'controlPlaneArtifacts',
       'runtimeManifests',
+      'continuity',
       'operatingLadder',
       'productCommands',
       'riskAwareContext',
@@ -2423,6 +2460,24 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           artifact: { const: '.playbook/runtime-manifests.json' },
           manifestsCount: { type: 'number' },
           manifests: { type: 'array', items: { type: 'object', additionalProperties: true } }
+        }
+      },
+      continuity: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['doctrine'],
+        properties: {
+          doctrine: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['role', 'path', 'export_path', 'registration_state'],
+            properties: {
+              role: { enum: ['core_continuity_doctrine'] },
+              path: { type: ['string', 'null'] },
+              export_path: { type: ['string', 'null'] },
+              registration_state: { enum: ['registered', 'missing', 'ambiguous'] }
+            }
+          }
         }
       },
       operatingLadder: {
