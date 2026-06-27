@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 export const repoRoot = path.resolve(scriptDir, '..');
 const cliEntry = path.join(repoRoot, 'packages', 'cli', 'dist', 'main.js');
+const PNPM_BIN = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 
 
 const SEEDED_TEMPLATE_DIR = path.join(repoRoot, 'test', 'fixtures', 'knowledge', 'seeded');
@@ -238,14 +239,15 @@ export function createContractFixtureRepo() {
 }
 
 export function runCli(args, fixtureRepo) {
-  const result = spawnSync(process.execPath, [cliEntry, ...args], {
+  const result = spawnSync(PNPM_BIN, ['exec', 'node', cliEntry, ...args], {
     cwd: fixtureRepo,
-    encoding: 'utf8'
+    encoding: 'utf8',
+    shell: process.platform === 'win32'
   });
 
   return {
-    stdout: result.stdout,
-    stderr: result.stderr,
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
     status: result.status
   };
 }

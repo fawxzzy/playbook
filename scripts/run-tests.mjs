@@ -41,7 +41,7 @@ const run = (command, commandArgs) =>
     shell: process.platform === 'win32',
   });
 
-const runEsbuildPreflight = () => run('node', ['scripts/assert-esbuild.mjs']);
+const runEsbuildPreflight = () => run(PNPM_BIN, ['exec', 'node', 'scripts/assert-esbuild.mjs']);
 
 const runSteps = (steps) => {
   for (const { command, commandArgs } of steps) {

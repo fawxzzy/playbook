@@ -2,10 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..');
 const require = createRequire(import.meta.url);
+const PNPM_BIN = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
 
 const cliDir = path.join(repoRoot, 'packages', 'cli');
 const cliDistDir = path.join(cliDir, 'dist');
@@ -45,10 +47,41 @@ if (missingBuildOutputs.length > 0) {
   throw new Error(missingBuildOutputs.join('\n'));
 }
 
+const resolvePackageJsonPath = (packageName, fromDir) => {
+  const spec = `${packageName}/package.json`;
+
+  try {
+    return require.resolve(spec, { paths: [fromDir] });
+  } catch (primaryError) {
+    const resolverScript = [
+      "const { createRequire } = require('node:module');",
+      "const path = require('node:path');",
+      `const req = createRequire(path.join(${JSON.stringify(fromDir)}, 'package.json'));`,
+      `process.stdout.write(req.resolve(${JSON.stringify(spec)}));`
+    ].join(' ');
+    const fallback = spawnSync(PNPM_BIN, ['exec', 'node', '-e', resolverScript], {
+      cwd: repoRoot,
+      encoding: 'utf8'
+    });
+
+    if (fallback.status === 0) {
+      const resolved = fallback.stdout.trim();
+      if (resolved) return resolved;
+    }
+
+    const stderr = fallback.stderr?.trim();
+    throw new Error(
+      `Unable to resolve ${spec} from ${fromDir}.\n${
+        stderr || (primaryError instanceof Error ? primaryError.message : String(primaryError))
+      }`
+    );
+  }
+};
+
 const copyExternalPackage = (packageName, fromDir) => {
   if (copiedExternalPackages.has(packageName)) return;
 
-  const resolvedPackageJsonPath = require.resolve(`${packageName}/package.json`, { paths: [fromDir] });
+  const resolvedPackageJsonPath = resolvePackageJsonPath(packageName, fromDir);
   const sourceDir = path.dirname(resolvedPackageJsonPath);
   const targetDir = path.join(wrapperRuntimeDir, 'node_modules', ...packageName.split('/'));
 
