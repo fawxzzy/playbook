@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Review and Next Step"
+  short_description: "Reconcile project truth and choose one next step"
+  default_prompt: "Use $review-project-next-step to reconcile this project and recommend one evidence-backed next step."

@@ -1,0 +1,129 @@
+{
+  "schema_version": "atlas-engineering-doctrine-registry.v1",
+  "registry_id": "atlas-engineering-doctrine-registry",
+  "owner": "playbook",
+  "consumer_adoption": {
+    "atlas_role": "adopter-and-conformance-owner",
+    "discovery": "Atlas consumers read this versioned Playbook registry by reference and record local adoption evidence against its stable IDs.",
+    "copying_rule": "Atlas must not copy this registry into a second canonical doctrine store; any local projection is read-only and links back to these records."
+  },
+  "records": [
+    {
+      "id": "rule-owner-repo-truth",
+      "kind": "rule",
+      "lifecycle": "promoted",
+      "statement": "Owner repositories retain implementation and repo-local truth; coordination consumers read that truth without replacing it.",
+      "rationale": "Separating owner truth from routing and visibility prevents competing canonical stores.",
+      "scope": { "truth_class": "universal-doctrine", "applies_to": "Cross-repository engineering governance", "excludes": ["Read-only compatibility projections"] },
+      "evidence": [{ "evidence_id": "playbook-contract-owner-truth", "authority": "canonical-playbook", "ref": "docs/contracts/PLAYBOOK-CONTRACT.md#owner-domains", "note": "Names owner-repo truth and prohibits a second truth store." }],
+      "enforcement": { "owner": "playbook", "mechanism": "Contract review and consumer conformance checks." },
+      "exceptions": ["A declared compatibility projection may preserve canonical fields and source references."],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": null }
+    },
+    {
+      "id": "rule-candidate-knowledge-not-enforced",
+      "kind": "rule",
+      "lifecycle": "promoted",
+      "statement": "Candidate knowledge remains advisory until reviewed and promoted through the governed evidence path.",
+      "rationale": "Unreviewed observations must not silently become governance.",
+      "scope": { "truth_class": "universal-doctrine", "applies_to": "Knowledge and doctrine promotion", "excludes": ["Explicitly promoted records"] },
+      "evidence": [{ "evidence_id": "longitudinal-candidate-rule", "authority": "canonical-playbook", "ref": "docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md#docs-summary-labels", "note": "States that candidate knowledge is not enforced governance." }],
+      "enforcement": { "owner": "playbook", "mechanism": "Promotion review and receipt-based lifecycle controls." },
+      "exceptions": [],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": null }
+    },
+    {
+      "id": "rule-evidence-before-marker-movement",
+      "kind": "rule",
+      "lifecycle": "promoted",
+      "statement": "Move a marker or claim completion only after current verification, receipt, and reconciliation evidence exists.",
+      "rationale": "Recovered prose, summaries, and percentages are not current operating truth.",
+      "scope": { "truth_class": "universal-doctrine", "applies_to": "Completion and marker decisions", "excludes": ["Clearly labeled historical provenance"] },
+      "evidence": [{ "evidence_id": "atlas-admission-current-truth", "authority": "canonical-atlas", "ref": "atlas:docs/registry/FAWXZZY-TECH-PLAN-RECOVERY-ADMISSION.json#current-truth-rule", "note": "Rejects recovered status claims as current truth and forbids marker movement from the import." }],
+      "enforcement": { "owner": "atlas", "mechanism": "Admission source hierarchy and owner receipt review." },
+      "exceptions": [],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "atlas-and-playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": ["failure-mode-summary-truth-drift"], "superseded_by": null, "retired_reason": null }
+    },
+    {
+      "id": "pattern-evidence-lineage-promotion",
+      "kind": "pattern",
+      "lifecycle": "promoted",
+      "statement": "Normalize evidence, retain lineage, classify a candidate, review it, and record promotion without destroying predecessor history.",
+      "rationale": "Replayable provenance makes doctrine inspectable and demotable when contradicted.",
+      "scope": { "truth_class": "universal-doctrine", "applies_to": "Reusable knowledge promotion", "excludes": ["Unstructured transcript persistence"] },
+      "evidence": [{ "evidence_id": "longitudinal-promotion-flow", "authority": "canonical-playbook", "ref": "docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md#knowledge-promotion-pipeline", "note": "Defines evidence bundles, classification, audited promotion, and retained lineage." }],
+      "enforcement": { "owner": "playbook", "mechanism": "Knowledge lifecycle and promotion receipt surfaces." },
+      "exceptions": [],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": null }
+    },
+    {
+      "id": "failure-mode-premature-canonicalization",
+      "kind": "failure-mode",
+      "lifecycle": "promoted",
+      "statement": "Treating draft, stale, or insufficiently evidenced guidance as canonical doctrine creates governance drift.",
+      "rationale": "Canonical status needs a current evidence lineage and review boundary.",
+      "scope": { "truth_class": "universal-doctrine", "applies_to": "Doctrine publication and promotion", "excludes": ["Clearly labeled candidate records"] },
+      "evidence": [{ "evidence_id": "longitudinal-premature-canonicalization", "authority": "canonical-playbook", "ref": "docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md#docs-summary-labels", "note": "Lists premature canonicalization as a failure mode." }],
+      "enforcement": { "owner": "playbook", "mechanism": "Registry validation requires canonical evidence for promoted doctrine." },
+      "exceptions": [],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": null }
+    },
+    {
+      "id": "decision-playbook-registry-atlas-adoption",
+      "kind": "decision",
+      "lifecycle": "promoted",
+      "statement": "Playbook publishes the reusable doctrine registry; Atlas adopts and checks conformance through source-linked consumption rather than copying doctrine.",
+      "rationale": "A shared registry needs one canonical owner while Atlas retains cross-stack adoption responsibility.",
+      "scope": { "truth_class": "universal-doctrine", "applies_to": "Atlas and Playbook doctrine consumption", "excludes": ["Atlas-owned platform implementation doctrine"] },
+      "evidence": [{ "evidence_id": "playbook-contract-consumption", "authority": "canonical-playbook", "ref": "docs/contracts/PLAYBOOK-CONTRACT.md#downstream-consumption-note", "note": "Requires consumers to reference owner artifacts directly rather than copy them." }, { "evidence_id": "atlas-admission-provenance-only", "authority": "canonical-atlas", "ref": "atlas:docs/registry/FAWXZZY-TECH-PLAN-RECOVERY-ADMISSION.json#admission-scope", "note": "Classifies the recovered material as provenance import rather than current authority." }],
+      "enforcement": { "owner": "playbook-and-atlas", "mechanism": "Registry validator and Atlas adoption evidence review." },
+      "exceptions": ["Atlas may retain source-linked local adoption evidence without re-publishing doctrine."],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "atlas-and-playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": null }
+    },
+    {
+      "id": "failure-mode-summary-truth-drift",
+      "kind": "failure-mode",
+      "lifecycle": "superseded",
+      "statement": "A review summary, plan, board, or marker can claim more progress than current code and evidence prove.",
+      "rationale": "The imported review skill identified the risk, while the canonical rule now defines the governed control.",
+      "scope": { "truth_class": "imported-provenance", "applies_to": "Imported review guidance", "excludes": ["Current marker decisions"] },
+      "evidence": [{ "evidence_id": "imported-review-skill-summary-drift", "authority": "imported-provenance", "ref": "atlas-import:fawxzzy-tech-plan-recovery/2026-07-13/review-project-next-step.SKILL.md#durable-review-rules", "note": "Imported skill named summary-truth drift." }, { "evidence_id": "atlas-admission-source-hierarchy", "authority": "canonical-atlas", "ref": "atlas:docs/registry/FAWXZZY-TECH-PLAN-RECOVERY-ADMISSION.json#evidence-hierarchy", "note": "Current Atlas hierarchy establishes the authoritative replacement control." }],
+      "enforcement": { "owner": "atlas", "mechanism": "Use rule-evidence-before-marker-movement for current decisions." },
+      "exceptions": [],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "atlas-and-playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": "rule-evidence-before-marker-movement", "retired_reason": null }
+    },
+    {
+      "id": "decision-imported-plan-progress-as-current-truth",
+      "kind": "decision",
+      "lifecycle": "retired",
+      "statement": "Treat imported plan status or percentages as current operating truth.",
+      "rationale": "This recovered-plan posture is retained solely to preserve why it is no longer admissible.",
+      "scope": { "truth_class": "imported-provenance", "applies_to": "Recovered plan status claims", "excludes": ["Current runtime, repository, receipt, and board readback"] },
+      "evidence": [{ "evidence_id": "atlas-admission-no-imported-current-truth", "authority": "canonical-atlas", "ref": "atlas:docs/registry/FAWXZZY-TECH-PLAN-RECOVERY-ADMISSION.json#current-truth-rule", "note": "Explicitly rejects recovered prose and percentages as current truth." }],
+      "enforcement": { "owner": "atlas", "mechanism": "Admission classification prevents imported status from moving markers." },
+      "exceptions": [],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "atlas-and-playbook-maintainers", "next_review_due": "2027-01-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": "Retired by the Atlas admission current-truth rule; retained as provenance history only." }
+    },
+    {
+      "id": "pattern-one-honest-next-step",
+      "kind": "pattern",
+      "lifecycle": "candidate",
+      "statement": "Choose the smallest safe, evidence-producing next execution packet after project reconciliation.",
+      "rationale": "The imported review skill proposes this useful routing heuristic, but no current canonical source was found that promotes this exact formulation.",
+      "scope": { "truth_class": "imported-provenance", "applies_to": "Project-review recommendations", "excludes": ["Automatic execution authorization"] },
+      "evidence": [{ "evidence_id": "imported-review-skill-one-next-step", "authority": "imported-provenance", "ref": "atlas-import:fawxzzy-tech-plan-recovery/2026-07-13/review-project-next-step.SKILL.md#durable-review-rules", "note": "Imported skill specified one honest next step." }],
+      "enforcement": { "owner": "playbook", "mechanism": "Candidate only; requires canonical evidence and review before promotion." },
+      "exceptions": ["The caller may explicitly authorize parallel review lanes."],
+      "review": { "last_reviewed": "2026-07-13", "reviewer": "playbook-maintainers", "next_review_due": "2026-10-13" },
+      "supersession": { "supersedes": [], "superseded_by": null, "retired_reason": null }
+    }
+  ]
+}
