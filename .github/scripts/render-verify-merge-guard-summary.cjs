@@ -9,6 +9,14 @@ function readJsonIfExists(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function normalizeVerifyPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  if (payload.artifact === 'playbook.findings' && payload.data && typeof payload.data === 'object') {
+    return payload.data;
+  }
+  return payload;
+}
+
 function unique(values) {
   return [...new Set(values.filter((value) => typeof value === 'string' && value.trim().length > 0).map((value) => value.trim()))]
     .sort((left, right) => left.localeCompare(right));
@@ -34,11 +42,13 @@ function parseList(value) {
 }
 
 function findMergeGuardFindings(verifyPayload) {
+  verifyPayload = normalizeVerifyPayload(verifyPayload);
   const findings = Array.isArray(verifyPayload?.findings) ? verifyPayload.findings : [];
   return findings.filter((finding) => typeof finding?.id === 'string' && finding.id.startsWith(PROTECTED_DOC_RULE_PREFIX));
 }
 
 function buildMergeGuardSummary(verifyPayload) {
+  verifyPayload = normalizeVerifyPayload(verifyPayload);
   const mergeGuardFindings = findMergeGuardFindings(verifyPayload);
   if (mergeGuardFindings.length === 0) return null;
 

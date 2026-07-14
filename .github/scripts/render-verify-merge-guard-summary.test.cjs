@@ -35,6 +35,30 @@ test('buildMergeGuardSummary compacts protected-doc verify evidence into canonic
   });
 });
 
+test('buildMergeGuardSummary unwraps verify artifact envelopes', () => {
+  const summary = buildMergeGuardSummary({
+    artifact: 'playbook.findings',
+    data: {
+      ok: true,
+      findings: [
+        {
+          id: 'protected-doc.governance',
+          evidence: 'decision=pass; status=clear; affected_surfaces=none; blockers=none; next_action=No protected-doc action required.'
+        }
+      ]
+    }
+  });
+
+  assert.deepEqual(summary, {
+    findingIds: ['protected-doc.governance'],
+    decision: 'pass',
+    status: 'clear',
+    affectedSurfaces: [],
+    blockers: [],
+    nextActions: ['No protected-doc action required.'],
+  });
+});
+
 test('renderMarkdown keeps the CI/PR summary compact', () => {
   const markdown = renderMarkdown({
     decision: 'fail_closed',

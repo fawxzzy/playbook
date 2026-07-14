@@ -40,6 +40,39 @@ test('buildSummary renders compact success summary with verify, release, and mer
   assert.equal(summary.remediation, null);
 });
 
+test('buildSummary unwraps verify artifact envelopes before computing PASS/FAIL', () => {
+  const summary = buildSummary({
+    verify: {
+      artifact: 'playbook.findings',
+      data: {
+        ok: true,
+        findings: [
+          {
+            id: 'verify.warning.config-missing',
+            level: 'warning',
+            message: 'using defaults'
+          }
+        ],
+        nextActions: [],
+      }
+    },
+    releasePlan: null,
+    verifyArtifactPath: '.playbook/verify.json',
+    releaseArtifactPath: '.playbook/release-plan.json',
+    remediationPolicy: null,
+    remediationPolicyArtifactPath: '.playbook/ci-remediation-policy.json',
+    failureSummary: null,
+    failureSummaryArtifactPath: '.playbook/test-triage.json',
+    remediationStatus: null,
+    remediationStatusArtifactPath: '.playbook/remediation-status.json',
+  });
+
+  assert.equal(summary.overall.decision, 'merge-ready pending policy context');
+  assert.equal(summary.overall.status, 'clear');
+  assert.equal(summary.verify.status, 'PASS');
+  assert.deepEqual(summary.verify.blockers, []);
+});
+
 test('buildSummary includes remediation only when a test failure artifact exists', () => {
   const summary = buildSummary({
     verify: {
@@ -107,6 +140,15 @@ test('readJsonIfExists parses pure JSON artifacts', () => {
 
   const payload = readJsonIfExists(artifactPath);
   assert.deepEqual(payload, { ok: true, findings: [] });
+});
+
+test('readJsonIfExists preserves wrapped verify artifacts for downstream normalization', () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-summary-json-envelope-'));
+  const artifactPath = path.join(tmpDir, 'verify.json');
+  fs.writeFileSync(artifactPath, '{"artifact":"playbook.findings","data":{"ok":true,"findings":[]}}', 'utf8');
+
+  const payload = readJsonIfExists(artifactPath);
+  assert.deepEqual(payload, { artifact: 'playbook.findings', data: { ok: true, findings: [] } });
 });
 
 test('readJsonIfExists names offending file when JSON is contaminated', () => {

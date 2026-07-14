@@ -19,6 +19,14 @@ function readJsonIfExists(filePath) {
   }
 }
 
+function normalizeVerifyPayload(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  if (payload.artifact === 'playbook.findings' && payload.data && typeof payload.data === 'object') {
+    return payload.data;
+  }
+  return payload;
+}
+
 function unique(values) {
   return [...new Set(values
     .filter((value) => typeof value === 'string' && value.trim().length > 0)
@@ -61,21 +69,23 @@ function bumpVersion(version, bump) {
 }
 
 function buildVerifySummary(verifyPayload) {
-  if (!verifyPayload || typeof verifyPayload !== 'object') return null;
-  const findings = Array.isArray(verifyPayload.findings) ? verifyPayload.findings : [];
+  const normalizedVerifyPayload = normalizeVerifyPayload(verifyPayload);
+  if (!normalizedVerifyPayload) return null;
+  const findings = Array.isArray(normalizedVerifyPayload.findings) ? normalizedVerifyPayload.findings : [];
   const blockers = findings
     .filter((finding) => finding?.level === 'error')
     .slice(0, 5)
     .map((finding) => `${finding.id}: ${finding.message}`);
-  const nextActions = Array.isArray(verifyPayload.nextActions) ? verifyPayload.nextActions.slice(0, 3) : [];
+  const nextActions = Array.isArray(normalizedVerifyPayload.nextActions) ? normalizedVerifyPayload.nextActions.slice(0, 3) : [];
   return {
-    status: verifyPayload.ok ? 'PASS' : 'FAIL',
+    status: normalizedVerifyPayload.ok ? 'PASS' : 'FAIL',
     blockers,
-    nextAction: nextActions[0] ?? (verifyPayload.ok ? 'No verify follow-up required.' : 'Review `.playbook/verify.json` and address the blocking findings.'),
+    nextAction: nextActions[0] ?? (normalizedVerifyPayload.ok ? 'No verify follow-up required.' : 'Review `.playbook/verify.json` and address the blocking findings.'),
   };
 }
 
 function buildMergeGuardSummary(verifyPayload) {
+  verifyPayload = normalizeVerifyPayload(verifyPayload);
   const findings = Array.isArray(verifyPayload?.findings) ? verifyPayload.findings : [];
   const mergeGuardFindings = findings.filter((finding) => typeof finding?.id === 'string' && finding.id.startsWith(PROTECTED_DOC_RULE_PREFIX));
   if (mergeGuardFindings.length === 0) return null;
@@ -149,6 +159,7 @@ function buildRemediationSummary(policy, failureSummary, remediationStatus) {
 }
 
 function buildSummary({ verify, verifyArtifactPath, releasePlan, releaseArtifactPath, remediationPolicy, remediationPolicyArtifactPath, failureSummary, failureSummaryArtifactPath, remediationStatus, remediationStatusArtifactPath }) {
+  verify = normalizeVerifyPayload(verify);
   const verifySummary = buildVerifySummary(verify);
   if (!verifySummary) return null;
   const mergeGuardSummary = buildMergeGuardSummary(verify);
