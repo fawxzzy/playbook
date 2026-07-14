@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 export const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-export const localCliEntrypoint = path.resolve(projectRoot, 'packages/cli/dist/main.js');
+const builtCliEntrypoint = path.resolve(projectRoot, 'packages/cli/dist/main.js');
+export const localCliEntrypoint = path.resolve(projectRoot, 'scripts/playbook-cli-proxy.mjs');
 
 const resolveCommand = (command, args) => {
   if (process.platform === 'win32' && ['npm', 'pnpm', 'yarn'].includes(command)) {
@@ -40,9 +41,9 @@ export const run = ({ cwd, command, args, allowFailure = false, env = process.en
 };
 
 export const assertLocalCliBuild = () => {
-  if (!fs.existsSync(localCliEntrypoint)) {
+  if (!fs.existsSync(builtCliEntrypoint)) {
     throw new Error(
-      `Local Playbook CLI build is missing at ${localCliEntrypoint}. Build the workspace first (pnpm -r build).`
+      `Local Playbook CLI build is missing at ${builtCliEntrypoint}. Build the workspace first (pnpm -r build).`
     );
   }
 };
