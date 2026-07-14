@@ -11,18 +11,21 @@ import {
   run,
   runPlaybookCli
 } from './demo-repo-utils.mjs';
+import { applyPlaybookDemoManagedDocsCompatibility } from './demo-managed-docs-compat.mjs';
 import { writeCommandTruthContract } from './managed-docs-lib.mjs';
 
 const DEFAULT_REPO_URL = 'https://github.com/ZachariahRedfield/playbook-demo.git';
 const DEFAULT_BASE_BRANCH = 'main';
 const DEFAULT_FEATURE_ID = 'PB-V1-DEMO-REFRESH-001';
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const DEMO_MANAGED_DOCS_HELPER_PATH = path.join(SCRIPT_DIR, 'demo-managed-docs-compat.mjs');
 const REQUIRED_ALLOWED_PATHS = [
   '.playbook/demo-artifacts/',
   '.playbook/repo-index.json',
   'docs/ARCHITECTURE_DIAGRAMS.md',
   'docs/contracts/command-truth.json'
 ];
-const RUNTIME_ONLY_PATHS = ['.playbook/finding-state.json'];
+const RUNTIME_ONLY_PATHS = ['.playbook/finding-state.json', '.playbook/runtime/'];
 const DEFAULT_GIT_AUTHOR_NAME = 'playbook-demo-refresh[bot]';
 const DEFAULT_GIT_AUTHOR_EMAIL = 'playbook-demo-refresh[bot]@users.noreply.github.com';
 
@@ -85,8 +88,7 @@ const parseChangedFiles = (repoDir) => {
   const status = run({ cwd: repoDir, command: 'git', args: ['status', '--porcelain', '--untracked-files=all'] });
   return status.stdout
     .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
+    .filter((line) => line.trim().length > 0)
     .map((line) => line.slice(3));
 };
 
@@ -117,7 +119,8 @@ const restoreRuntimeOnlyArtifacts = (demoDir) => {
 
     const absolutePath = path.join(demoDir, relativePath);
     if (fs.existsSync(absolutePath)) {
-      fs.rmSync(absolutePath, { force: true });
+      const stats = fs.statSync(absolutePath);
+      fs.rmSync(absolutePath, { force: true, recursive: stats.isDirectory() });
     }
   }
 };
@@ -178,7 +181,7 @@ const tokenizeCommand = (command) => {
   return tokens;
 };
 
-const resolveRefreshCommand = (demoDir) => {
+const resolveRefreshCommand = (demoDir, dryRun) => {
   const configured = process.env.PLAYBOOK_DEMO_REFRESH_CMD;
   if (configured) {
     const [command, ...args] = tokenizeCommand(configured);
@@ -197,6 +200,7 @@ const resolveRefreshCommand = (demoDir) => {
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   const scripts = packageJson.scripts && typeof packageJson.scripts === 'object' ? packageJson.scripts : {};
   const candidates = ['refresh:playbook', 'demo:refresh', 'refresh'];
+  const directRefreshScriptPath = path.join(demoDir, 'scripts', 'refresh-demo-artifacts.mjs');
   const hasNpmLock = fs.existsSync(path.join(demoDir, 'package-lock.json'));
   const hasPnpmLock = fs.existsSync(path.join(demoDir, 'pnpm-lock.yaml'));
   const hasYarnLock = fs.existsSync(path.join(demoDir, 'yarn.lock'));
@@ -212,6 +216,19 @@ const resolveRefreshCommand = (demoDir) => {
 
   for (const name of candidates) {
     if (typeof scripts[name] === 'string' && scripts[name].trim()) {
+      const normalizedScript = scripts[name].trim().replace(/\s+/g, ' ');
+      if (
+        name === 'demo:refresh' &&
+        normalizedScript === 'node scripts/demo-refresh.mjs' &&
+        fs.existsSync(directRefreshScriptPath)
+      ) {
+        return {
+          description: `node scripts/refresh-demo-artifacts.mjs${dryRun ? ' --dry-run' : ''}`,
+          command: 'node',
+          args: ['scripts/refresh-demo-artifacts.mjs', ...(dryRun ? ['--dry-run'] : [])]
+        };
+      }
+
       if (packageManager === 'pnpm') {
         return { description: `pnpm run ${name}`, command: 'pnpm', args: ['run', name] };
       }
@@ -227,14 +244,14 @@ const resolveRefreshCommand = (demoDir) => {
   );
 };
 
-const runRefreshCommand = ({ demoDir, refreshCommand }) => {
+const runRefreshCommand = ({ demoDir, refreshCommand, env = process.env }) => {
   const result = run({
     cwd: demoDir,
     command: refreshCommand.command,
     args: refreshCommand.args,
     allowFailure: true,
     env: {
-      ...process.env,
+      ...env,
       PLAYBOOK_CLI_PATH: localCliEntrypoint
     }
   });
@@ -311,6 +328,51 @@ const syncDemoDoctorContracts = async (demoDir) => {
   console.log('Validated required managed docs/contracts in temp demo repo before demo refresh: docs/contracts/command-truth.json');
 };
 
+const patchDemoManagedDocsUpdateScript = (demoDir) => {
+  const scriptPath = path.join(demoDir, 'scripts', 'update-managed-docs.mjs');
+  if (!fs.existsSync(scriptPath)) {
+    return () => {};
+  }
+
+  const original = fs.readFileSync(scriptPath, 'utf8');
+  const patched = `import { fileURLToPath, pathToFileURL } from 'node:url';
+import path from 'node:path';
+import { regenerateManagedDocs } from '../src/lib/demo-governance.js';
+
+async function applyPlaybookManagedDocsCompatibility(rootDir) {
+  const helperPath = process.env.PLAYBOOK_DEMO_MANAGED_DOCS_HELPER;
+  if (!helperPath) {
+    return;
+  }
+
+  const helperModule = await import(pathToFileURL(path.resolve(helperPath)).href);
+  if (typeof helperModule.applyPlaybookDemoManagedDocsCompatibility === 'function') {
+    await helperModule.applyPlaybookDemoManagedDocsCompatibility(rootDir);
+  }
+}
+
+async function main() {
+  const rootDir = process.env.PLAYBOOK_MANAGED_DOCS_ROOT ? path.resolve(process.env.PLAYBOOK_MANAGED_DOCS_ROOT) : process.cwd();
+  regenerateManagedDocs(rootDir);
+  await applyPlaybookManagedDocsCompatibility(rootDir);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}
+
+export { main };
+`;
+
+  fs.writeFileSync(scriptPath, patched, 'utf8');
+  return () => {
+    fs.writeFileSync(scriptPath, original, 'utf8');
+  };
+};
+
 const configureGitIdentity = (demoDir) => {
   const gitAuthorName = process.env.PLAYBOOK_GIT_AUTHOR_NAME ?? DEFAULT_GIT_AUTHOR_NAME;
   const gitAuthorEmail = process.env.PLAYBOOK_GIT_AUTHOR_EMAIL ?? DEFAULT_GIT_AUTHOR_EMAIL;
@@ -366,10 +428,22 @@ const main = async () => {
   const { demoDir } = cloneDemoRepository({ repoUrl: args.repoUrl, prefix: 'playbook-demo-refresh' });
   installNodeDependencies(demoDir);
   await syncDemoDoctorContracts(demoDir);
+  const restoreManagedDocsScript = patchDemoManagedDocsUpdateScript(demoDir);
 
-  const refreshCommand = resolveRefreshCommand(demoDir);
-  console.log(`Using refresh command: ${refreshCommand.description}`);
-  runRefreshCommand({ demoDir, refreshCommand });
+  try {
+    const refreshCommand = resolveRefreshCommand(demoDir, args.dryRun);
+    console.log(`Using refresh command: ${refreshCommand.description}`);
+    runRefreshCommand({
+      demoDir,
+      refreshCommand,
+      env: {
+        ...process.env,
+        PLAYBOOK_DEMO_MANAGED_DOCS_HELPER: DEMO_MANAGED_DOCS_HELPER_PATH
+      }
+    });
+  } finally {
+    restoreManagedDocsScript();
+  }
   restoreRuntimeOnlyArtifacts(demoDir);
 
   const changedFiles = parseChangedFiles(demoDir);
