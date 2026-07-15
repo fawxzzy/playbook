@@ -19,6 +19,13 @@ type DoctorPayload = {
     id: string;
     message: string;
   }>;
+  failureDomains: string[];
+  primaryFailureDomain: string | null;
+  domainBlockers: Array<{
+    domain: string;
+    signal: string;
+    summary: string;
+  }>;
 };
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
@@ -105,11 +112,18 @@ describe('doctor contract', () => {
 
       expect(payload).toMatchObject({
         schemaVersion: '1.0',
-        command: 'doctor'
+        command: 'doctor',
+        status: 'error',
+        primaryFailureDomain: 'contract_validation'
       });
       assertDoctorExitSemantics(payload, result.status);
+      expect(result.status).toBe(1);
+      expect(result.signal).toBeNull();
+      expect(result.stderr).toBe('');
       expect(payload.summary.errors).toBeGreaterThan(0);
       expect(payload.findings.some((finding) => finding.severity === 'error')).toBe(true);
+      expect(payload.failureDomains).toContain('contract_validation');
+      expect(payload.domainBlockers.some((blocker) => blocker.domain === 'contract_validation')).toBe(true);
     } finally {
       fs.rmSync(fixtureRepo, { recursive: true, force: true });
     }
