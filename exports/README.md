@@ -44,6 +44,14 @@ Canonical commandless workflow-pack environment bridge exports now also include:
 - `exports/playbook.workflow-pack.environment-bridge.executor-receipt.schema.v1.json`
 - `exports/playbook.workflow-pack.environment-bridge.executor-receipt.example.v1.json`
 
+The canonical project-board owner export is:
+
+- `exports/playbook.project-board.owner-export.v1.json`
+
+It is generated from `docs/roadmap/ROADMAP.json` with `pnpm board:export` and
+must remain byte-current under `pnpm board:export:check`. Atlas Contracts owns
+the shared schema and semantic validation used before DiscordOS admission.
+
 Draft/review exports may also appear here when new contract surfaces are being proposed. Those files are advisory until the corresponding contract/docs surface is promoted.
 
 Use the export as read-only owner truth. Do not copy its doctrine into a second canonical store.
