@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_d95d386945a2",
+  "export_id": "pbe_playbook_roadmap_0e9797a3301f",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:d95d386945a216ecc609c7d3a2535e4025b6c51f3d5c3bc520b2c0a5bb832235",
+  "source_revision": "sha256:0e9797a3301fe64d168ea4e3bcd07a9db0e59c3828df78ca18f761246e30da2b",
   "generated_at": "2026-07-15T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:d95d386945a216ecc609c7d3a2535e4025b6c51f3d5c3bc520b2c0a5bb832235",
+      "revision": "sha256:0e9797a3301fe64d168ea4e3bcd07a9db0e59c3828df78ca18f761246e30da2b",
       "observed_at": "2026-07-15T00:00:00.000Z"
     }
   ],
@@ -2590,7 +2590,7 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:d95d386945a216ecc609c7d3a2535e4025b6c51f3d5c3bc520b2c0a5bb832235",
+    "source_digest": "sha256:0e9797a3301fe64d168ea4e3bcd07a9db0e59c3828df78ca18f761246e30da2b",
     "source_feature_count": 63,
     "exported_card_count": 35,
     "excluded_completed_statuses": [

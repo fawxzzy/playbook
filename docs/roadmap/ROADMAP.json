@@ -2356,7 +2356,7 @@
       "feature_id": "PB-V10-LIFELINE-OBSERVER-HOME-001",
       "version": "v1.0",
       "title": "Lifeline canonical Observer runtime home",
-      "goal": "Keep the Lifeline-supervised Playbook Observer loopback instance on the canonical Atlas runtime home through one explicit portable start-root contract without changing normal Observer CLI root behavior or writing mutable Observer state into the Playbook source checkout.",
+      "goal": "Keep the Lifeline-supervised Playbook Observer loopback instance on the canonical Atlas runtime home through one portable global target and explicit Observer-root contract without changing normal Observer CLI behavior or writing Observer state or Playbook lifecycle telemetry into the source checkout.",
       "commands": [
         "observer"
       ],
@@ -2365,6 +2365,7 @@
       ],
       "tests": [
         "test/scripts/start-lifeline-root.test.mjs",
+        "packages/cli/src/main.runtime.test.ts",
         "packages/cli/src/commands/observer.test.ts"
       ],
       "docs": [
@@ -2377,6 +2378,7 @@
       "dependencies": [],
       "verification_commands": [
         "node --test test/scripts/start-lifeline-root.test.mjs",
+        "pnpm -C packages/cli test -- src/main.runtime.test.ts",
         "pnpm -C packages/cli test -- src/commands/observer.test.ts",
         "pnpm test:cli",
         "pnpm -r build",

@@ -1,11 +1,14 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 
 const scriptPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'run-playbook.mjs');
+const cliEntrypoint = path.resolve(process.cwd(), 'dist', 'main.js');
+const rootPackageJsonPath = path.resolve(process.cwd(), '..', '..', 'package.json');
 const tempRoots: string[] = [];
 
 const createTempRoot = (prefix: string): string => {
@@ -22,6 +25,73 @@ describe('runtime observability artifacts', () => {
         fs.rmSync(root, { recursive: true, force: true });
       }
     }
+  });
+
+  it('keeps Lifeline Observer state and graceful-stop telemetry out of the source checkout', { timeout: 20000 }, () => {
+    const atlasRoot = createTempRoot('playbook-lifeline-runtime-');
+    const sourceCheckout = path.join(atlasRoot, 'repos', 'playbook');
+    const observerHome = path.join(atlasRoot, 'runtime', 'playbook', 'observer');
+    fs.mkdirSync(sourceCheckout, { recursive: true });
+    fs.mkdirSync(observerHome, { recursive: true });
+    fs.writeFileSync(path.join(sourceCheckout, 'package.json'), JSON.stringify({ name: 'playbook-source-fixture' }), 'utf8');
+
+    const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    const startTokens = rootPackageJson.scripts['start:lifeline'].trim().split(/\s+/);
+    expect(startTokens.slice(0, 2)).toEqual(['pnpm', 'playbook']);
+    const commandArgs = startTokens.slice(2);
+    const portIndex = commandArgs.indexOf('--port');
+    expect(commandArgs[portIndex + 1]).toBe('4300');
+    commandArgs[portIndex + 1] = '0';
+
+    const wrapperSource = `
+      process.argv = [process.execPath, ${JSON.stringify(cliEntrypoint)}, ...JSON.parse(process.env.PLAYBOOK_LIFELINE_TEST_ARGS)];
+      const shutdownDeadline = setTimeout(() => process.exit(124), 10000);
+      const gracefulStop = setInterval(() => {
+        if (process.listenerCount('SIGTERM') > 0) {
+          clearInterval(gracefulStop);
+          process.emit('SIGTERM');
+        }
+      }, 10);
+      await import(${JSON.stringify(pathToFileURL(cliEntrypoint).href)});
+      clearTimeout(shutdownDeadline);
+    `;
+    const result = spawnSync(process.execPath, ['--input-type=module', '--eval', wrapperSource], {
+      cwd: sourceCheckout,
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PLAYBOOK_LIFELINE_TEST_ARGS: JSON.stringify([...commandArgs, '--json'])
+      },
+      timeout: 15000
+    });
+
+    expect({ status: result.status, signal: result.signal, stderr: result.stderr }).toEqual({
+      status: 0,
+      signal: null,
+      stderr: ''
+    });
+    const servePayload = JSON.parse(result.stdout) as {
+      command: string;
+      observer_root: string;
+      registry_path: string;
+    };
+    expect(servePayload.command).toBe('observer-serve');
+    expect(servePayload.observer_root).toBe(fs.realpathSync(observerHome));
+    expect(servePayload.registry_path.startsWith(fs.realpathSync(observerHome))).toBe(true);
+
+    const runtimeRoot = path.join(observerHome, '.playbook', 'runtime');
+    const telemetry = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'current', 'telemetry.json'), 'utf8')) as {
+      cycle_id: string;
+      command_call_count_by_command: Record<string, number>;
+    };
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(runtimeRoot, 'cycles', telemetry.cycle_id, 'manifest.json'), 'utf8')
+    ) as { trigger_command: string; status: string };
+    expect(telemetry.command_call_count_by_command.observer).toBe(1);
+    expect(manifest).toMatchObject({ trigger_command: 'observer', status: 'success' });
+    expect(fs.existsSync(path.join(sourceCheckout, '.playbook'))).toBe(false);
   });
 
   it('writes current, cycle, and history runtime artifacts for target repos', { timeout: 15000 }, () => {
