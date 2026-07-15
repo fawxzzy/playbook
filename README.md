@@ -50,6 +50,10 @@ Failure Mode: Manual proposal-to-request translation recreates hidden session st
 Failure Mode: The loop claims to derive next action, but that action remains trapped in a followup artifact no operator workflow actually consumes.
 Recent implementation note: promoted reusable patterns now carry explicit lifecycle truth (`active`, `superseded`, `retired`, `demoted`), lifecycle mutations emit audited receipts through `pnpm playbook promote pattern-retire|pattern-demote|pattern-recall|pattern-supersede`, and advisory planning context consumes only active promoted knowledge by default.
 Recent implementation note: `pnpm playbook receipt ingest --json` now converts receipts, drift signals, rollback/deactivation notes, promotion history, and later portability outcomes into reviewable `.playbook/memory/lifecycle-candidates.json` rows that stay candidate-only until explicit human lifecycle review.
+Recent implementation note: `pnpm playbook knowledge atlas-admit --artifact <path> --atlas-contracts-root <dir> --json` now consumes Atlas-owned `atlas.knowledge-candidate.v2` artifacts through the official `@atlas/contracts` `./validator` export, preserves exact candidate identity and classified provenance, and writes only the deterministic review queue at `.playbook/memory/atlas-knowledge-candidates.json` with a correlated consumer receipt.
+Rule: Atlas owns contract semantics; Playbook consumes without copying, and KnowledgeCandidate admission never grants doctrine-promotion authority.
+Pattern: Candidate-only intake preserves exact identity/provenance and emits a deterministic correlated receipt.
+Failure Mode: Candidate-to-Doctrine Collapse occurs when a consumer silently treats suggested destination or review state as promotion authority.
 Recent implementation note: `pnpm playbook docs consolidate --json` now provides a deterministic proposal-only docs seam for protected singleton narrative surfaces by reading worker fragments plus the protected-surface registry, writing `.playbook/docs-consolidation.json`, surfacing duplicate/conflicting fragment targets explicitly, and emitting one compact lead-agent integration brief without introducing any new doc mutation executor.
 Recent implementation note: `pnpm playbook docs consolidate-plan --json` now compiles `.playbook/docs-consolidation.json` into the first-class `.playbook/docs-consolidation-plan.json` reviewed-write artifact, stamping target-locked file/block fingerprints or anchor context onto each executable task so `pnpm playbook apply --from-plan .playbook/docs-consolidation-plan.json` fails closed if reviewed protected-doc targets drift before execution. Protected singleton docs still mutate only through `apply --from-plan`, so consolidation planning does not become a shadow executor.
 Recent implementation note: `pnpm playbook apply` now enforces declared `.playbook/change-scope.json` mutation bundles before execution succeeds, including `allowedFiles`, `patchSizeBudget`, and required `boundaryChecks`, and fails clearly when scope checks are missing, red, or exceeded.
@@ -437,6 +441,7 @@ pnpm playbook query rule-owners
 pnpm playbook query test-hotspots
 pnpm playbook knowledge list
 pnpm playbook knowledge query --type candidate
+pnpm playbook knowledge atlas-admit --artifact <candidate.json> --atlas-contracts-root <atlas-contracts-dir> --json
 pnpm playbook ask "where should a new feature live?"
 pnpm playbook ask "what modules exist?" --json
 pnpm playbook ask "how does auth work?" --repo-context --mode concise
@@ -448,7 +453,7 @@ pnpm playbook explain PB001
 pnpm playbook explain architecture
 ```
 
-`pnpm playbook knowledge` is the read-only inspection surface for normalized evidence, candidate knowledge, promoted doctrine, and superseded knowledge.
+`pnpm playbook knowledge` provides read-only inspection for normalized evidence, candidate knowledge, promoted doctrine, and superseded knowledge. Its explicit `atlas-admit` subcommand is the narrow exception: it writes only an Atlas review-candidate queue and never promotes or mutates doctrine.
 
 ### Repo-aware ask (`pnpm playbook ask --repo-context`, `--module`)
 

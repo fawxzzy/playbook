@@ -15,9 +15,10 @@ export type KnowledgeCommandOptions = {
 export const printKnowledgeHelp = (): void => {
   console.log(`Usage: playbook knowledge <subcommand> [options]
 
-Inspect repository knowledge artifacts through read-only deterministic surfaces.
+Inspect repository knowledge artifacts and admit Atlas-owned review candidates through deterministic surfaces.
 
 Subcommands:
+  atlas-admit                     Admit one Atlas KnowledgeCandidate into the review-only queue
   list                            List evidence, candidate, promoted, and superseded knowledge records
   query                           Filter knowledge records
   inspect <id>                    Inspect one knowledge record by id
@@ -34,6 +35,9 @@ Subcommands:
   review record                   Record a durable retrieval review receipt
 
 Options:
+  --artifact <path>            Atlas KnowledgeCandidate JSON path for atlas-admit
+  --atlas-contracts-root <dir> Atlas @atlas/contracts package root for atlas-admit
+  --promote                    Forbidden proof flag; atlas-admit rejects automatic promotion
   --type <type>                Filter by type (evidence|candidate|promoted|superseded)
   --status <status>            Filter by status (observed|active|stale|retired|superseded)
   --lifecycle <state>          Filter by lifecycle (observed|candidate|active|stale|retired|superseded|demoted)

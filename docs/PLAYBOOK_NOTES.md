@@ -1,5 +1,17 @@
 # Playbook Notes
 
+• Rule: Atlas owns contract semantics; Playbook consumes without copying.
+The Atlas KnowledgeCandidate adapter resolves the official `@atlas/contracts` `./validator` export at runtime and never embeds the Atlas schema or validator behavior.
+
+• Rule: KnowledgeCandidate admission never grants doctrine-promotion authority.
+Admission may create or reuse one review-candidate record, but canonical doctrine, rules, patterns, failure modes, stories, and promoted memory remain behind their existing explicit review gates.
+
+• Pattern: Candidate-only intake with exact identity/provenance preservation and deterministic correlated receipt.
+The external `candidate_id`, ordered provenance references/classifications, proposal destination, and review state remain exact while deterministic record and receipt identities make replay byte-stable and duplicate-free.
+
+• Failure Mode: Candidate-to-Doctrine Collapse.
+A consumer silently treats `suggested_destination` or review state as promotion authority, collapsing a proposal into canonical doctrine without an explicit Playbook review action.
+
 • Pattern: Verify-Plan-Apply-Verify
 The canonical remediation workflow is `verify -> plan -> apply -> verify`. This keeps detection, intent generation, execution, and post-execution validation explicit for humans, CI, and AI agents.
 

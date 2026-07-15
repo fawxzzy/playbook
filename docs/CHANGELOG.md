@@ -1,4 +1,12 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.53.0 - 2026-07-15
+- Recommended bump: minor
+- @fawxzzy/playbook: 0.52.2 -> 0.53.0 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.52.2 -> 0.53.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.52.2 -> 0.53.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.52.2 -> 0.53.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.52.2 -> 0.53.0 (playbook-installable-workspace)
+
 ## 0.52.2 - 2026-05-21
 - Recommended bump: patch
 - @fawxzzy/playbook: 0.52.1 -> 0.52.2 (playbook-installable-workspace)
@@ -1394,5 +1402,9 @@
 - Failure Mode: Dumping full machine context into worker prompts lowers signal and increases drift.
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_END -->
 
+- WHAT: Added a fail-closed engine adapter and `knowledge atlas-admit` CLI surface for Atlas-owned `atlas.knowledge-candidate.v2` artifacts, using the official `@atlas/contracts` `./validator` export, exact identity/classified-provenance preservation, supported-destination checks, deterministic correlated receipts, byte-identical replay, and doctrine-unchanged proof. WHY: Playbook can now operate as an independent candidate-only Atlas consumer without copying contract semantics or turning candidate metadata into doctrine-promotion authority.
+- Rule: Atlas owns contract semantics; Playbook consumes without copying, and KnowledgeCandidate admission never grants doctrine-promotion authority.
+- Pattern: Candidate-only intake with exact identity/provenance preservation and deterministic correlated receipt.
+- Failure Mode: Candidate-to-Doctrine Collapse occurs when suggested destination or review state is silently treated as promotion authority.
 - WHAT: Updated `pnpm playbook docs audit` idea-leakage scanning to ignore managed AGENTS command/example sections, added regression coverage for that false-positive path, and refreshed repo scorecard examples to reflect docs governance as verified rather than warning-bearing. WHY: Managed command metadata should not cause AGENTS planning-language warnings, and the support artifacts now match the actual docs-audit contract.
 - WHAT: Recorded the recent stack sustain patterns in `docs/PATTERNS.md`, covering merge-repin-validate archive closure, atomic topology admission, release-safety waves before runtime expansion, and clean-worktree lane execution. WHY: These were reused successfully across ATLAS, Foundation, and Lifeline and are now explicit Playbook doctrine rather than task-local memory.

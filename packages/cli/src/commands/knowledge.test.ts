@@ -9,6 +9,7 @@ const knowledgeTimeline = vi.fn();
 const knowledgeProvenance = vi.fn();
 const knowledgeSupersession = vi.fn();
 const knowledgeStale = vi.fn();
+const admitAtlasKnowledgeCandidate = vi.fn();
 const readCrossRepoPatternsArtifact = vi.fn();
 const readPortabilityOutcomesArtifact = vi.fn();
 const buildReviewQueue = vi.fn();
@@ -26,6 +27,7 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   knowledgeProvenance,
   knowledgeSupersession,
   knowledgeStale,
+  admitAtlasKnowledgeCandidate,
   readCrossRepoPatternsArtifact,
   readPortabilityOutcomesArtifact,
   buildReviewQueue,
@@ -161,6 +163,70 @@ const transferReadinessFixture = () => ({
 
 
 describe('runKnowledge', () => {
+  it('admits Atlas KnowledgeCandidate artifacts through the thin knowledge CLI surface', async () => {
+    const { runKnowledge } = await import('./knowledge.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    admitAtlasKnowledgeCandidate.mockResolvedValue({
+      schemaVersion: '1.0',
+      command: 'atlas-knowledge-candidate-admit',
+      status: 'admitted',
+      candidate_id: 'knowledge-001',
+      candidate_record_id: 'playbook-akc-record',
+      queue_path: '.playbook/memory/atlas-knowledge-candidates.json',
+      candidate_count: 1,
+      receipt: { receipt_id: 'playbook-akc-receipt' },
+      proof: { doctrine_unchanged: true, auto_promotion: false }
+    });
+
+    const exitCode = await runKnowledge('/repo', [
+      'atlas-admit',
+      '--artifact',
+      '/atlas/knowledge-candidate.json',
+      '--atlas-contracts-root',
+      '/atlas/packages/atlas-contracts'
+    ], { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(admitAtlasKnowledgeCandidate).toHaveBeenCalledWith({
+      projectRoot: '/repo',
+      artifactPath: '/atlas/knowledge-candidate.json',
+      atlasContractsRoot: '/atlas/packages/atlas-contracts',
+      attemptPromotion: false
+    });
+    expect(JSON.parse(String(logSpy.mock.calls[0]?.[0]))).toMatchObject({
+      command: 'atlas-knowledge-candidate-admit',
+      status: 'admitted',
+      candidate_id: 'knowledge-001'
+    });
+    logSpy.mockRestore();
+  });
+
+  it('emits stable engine reason codes for rejected Atlas admission', async () => {
+    const { runKnowledge } = await import('./knowledge.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    admitAtlasKnowledgeCandidate.mockRejectedValue(Object.assign(new Error('automatic promotion forbidden'), {
+      reasonCode: 'KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN',
+      details: []
+    }));
+
+    const exitCode = await runKnowledge('/repo', [
+      'atlas-admit',
+      '--artifact',
+      '/atlas/knowledge-candidate.json',
+      '--atlas-contracts-root',
+      '/atlas/packages/atlas-contracts',
+      '--promote'
+    ], { format: 'json', quiet: false });
+
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(JSON.parse(String(logSpy.mock.calls[0]?.[0]))).toMatchObject({
+      command: 'knowledge-atlas-admit',
+      status: 'rejected',
+      reason_code: 'KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN'
+    });
+    logSpy.mockRestore();
+  });
+
   it('supports list and emits json output', async () => {
     const { runKnowledge } = await import('./knowledge.js');
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
