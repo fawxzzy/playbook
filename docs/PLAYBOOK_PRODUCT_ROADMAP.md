@@ -41,6 +41,10 @@ Recent implementation note: deterministic change-scope bundles are now emitted a
 Recent implementation note: `apply` now enforces declared change-scope bundles before reporting success, with fail-closed checks for out-of-scope files, patch-budget overflow, and missing/red boundary checks.
 Recent implementation note: worker launch/submit authorization now derives per-lane allowed write surfaces from `.playbook/change-scope.json`, keeps launch eligibility bounded by those declared surfaces, and reject-blocks submissions when worker outputs exceed scope or budget boundaries.
 Recent implementation note: Playbook now independently consumes Atlas-owned `atlas.knowledge-candidate.v2` artifacts through `knowledge atlas-admit`, preserving exact external identity and classified provenance in a deterministic review-only queue with a correlated receipt while proving canonical doctrine/memory/pattern/story paths remain unchanged.
+Recent implementation note: `PB-V1-DELIVERY-SYSTEM-001` now covers the repaired CLI Doctor smoke contract: the intentionally incomplete fresh-init fixture exercises Doctor's structured negative path, admits only diagnostic exit `1`, and rejects runtime stderr, malformed JSON, missing structured evidence, or unexpected failure domains. No duplicate roadmap/card identity was introduced.
+Rule: Smoke tests that admit expected nonzero diagnostics must validate structured failure semantics, not only the exit code.
+Failure Mode: Expected Diagnostic Exit Masking occurs when a broad allowed-exit rule lets crashes or unrelated contract failures pass.
+Pattern: Use structured JSON plus exact status/failure-domain assertions for negative-path CLI smoke coverage.
 Rule: Atlas owns contract semantics; Playbook consumes without copying.
 Rule: KnowledgeCandidate admission never grants doctrine-promotion authority.
 Pattern: Candidate-only intake with exact identity/provenance preservation and deterministic correlated receipt.

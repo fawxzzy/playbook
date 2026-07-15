@@ -27,3 +27,5 @@ pnpm playbook doctor --fix --yes
 - Integrates architecture-audit checks into health reporting.
 - Reports structured `artifactHygiene` and `memoryDiagnostics` payloads in JSON mode.
 - Returns stable machine-readable contracts for automation via `--json`.
+- Returns exit `1` when the structured report status is `error`; `ok` and `warning` reports return exit `0`.
+- Treat exit `1` as a diagnostic failure only after validating the `--json` envelope, summary, findings, and failure domains; do not treat the exit code alone as proof of a successful Doctor run.

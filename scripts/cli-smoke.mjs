@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { assertExpectedDoctorDiagnosticFailure } from './cli-smoke-doctor-contract.mjs';
 
 const repoRoot = path.resolve('.');
 const nodeBin = process.execPath;
@@ -19,10 +20,18 @@ const runCommand = ({ args, cwd, artifactFile, allowedExitCodes = [0], useCliOut
   });
 
   if (result.error) {
-    throw result.error;
+    throw new Error(
+      `cli-smoke failed: could not start \`${['playbook', ...args].join(' ')}\`: ${result.error.message}`
+    );
   }
 
-  const status = typeof result.status === 'number' ? result.status : 1;
+  if (typeof result.status !== 'number') {
+    throw new Error(
+      `cli-smoke failed: \`${['playbook', ...args].join(' ')}\` terminated without an exit code (signal=${String(result.signal)})`
+    );
+  }
+
+  const status = result.status;
   const stdout = result.stdout ?? '';
   const stderr = result.stderr ?? '';
 
@@ -48,6 +57,8 @@ const runCommand = ({ args, cwd, artifactFile, allowedExitCodes = [0], useCliOut
       `cli-smoke failed: runtime error signal detected in stderr for \`${['playbook', ...args].join(' ')}\`\n${stderr}`
     );
   }
+
+  return { status, stdout, stderr };
 };
 
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-cli-smoke-'));
@@ -75,7 +86,13 @@ try {
   runCommand({ args: ['verify', '--json', '--out', '.playbook/test-artifacts/verify.json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/verify.json', allowedExitCodes: [0, 3], useCliOut: true });
   runCommand({ args: ['plan', '--json', '--out', '.playbook/test-artifacts/plan.json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/plan.json', useCliOut: true });
   runCommand({ args: ['apply', '--json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/apply.json' });
-  runCommand({ args: ['doctor'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/doctor.txt' });
+  const doctorResult = runCommand({
+    args: ['doctor', '--json'],
+    cwd: projectDir,
+    artifactFile: '.playbook/test-artifacts/doctor.json',
+    allowedExitCodes: [1]
+  });
+  assertExpectedDoctorDiagnosticFailure(doctorResult);
   runCommand({ args: ['ask', 'what architecture is this repo?'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/ask.txt' });
   runCommand({ args: ['query', 'modules', '--json', '--out', '.playbook/test-artifacts/query.json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/query.json', useCliOut: true });
   runCommand({ args: ['pilot', '--repo', projectDir, '--json'], cwd: projectDir, artifactFile: '.playbook/test-artifacts/pilot.json' });
