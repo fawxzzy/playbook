@@ -153,7 +153,12 @@ export function buildProjectBoardOwnerExport(roadmap, roadmapBytes) {
   }
 
   const generatedAt = normalizeTimestamp(roadmap.updatedAt);
-  const digest = crypto.createHash('sha256').update(roadmapBytes).digest('hex');
+  // Git may materialize JSON with CRLF on Windows and LF in CI. Hash the
+  // canonical UTF-8/LF representation so one source revision is portable.
+  const canonicalRoadmapBytes = Buffer.from(roadmapBytes)
+    .toString('utf8')
+    .replace(/\r\n?/g, '\n');
+  const digest = crypto.createHash('sha256').update(canonicalRoadmapBytes, 'utf8').digest('hex');
   const sourceRevision = `sha256:${digest}`;
   const cards = roadmap.features
     .filter((feature) => !COMPLETED_STATUSES.has(feature.status))

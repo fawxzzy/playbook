@@ -74,6 +74,16 @@ test('is byte-deterministic for an unchanged roadmap', () => {
   assert.equal(JSON.stringify(first), JSON.stringify(second));
 });
 
+test('uses the same source revision for LF and CRLF roadmap checkouts', () => {
+  const lf = `${JSON.stringify(roadmap, null, 2)}\n`;
+  const crlf = lf.replaceAll('\n', '\r\n');
+  const fromLf = buildProjectBoardOwnerExport(roadmap, Buffer.from(lf));
+  const fromCrlf = buildProjectBoardOwnerExport(roadmap, Buffer.from(crlf));
+
+  assert.equal(fromLf.source_revision, fromCrlf.source_revision);
+  assert.equal(fromLf.export_id, fromCrlf.export_id);
+});
+
 test('fails closed for an unsupported non-complete status', () => {
   const invalid = { ...roadmap, features: [feature('PB-V1-X-001', 'mystery')] };
   assert.throws(

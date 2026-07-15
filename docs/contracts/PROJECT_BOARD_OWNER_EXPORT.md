@@ -22,7 +22,9 @@ deterministic projection for Atlas and DiscordOS; it is not a second roadmap.
 Completed and implemented statuses are excluded. The adapter preserves roadmap
 feature IDs as card IDs, keeps priority `null` when the roadmap does not define
 one, maps dependencies without inference, and derives the source revision from
-the exact roadmap bytes.
+the roadmap's canonical UTF-8 bytes with line endings normalized to LF. This
+keeps the revision stable when Git checks out the same JSON with CRLF on Windows
+and LF in CI.
 
 Generate and verify the export with:
 

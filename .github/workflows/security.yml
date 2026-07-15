@@ -43,15 +43,17 @@ jobs:
       - name: Build
         run: pnpm -r build
 
-      - name: Step 1 — Dependency Audit
-        run: pnpm audit --audit-level=critical
+      # pnpm 10 uses npm audit endpoints retired by the registry. Keep the
+      # repository toolchain pinned while using pnpm 11's bulk advisory client.
+      - name: Step 1 - Dependency Audit
+        run: corepack pnpm@11.4.0 --pm-on-fail=ignore audit --audit-level=critical
 
-      - name: Step 2 — Secret Scan (gitleaks)
+      - name: Step 2 - Secret Scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Step 3 — SBOM Generation
+      - name: Step 3 - SBOM Generation
         run: |
           mkdir -p artifacts
           pnpm dlx @cyclonedx/cyclonedx-npm \
@@ -59,7 +61,7 @@ jobs:
             --spec-version 1.5 \
             --output-file artifacts/sbom.json
 
-      - name: Step 3.1 — SBOM Vulnerability Scan
+      - name: Step 3.1 - SBOM Vulnerability Scan
         id: grype_scan
         # Keep scan visibility/signals during infrastructure validation: Grype DB freshness
         # staleness (external data age) should not block fallback/release proof paths.
@@ -72,15 +74,15 @@ jobs:
           severity-cutoff: high
           fail-build: "${{ github.event_name != 'pull_request' }}"
 
-      - name: Step 3.2 — Upload vulnerability scan artifact
-        if: always()
+      - name: Step 3.2 - Upload vulnerability scan artifact
+        if: ${{ always() && steps.grype_scan.outputs.sarif != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: grype-scan-results
           path: ${{ steps.grype_scan.outputs.sarif }}
           if-no-files-found: warn
 
-      - name: Step 3.3 — Capture deterministic security baseline
+      - name: Step 3.3 - Capture deterministic security baseline
         shell: bash
         env:
           SARIF_PATH: "${{ steps.grype_scan.outputs.sarif }}"
@@ -141,7 +143,7 @@ jobs:
           );
           NODE
 
-      - name: Step 3.4 — Upload security baseline artifact
+      - name: Step 3.4 - Upload security baseline artifact
         uses: actions/upload-artifact@v4
         with:
           name: security-baseline
@@ -153,7 +155,7 @@ jobs:
         with:
           cosign-release: 'v3.0.3'
 
-      - name: Step 4 — Artifact Signing (Cosign)
+      - name: Step 4 - Artifact Signing (Cosign)
         run: |
           cosign sign-blob \
             --yes \
@@ -168,7 +170,7 @@ jobs:
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             artifacts/sbom.json
 
-      - name: Step 5 — Provenance Attestation
+      - name: Step 5 - Provenance Attestation
         run: |
           mkdir -p artifacts
           node <<'NODE'
@@ -191,7 +193,7 @@ jobs:
           GITHUB_WORKFLOW: ${{ github.workflow }}
           GITHUB_RUN_ID: ${{ github.run_id }}
 
-      - name: Step 6 — Security Policy Gate
+      - name: Step 6 - Security Policy Gate
         run: |
           test -f artifacts/sbom.json
           test -f artifacts/sbom.sigstore.json
