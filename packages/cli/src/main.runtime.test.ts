@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 const scriptPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'run-playbook.mjs');
 const cliEntrypoint = path.resolve(process.cwd(), 'dist', 'main.js');
 const rootPackageJsonPath = path.resolve(process.cwd(), '..', '..', 'package.json');
+const lifelinePreflightPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'ensure-lifeline-observer-home.mjs');
 const tempRoots: string[] = [];
 
 const createTempRoot = (prefix: string): string => {
@@ -32,37 +33,57 @@ describe('runtime observability artifacts', () => {
     const sourceCheckout = path.join(atlasRoot, 'repos', 'playbook');
     const observerHome = path.join(atlasRoot, 'runtime', 'playbook', 'observer');
     fs.mkdirSync(sourceCheckout, { recursive: true });
-    fs.mkdirSync(observerHome, { recursive: true });
-    fs.writeFileSync(path.join(sourceCheckout, 'package.json'), JSON.stringify({ name: 'playbook-source-fixture' }), 'utf8');
+    fs.mkdirSync(path.join(sourceCheckout, 'scripts'), { recursive: true });
+    fs.copyFileSync(lifelinePreflightPath, path.join(sourceCheckout, 'scripts', 'ensure-lifeline-observer-home.mjs'));
 
     const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8')) as {
       scripts: Record<string, string>;
     };
-    const startTokens = rootPackageJson.scripts['start:lifeline'].trim().split(/\s+/);
-    expect(startTokens.slice(0, 2)).toEqual(['pnpm', 'playbook']);
-    const commandArgs = startTokens.slice(2);
-    const portIndex = commandArgs.indexOf('--port');
-    expect(commandArgs[portIndex + 1]).toBe('4300');
-    commandArgs[portIndex + 1] = '0';
-
-    const wrapperSource = `
-      process.argv = [process.execPath, ${JSON.stringify(cliEntrypoint)}, ...JSON.parse(process.env.PLAYBOOK_LIFELINE_TEST_ARGS)];
-      const shutdownDeadline = setTimeout(() => process.exit(124), 10000);
-      const gracefulStop = setInterval(() => {
-        if (process.listenerCount('SIGTERM') > 0) {
-          clearInterval(gracefulStop);
-          process.emit('SIGTERM');
+    const startCommand = rootPackageJson.scripts['start:lifeline'].replace('--port 4300', '--port 0') + ' --json';
+    const gracefulStopPreload = path.join(atlasRoot, 'graceful-stop.mjs');
+    fs.writeFileSync(
+      gracefulStopPreload,
+      `
+        const entrypoint = process.argv[1]?.replaceAll('\\\\', '/');
+        if (entrypoint?.endsWith('/packages/cli/dist/main.js')) {
+          setTimeout(() => process.exit(124), 10000);
+          const gracefulStop = setInterval(() => {
+            if (process.listenerCount('SIGTERM') > 0) {
+              clearInterval(gracefulStop);
+              process.emit('SIGTERM');
+            }
+          }, 10);
         }
-      }, 10);
-      await import(${JSON.stringify(pathToFileURL(cliEntrypoint).href)});
-      clearTimeout(shutdownDeadline);
-    `;
-    const result = spawnSync(process.execPath, ['--input-type=module', '--eval', wrapperSource], {
+      `,
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(sourceCheckout, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'playbook-source-fixture',
+          private: true,
+          scripts: {
+            playbook: `node "${cliEntrypoint.split(path.sep).join('/')}"`,
+            'start:lifeline': startCommand
+          }
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+    expect(fs.existsSync(observerHome)).toBe(false);
+
+    const result = spawnSync(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['start:lifeline'], {
       cwd: sourceCheckout,
       encoding: 'utf8',
+      shell: process.platform === 'win32',
       env: {
         ...process.env,
-        PLAYBOOK_LIFELINE_TEST_ARGS: JSON.stringify([...commandArgs, '--json'])
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, `--import=${pathToFileURL(gracefulStopPreload).href}`]
+          .filter(Boolean)
+          .join(' ')
       },
       timeout: 15000
     });
@@ -72,7 +93,10 @@ describe('runtime observability artifacts', () => {
       signal: null,
       stderr: ''
     });
-    const servePayload = JSON.parse(result.stdout) as {
+    const payloadStart = result.stdout.indexOf('{\n  "schemaVersion": "1.0"');
+    const payloadEnd = result.stdout.lastIndexOf('}');
+    expect(payloadStart).toBeGreaterThanOrEqual(0);
+    const servePayload = JSON.parse(result.stdout.slice(payloadStart, payloadEnd + 1)) as {
       command: string;
       observer_root: string;
       registry_path: string;

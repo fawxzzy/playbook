@@ -27,7 +27,7 @@ This prevents split registries when commands are run from incidental nested shel
 
 ### Lifeline-supervised Observer home
 
-The checked-in Lifeline app contract starts Playbook from the repository root with `pnpm start:lifeline`. That package script passes the portable global target `--repo ../../runtime/playbook/observer` and explicit Observer-local `--root .` while preserving `127.0.0.1:4300`. Under the canonical Atlas layout (`repos/playbook`), the global target resolves first to `runtime/playbook/observer`, then `--root .` resolves to that same directory. Both Observer state and the top-level Playbook runtime-cycle telemetry written during normal start and graceful stop therefore stay outside the source checkout.
+The checked-in Lifeline app contract starts Playbook from the repository root with `pnpm start:lifeline`. That package script first creates the portable relative `../../runtime/playbook/observer` directory when absent, then passes it as the global `--repo` target with explicit Observer-local `--root .` while preserving `127.0.0.1:4300`. Under the canonical Atlas layout (`repos/playbook`), the global target resolves first to `runtime/playbook/observer`, then `--root .` resolves to that same directory. Both Observer state and the top-level Playbook runtime-cycle telemetry written during first start, normal start, and graceful stop therefore stay outside the source checkout.
 
 These target/root overrides belong only to the Lifeline start surface. Direct `pnpm playbook observer ...` invocations keep the normal cwd and root resolution order above, including any caller-supplied `--repo` or `--root`.
 
