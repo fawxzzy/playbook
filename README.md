@@ -101,7 +101,7 @@ lifeline logs playbook
 lifeline down playbook
 ```
 
-The app process started by Lifeline is `pnpm start:lifeline`, which preserves the normal local Playbook CLI and terminal-based development flow.
+The app process started by Lifeline is `pnpm start:lifeline`. That dedicated surface creates the relative `../../runtime/playbook/observer` directory when absent, keeps the loopback host and port fixed at `127.0.0.1:4300`, selects that directory through the existing global `--repo` option, and passes the Observer-local `--root .` explicitly. In the canonical Atlas topology, where this checkout is `repos/playbook`, both the Playbook lifecycle telemetry root and Observer home resolve to `runtime/playbook/observer`, so first start, normal start, and graceful stop do not create mutable `.playbook` state in the source checkout. Normal `pnpm playbook observer ...` commands retain their existing cwd and explicit-`--root` behavior.
 Playbook routing inspection emits deterministic proposal-only execution plans at `.playbook/execution-plan.json` via `pnpm playbook route "<task>" --json`.
 
 Wave 1 restart posture shadow codification lives in [docs/architecture/PLAYBOOK_LIFELINE_WAVE_1_RESTART_POSTURE.md](docs/architecture/PLAYBOOK_LIFELINE_WAVE_1_RESTART_POSTURE.md). It records the proof-gated checklist, decisions, failure modes, and parity criteria Playbook should mirror without taking over Lifeline implementation.

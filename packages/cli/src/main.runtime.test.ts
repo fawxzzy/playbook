@@ -1,11 +1,15 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 
 
 const scriptPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'run-playbook.mjs');
+const cliEntrypoint = path.resolve(process.cwd(), 'dist', 'main.js');
+const rootPackageJsonPath = path.resolve(process.cwd(), '..', '..', 'package.json');
+const lifelinePreflightPath = path.resolve(process.cwd(), '..', '..', 'scripts', 'ensure-lifeline-observer-home.mjs');
 const tempRoots: string[] = [];
 
 const createTempRoot = (prefix: string): string => {
@@ -22,6 +26,96 @@ describe('runtime observability artifacts', () => {
         fs.rmSync(root, { recursive: true, force: true });
       }
     }
+  });
+
+  it('keeps Lifeline Observer state and graceful-stop telemetry out of the source checkout', { timeout: 20000 }, () => {
+    const atlasRoot = createTempRoot('playbook-lifeline-runtime-');
+    const sourceCheckout = path.join(atlasRoot, 'repos', 'playbook');
+    const observerHome = path.join(atlasRoot, 'runtime', 'playbook', 'observer');
+    fs.mkdirSync(sourceCheckout, { recursive: true });
+    fs.mkdirSync(path.join(sourceCheckout, 'scripts'), { recursive: true });
+    fs.copyFileSync(lifelinePreflightPath, path.join(sourceCheckout, 'scripts', 'ensure-lifeline-observer-home.mjs'));
+
+    const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    const startCommand = rootPackageJson.scripts['start:lifeline'].replace('--port 4300', '--port 0') + ' --json';
+    const gracefulStopPreload = path.join(atlasRoot, 'graceful-stop.mjs');
+    fs.writeFileSync(
+      gracefulStopPreload,
+      `
+        const entrypoint = process.argv[1]?.replaceAll('\\\\', '/');
+        if (entrypoint?.endsWith('/packages/cli/dist/main.js')) {
+          setTimeout(() => process.exit(124), 10000);
+          const gracefulStop = setInterval(() => {
+            if (process.listenerCount('SIGTERM') > 0) {
+              clearInterval(gracefulStop);
+              process.emit('SIGTERM');
+            }
+          }, 10);
+        }
+      `,
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(sourceCheckout, 'package.json'),
+      JSON.stringify(
+        {
+          name: 'playbook-source-fixture',
+          private: true,
+          scripts: {
+            playbook: `node "${cliEntrypoint.split(path.sep).join('/')}"`,
+            'start:lifeline': startCommand
+          }
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+    expect(fs.existsSync(observerHome)).toBe(false);
+
+    const result = spawnSync(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['start:lifeline'], {
+      cwd: sourceCheckout,
+      encoding: 'utf8',
+      shell: process.platform === 'win32',
+      env: {
+        ...process.env,
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, `--import=${pathToFileURL(gracefulStopPreload).href}`]
+          .filter(Boolean)
+          .join(' ')
+      },
+      timeout: 15000
+    });
+
+    expect({ status: result.status, signal: result.signal, stderr: result.stderr }).toEqual({
+      status: 0,
+      signal: null,
+      stderr: ''
+    });
+    const payloadStart = result.stdout.indexOf('{\n  "schemaVersion": "1.0"');
+    const payloadEnd = result.stdout.lastIndexOf('}');
+    expect(payloadStart).toBeGreaterThanOrEqual(0);
+    const servePayload = JSON.parse(result.stdout.slice(payloadStart, payloadEnd + 1)) as {
+      command: string;
+      observer_root: string;
+      registry_path: string;
+    };
+    expect(servePayload.command).toBe('observer-serve');
+    expect(servePayload.observer_root).toBe(fs.realpathSync(observerHome));
+    expect(servePayload.registry_path.startsWith(fs.realpathSync(observerHome))).toBe(true);
+
+    const runtimeRoot = path.join(observerHome, '.playbook', 'runtime');
+    const telemetry = JSON.parse(fs.readFileSync(path.join(runtimeRoot, 'current', 'telemetry.json'), 'utf8')) as {
+      cycle_id: string;
+      command_call_count_by_command: Record<string, number>;
+    };
+    const manifest = JSON.parse(
+      fs.readFileSync(path.join(runtimeRoot, 'cycles', telemetry.cycle_id, 'manifest.json'), 'utf8')
+    ) as { trigger_command: string; status: string };
+    expect(telemetry.command_call_count_by_command.observer).toBe(1);
+    expect(manifest).toMatchObject({ trigger_command: 'observer', status: 'success' });
+    expect(fs.existsSync(path.join(sourceCheckout, '.playbook'))).toBe(false);
   });
 
   it('writes current, cycle, and history runtime artifacts for target repos', { timeout: 15000 }, () => {
