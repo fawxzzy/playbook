@@ -82,6 +82,36 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     expect(doctrineBytes(repoRoot)).toEqual(doctrineBefore);
   });
 
+  it('appends a second distinct review candidate without duplicates or doctrine writes', async () => {
+    const repoRoot = createRepo();
+    const secondCandidate: AtlasKnowledgeCandidate = {
+      ...readFixture(),
+      candidate_id: 'knowledge-002',
+      name: 'Second deterministic knowledge candidate'
+    };
+    const secondArtifactPath = writeCandidate(repoRoot, secondCandidate, 'candidate-002.json');
+
+    const first = await admit(repoRoot);
+    const second = await admit(repoRoot, secondArtifactPath);
+    const queueAfterAppend = fs.readFileSync(queuePath(repoRoot), 'utf8');
+    const secondReplay = await admit(repoRoot, secondArtifactPath);
+    const queue = readQueue(repoRoot);
+
+    expect(first.candidate_count).toBe(1);
+    expect(second.status).toBe('admitted');
+    expect(second.candidate_count).toBe(2);
+    expect(secondReplay.status).toBe('replayed');
+    expect(secondReplay.candidate_count).toBe(2);
+    expect(fs.readFileSync(queuePath(repoRoot), 'utf8')).toBe(queueAfterAppend);
+    expect(queue.candidates.map((record) => record.external_candidate_id)).toEqual([
+      'knowledge-001',
+      'knowledge-002'
+    ]);
+    expect(new Set(queue.candidates.map((record) => record.record_id)).size).toBe(2);
+    expect(new Set(queue.candidates.map((record) => record.consumer_receipt.receipt_id)).size).toBe(2);
+    expect(PLAYBOOK_DOCTRINE_PATHS.every((relativePath) => !fs.existsSync(path.join(repoRoot, relativePath)))).toBe(true);
+  });
+
   it('rejects the Atlas bad-kind fixture through the Atlas-owned validator', async () => {
     await expect(admit(createRepo(), badKindFixturePath)).rejects.toMatchObject({
       reasonCode: 'KNOWLEDGE_ATLAS_VALIDATION_FAILED',

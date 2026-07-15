@@ -15,22 +15,26 @@ describe('runAtlasKnowledgeCandidateAdmission', () => {
     admitAtlasKnowledgeCandidate.mockReset();
   });
 
-  it('forwards exact artifact and Atlas validator roots without widening promotion authority', async () => {
-    admitAtlasKnowledgeCandidate.mockResolvedValue({ status: 'admitted' });
+  it('forwards explicit promotion intent to the fail-closed engine boundary', async () => {
+    const rejection = Object.assign(new Error('automatic promotion forbidden'), {
+      reasonCode: 'KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN'
+    });
+    admitAtlasKnowledgeCandidate.mockRejectedValue(rejection);
 
-    await runAtlasKnowledgeCandidateAdmission('/repo', [
+    await expect(runAtlasKnowledgeCandidateAdmission('/repo', [
       'atlas-admit',
       '--artifact',
       '/atlas/knowledge-candidate.json',
       '--atlas-contracts-root',
-      '/atlas/packages/atlas-contracts'
-    ]);
+      '/atlas/packages/atlas-contracts',
+      '--promote'
+    ])).rejects.toBe(rejection);
 
     expect(admitAtlasKnowledgeCandidate).toHaveBeenCalledWith({
       projectRoot: '/repo',
       artifactPath: '/atlas/knowledge-candidate.json',
       atlasContractsRoot: '/atlas/packages/atlas-contracts',
-      attemptPromotion: false
+      attemptPromotion: true
     });
   });
 
