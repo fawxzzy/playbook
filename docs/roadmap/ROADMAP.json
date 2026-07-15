@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-04-17",
+  "updatedAt": "2026-07-15",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -2349,6 +2349,42 @@
       "status": "planned",
       "package_ownership": [
         "@zachariahredfield/playbook-engine",
+        "@fawxzzy/playbook"
+      ]
+    },
+    {
+      "feature_id": "PB-V10-LIFELINE-OBSERVER-HOME-001",
+      "version": "v1.0",
+      "title": "Lifeline canonical Observer runtime home",
+      "goal": "Keep the Lifeline-supervised Playbook Observer loopback instance on the canonical Atlas runtime home through one explicit portable start-root contract without changing normal Observer CLI root behavior or writing mutable Observer state into the Playbook source checkout.",
+      "commands": [
+        "observer"
+      ],
+      "contracts": [
+        ".lifeline/playbook.lifeline.yml"
+      ],
+      "tests": [
+        "test/scripts/start-lifeline-root.test.mjs",
+        "packages/cli/src/commands/observer.test.ts"
+      ],
+      "docs": [
+        "README.md",
+        "docs/commands/observer.md",
+        "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+        "docs/CHANGELOG.md",
+        "docs/roadmap/ROADMAP.json"
+      ],
+      "dependencies": [],
+      "verification_commands": [
+        "node --test test/scripts/start-lifeline-root.test.mjs",
+        "pnpm -C packages/cli test -- src/commands/observer.test.ts",
+        "pnpm test:cli",
+        "pnpm -r build",
+        "pnpm board:export:check",
+        "pnpm verify:local"
+      ],
+      "status": "implemented-hardening",
+      "package_ownership": [
         "@fawxzzy/playbook"
       ]
     }

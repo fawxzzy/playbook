@@ -25,6 +25,12 @@ Observer root resolution is deterministic:
 
 This prevents split registries when commands are run from incidental nested shell directories.
 
+### Lifeline-supervised Observer home
+
+The checked-in Lifeline app contract starts Playbook from the repository root with `pnpm start:lifeline`. That package script passes `--root ../../runtime/playbook/observer` explicitly while preserving `127.0.0.1:4300`. Under the canonical Atlas layout (`repos/playbook`), the relative argument resolves to `runtime/playbook/observer`, so supervised Observer state stays outside the source checkout.
+
+This root override belongs only to the Lifeline start surface. Direct `pnpm playbook observer ...` invocations keep the normal resolution order above, including any caller-supplied `--root`.
+
 Contract:
 
 - `schemaVersion: "1.0"`

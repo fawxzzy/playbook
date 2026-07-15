@@ -1406,6 +1406,10 @@
 - Failure Mode: Dumping full machine context into worker prompts lowers signal and increases drift.
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_END -->
 
+- WHAT: Updated `pnpm start:lifeline` to pass the portable explicit Observer root `../../runtime/playbook/observer`, added a deterministic Atlas-topology contract test, and documented the Lifeline-only runtime-home boundary. WHY: A supervisor-owned start surface must not let repository cwd silently become durable Observer state placement.
+- Rule: Runtime homes are explicit; a supervisor-owned start surface must pass the canonical runtime home explicitly.
+- Pattern: Stable repository working directory + portable relative runtime-home argument -> deterministic state placement outside the source checkout.
+- Failure Mode: Source-checkout runtime leakage occurs when a supervised local command inherits repository cwd as its durable state root.
 - WHAT: Added a fail-closed engine adapter and `knowledge atlas-admit` CLI surface for Atlas-owned `atlas.knowledge-candidate.v2` artifacts, using the official `@atlas/contracts` `./validator` export, exact identity/classified-provenance preservation, supported-destination checks, deterministic correlated receipts, byte-identical replay, and doctrine-unchanged proof. WHY: Playbook can now operate as an independent candidate-only Atlas consumer without copying contract semantics or turning candidate metadata into doctrine-promotion authority.
 - Rule: Atlas owns contract semantics; Playbook consumes without copying, and KnowledgeCandidate admission never grants doctrine-promotion authority.
 - Pattern: Candidate-only intake with exact identity/provenance preservation and deterministic correlated receipt.
