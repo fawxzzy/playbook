@@ -1,12 +1,52 @@
 # `pnpm playbook knowledge`
 
-Inspect normalized knowledge artifacts through read-only deterministic surfaces.
+Inspect normalized knowledge artifacts through deterministic surfaces and admit Atlas-owned review candidates through one narrow fail-closed boundary.
 
 Command boundary:
 - `pnpm playbook memory ...` is the raw lifecycle/review/mutation surface for memory artifacts.
-- `pnpm playbook knowledge ...` is the normalized read-only inspection/query surface.
+- `pnpm playbook knowledge ...` is the normalized inspection/query surface. All existing retrieval subcommands remain read-only; `knowledge atlas-admit` may write only the dedicated Atlas review-candidate queue.
 
 ## Subcommands
+
+### `knowledge atlas-admit`
+
+Admit one Atlas-owned `atlas.knowledge-candidate.v2` artifact into `.playbook/memory/atlas-knowledge-candidates.json` for explicit review.
+
+```bash
+pnpm playbook knowledge atlas-admit \
+  --artifact <knowledge-candidate.json> \
+  --atlas-contracts-root <atlas-contracts-dir> \
+  --json
+```
+
+Admission guarantees:
+
+- loads the official `@atlas/contracts` `./validator` export from the caller-supplied Atlas contracts package root; Playbook does not embed the Atlas schema or validator logic
+- accepts only exact supported proposals: `Playbook/rules`, `Playbook/patterns`, and `Playbook/failure-modes`; spelling and meaning are never normalized silently
+- retains `candidate_id`, `kind`, `name`, `statement`, `scope`, the complete ordered provenance array and classifications, review state, `suggested_destination`, `created_at`, and extensions
+- treats `suggested_destination` as proposal-only metadata and requires `review.status=candidate`
+- emits and stores a deterministic receipt correlated to the external candidate identity and deterministic Playbook record id
+- replays idempotently without duplicate candidate records or byte changes
+- snapshots canonical memory, doctrine, pattern, and story paths and rejects admission if any changes
+- recognizes `--promote` only as a negative-proof flag and rejects it; use existing explicit review/promotion commands after admission
+
+Stable fail-closed reason codes:
+
+- `KNOWLEDGE_PROVENANCE_MISMATCH`
+- `KNOWLEDGE_DESTINATION_UNSUPPORTED`
+- `KNOWLEDGE_IDENTITY_LOST`
+- `KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN`
+- `KNOWLEDGE_CONSUMER_RECEIPT_MISSING`
+- `KNOWLEDGE_ATLAS_VALIDATION_FAILED`
+- `KNOWLEDGE_ATLAS_VALIDATOR_UNAVAILABLE`
+
+Rule: Atlas owns contract semantics; Playbook consumes without copying.
+
+Rule: KnowledgeCandidate admission never grants doctrine-promotion authority.
+
+Pattern: Candidate-only intake with exact identity/provenance preservation and a deterministic correlated receipt.
+
+Failure Mode: Candidate-to-Doctrine Collapse occurs when a consumer silently treats suggested destination or review state as promotion authority.
 
 ### `knowledge list`
 
@@ -241,6 +281,7 @@ JSON output and `.playbook/knowledge-review-receipts.json` preserve full determi
 ## Examples
 
 ```bash
+pnpm playbook knowledge atlas-admit --artifact <candidate.json> --atlas-contracts-root <atlas-contracts-dir> --json
 pnpm playbook knowledge list --json
 pnpm playbook knowledge query --type candidate --json
 pnpm playbook knowledge inspect <id> --json
@@ -272,10 +313,11 @@ pnpm playbook knowledge review record --from <queue-entry-id> --decision defer -
 
 ## Guarantees
 
-- Read-only command family
+- Existing inspection/review views remain read-only; Atlas admission writes only the dedicated review-candidate queue
 - Deterministic normalized record shape
 - Provenance-preserving output
 - Lifecycle-aware filtering and warnings without introducing mutation routes
+- Atlas candidate admission has no doctrine, rule, pattern, failure-mode, story, promoted-memory, or execution authority
 - Rule: Review surfaces recall governed knowledge without mutating it.
 - Pattern: Use existing review families before inventing new top-level command families.
 - Failure Mode: Retrieval review that lands as a new command silo instead of an existing review surface fragments the workflow.

@@ -360,6 +360,26 @@ export { lookupMemoryCompactionReview } from './memory/inspection.js';
 export { listCandidateKnowledge, loadCandidateKnowledgeById, promoteMemoryCandidate, retirePromotedKnowledge, supersedePromotedKnowledge, pruneMemoryKnowledge } from './memory/knowledge.js';
 export type { MemoryKnowledgeKind, MemoryKnowledgeEntry, MemoryKnowledgeArtifact, MemoryPromotionResult, MemoryRetireResult, MemorySupersedeResult, MemoryPruneResult } from './memory/knowledge.js';
 export {
+  ATLAS_KNOWLEDGE_ADMISSION_REASON_CODES,
+  ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT,
+  ATLAS_KNOWLEDGE_CANDIDATE_QUEUE_RELATIVE_PATH,
+  PLAYBOOK_DOCTRINE_PATHS,
+  AtlasKnowledgeCandidateAdmissionError,
+  admitAtlasKnowledgeCandidate,
+  assertAtlasKnowledgeCandidateAdmission
+} from './memory/atlasCandidateAdmission.js';
+export type {
+  AdmitAtlasKnowledgeCandidateOptions,
+  AtlasKnowledgeAdmissionReasonCode,
+  AtlasKnowledgeCandidate,
+  AtlasKnowledgeCandidateAdmissionResult,
+  AtlasKnowledgeCandidateKind,
+  AtlasKnowledgeCandidateQueue,
+  AtlasKnowledgeCandidateRecord,
+  AtlasKnowledgeConsumerReceipt,
+  AtlasKnowledgeProvenance
+} from './memory/atlasCandidateAdmission.js';
+export {
   AUTOMATION_SUGGESTIONS_SCHEMA_VERSION,
   AUTOMATION_SUGGESTIONS_RELATIVE_PATH,
   buildAutomationSuggestionsArtifact,

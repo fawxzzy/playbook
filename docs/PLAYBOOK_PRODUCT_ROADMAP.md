@@ -40,6 +40,11 @@ Recent implementation note: `pnpm playbook interop emit-fitness-plan --from-draf
 Recent implementation note: deterministic change-scope bundles are now emitted at `.playbook/change-scope.json` from plan/analyze-pr/workers launch-plan/ai propose so mutation-scope declarations (`allowedFiles`, `patchSizeBudget`, `boundaryChecks`) can be carried as explicit governed artifacts without widening mutation authority in this slice.
 Recent implementation note: `apply` now enforces declared change-scope bundles before reporting success, with fail-closed checks for out-of-scope files, patch-budget overflow, and missing/red boundary checks.
 Recent implementation note: worker launch/submit authorization now derives per-lane allowed write surfaces from `.playbook/change-scope.json`, keeps launch eligibility bounded by those declared surfaces, and reject-blocks submissions when worker outputs exceed scope or budget boundaries.
+Recent implementation note: Playbook now independently consumes Atlas-owned `atlas.knowledge-candidate.v2` artifacts through `knowledge atlas-admit`, preserving exact external identity and classified provenance in a deterministic review-only queue with a correlated receipt while proving canonical doctrine/memory/pattern/story paths remain unchanged.
+Rule: Atlas owns contract semantics; Playbook consumes without copying.
+Rule: KnowledgeCandidate admission never grants doctrine-promotion authority.
+Pattern: Candidate-only intake with exact identity/provenance preservation and deterministic correlated receipt.
+Failure Mode: Candidate-to-Doctrine Collapse occurs when a consumer treats a suggested destination or review state as promotion authority.
 Rule: Declared mutation scope must be enforced before apply succeeds.
 Rule: Managed workers may operate only within declared mutation scope.
 Pattern: Declare scope -> enforce scope -> mutate -> receipt.

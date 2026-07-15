@@ -260,7 +260,7 @@ Do not hand-edit entries inside the managed markers.
   - Example: `pnpm playbook explain architecture --json`
 - `route`: Classify tasks and emit deterministic proposal-only execution plans for task-specific routing decisions
   - Example: `pnpm playbook route "summarize current repo state" --json`
-- `knowledge`: Inspect read-only knowledge artifacts and provenance surfaces
+- `knowledge`: Inspect knowledge artifacts and admit Atlas-owned review candidates without promotion
   - Example: `pnpm playbook knowledge list --json`
 
 ### Utility

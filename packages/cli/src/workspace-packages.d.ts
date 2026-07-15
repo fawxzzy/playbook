@@ -142,6 +142,16 @@ declare module "@zachariahredfield/playbook-engine" {
   export const knowledgeProvenance: (...args: any[]) => any;
   export const knowledgeSupersession: (...args: any[]) => any;
   export const knowledgeStale: (...args: any[]) => any;
+  export const ATLAS_KNOWLEDGE_ADMISSION_REASON_CODES: readonly string[];
+  export const ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT: 'atlas.knowledge-candidate.v2';
+  export const ATLAS_KNOWLEDGE_CANDIDATE_QUEUE_RELATIVE_PATH: '.playbook/memory/atlas-knowledge-candidates.json';
+  export const PLAYBOOK_DOCTRINE_PATHS: readonly string[];
+  export class AtlasKnowledgeCandidateAdmissionError extends Error {
+    reasonCode: string;
+    details: string[];
+  }
+  export const admitAtlasKnowledgeCandidate: (...args: any[]) => Promise<any>;
+  export const assertAtlasKnowledgeCandidateAdmission: (...args: any[]) => void;
   export const generateRepositoryIndex: (...args: any[]) => any;
   export const generateRepositoryGraph: (...args: any[]) => any;
   export const buildModuleDigestsArtifact: (...args: any[]) => any;

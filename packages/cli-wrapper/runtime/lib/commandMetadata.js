@@ -703,7 +703,7 @@ export const commandMetadata = [
     },
     {
         name: "knowledge",
-        description: "Inspect read-only knowledge artifacts and provenance surfaces",
+        description: "Inspect knowledge artifacts and admit Atlas-owned review candidates without promotion",
         category: "Repository intelligence",
         role: "repo-intelligence",
         lifecycle: "canonical",

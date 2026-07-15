@@ -132,7 +132,7 @@ Do not hand-edit entries inside the managed markers.
 | `learn` | Draft deterministic knowledge candidates from local diff and repository intelligence | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook learn draft --json --out .playbook/knowledge/candidates.json` |
 | `memory` | Inspect, review, and curate repository memory artifacts with explicit human-reviewed doctrine promotion | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook memory events --json` |
 | `improve` | Generate deterministic improvement candidates from memory events and learning-state signals | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook improve --json` |
-| `knowledge` | Inspect read-only knowledge artifacts and provenance surfaces | canonical | repo-intelligence | secondary | Later | Current (implemented) | `pnpm playbook knowledge list --json` |
+| `knowledge` | Inspect knowledge artifacts and admit Atlas-owned review candidates without promotion | canonical | repo-intelligence | secondary | Later | Current (implemented) | `pnpm playbook knowledge list --json` |
 | `security` | Inspect deterministic security baseline findings and summary | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook security baseline summary --json` |
 | `telemetry` | Inspect deterministic repository/process telemetry and compact cross-run learning summaries | utility | utility | secondary | Later | Current (implemented) | `pnpm playbook telemetry learning --json` |
 | `policy` | Evaluate improvement proposals against governed runtime evidence (read-only control-plane) | canonical | governance | secondary | Later | Current (implemented) | `pnpm playbook policy evaluate --json` |
@@ -497,10 +497,11 @@ Command boundary note:
 - Rule: Pressure policy should be inspectable before it is made more aggressive.
 - Pattern: Inspect first, then tighten automation.
 - Failure Mode: Hidden memory pressure logic feels random even when the policy is deterministic.
-- `knowledge` = normalized, read-only inspection/query surface for governed knowledge retrieval and provenance.
+- `knowledge` = normalized inspection/query surface for governed knowledge retrieval and provenance, plus one narrow Atlas review-candidate admission boundary.
 
-`pnpm playbook knowledge` is the read-only inspection surface for normalized knowledge records.
+`pnpm playbook knowledge` keeps its retrieval surfaces read-only. `knowledge atlas-admit --artifact <path> --atlas-contracts-root <dir> --json` is the explicit exception: it consumes the Atlas-owned validator, preserves exact identity/classified provenance, and writes only `.playbook/memory/atlas-knowledge-candidates.json` with a deterministic correlated receipt and no promotion authority.
 
+- `knowledge atlas-admit` accepts exact supported `Playbook/rules`, `Playbook/patterns`, or `Playbook/failure-modes` destination proposals, replays idempotently, and rejects any automatic-promotion attempt.
 - `knowledge list` enumerates all record types.
 - `knowledge query` filters by type, status, module, rule, or text.
 - `knowledge inspect <id>` reads one record.
@@ -522,6 +523,7 @@ Command boundary note:
 - Pattern: Queue -> receipt -> handoff -> routed follow-up, all inside one review family.
 - Failure Mode: Architecture review triggers live only in docs and never become operational review signals.
 - Failure Mode: Launching retrieval review as a separate command silo fragments operator workflow and weakens command authority.
+- Failure Mode: Candidate-to-Doctrine Collapse occurs when suggested destination or review state is treated as promotion authority.
 - Failure Mode: Review handoffs become a dead-end list instead of a governed bridge to action.
 - Failure Mode: A review system that cannot say when something should return encourages ad hoc maintenance.
 

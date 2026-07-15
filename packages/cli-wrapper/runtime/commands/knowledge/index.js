@@ -1,4 +1,5 @@
 import { runKnowledgeCompare } from './compare.js';
+import { runAtlasKnowledgeCandidateAdmission } from './atlasCandidate.js';
 import { emitJsonOutput } from '../../lib/jsonArtifact.js';
 import { ExitCode } from '../../lib/cliContract.js';
 import { runKnowledgeInspect } from './inspect.js';
@@ -119,6 +120,9 @@ Sample Size: ${String(entry.sample_size)}`)
         .join('\n\n---\n\n');
 };
 const renderText = (subcommand, payload) => {
+    if (subcommand === 'atlas-admit') {
+        return `Atlas KnowledgeCandidate ${String(payload.candidate_id)} ${String(payload.status)} as review-only record ${String(payload.candidate_record_id)}.`;
+    }
     if (subcommand === 'inspect') {
         const knowledge = payload.knowledge;
         return `Knowledge ${String(payload.id)} (${String(knowledge.type ?? 'unknown')}).`;
@@ -246,7 +250,10 @@ export const runKnowledge = async (cwd, args, options) => {
         return subcommand ? ExitCode.Success : ExitCode.Failure;
     }
     try {
-        const payload = (() => {
+        const payload = await (async () => {
+            if (subcommand === 'atlas-admit') {
+                return runAtlasKnowledgeCandidateAdmission(cwd, args);
+            }
             if (subcommand === 'list') {
                 return runKnowledgeList(cwd, args);
             }
@@ -277,7 +284,7 @@ export const runKnowledge = async (cwd, args, options) => {
             if (subcommand === 'review') {
                 return runKnowledgeReview(cwd, args);
             }
-            throw new Error('playbook knowledge: unsupported subcommand. Use list, query, inspect, compare, timeline, provenance, supersession, stale, portability, review, review handoffs, review routes, review followups, or review record.');
+            throw new Error('playbook knowledge: unsupported subcommand. Use atlas-admit, list, query, inspect, compare, timeline, provenance, supersession, stale, portability, review, review handoffs, review routes, review followups, or review record.');
         })();
         if (options.format === 'json') {
             emitJsonOutput({ cwd, command: `knowledge ${subcommand}`, payload });
@@ -289,8 +296,21 @@ export const runKnowledge = async (cwd, args, options) => {
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        const reasonCode = error && typeof error === 'object' && 'reasonCode' in error
+            ? String(error.reasonCode)
+            : undefined;
+        const details = error && typeof error === 'object' && 'details' in error && Array.isArray(error.details)
+            ? error.details.map(String)
+            : [];
         if (options.format === 'json') {
-            console.log(JSON.stringify({ schemaVersion: '1.0', command: `knowledge-${subcommand}`, error: message }, null, 2));
+            console.log(JSON.stringify({
+                schemaVersion: '1.0',
+                command: `knowledge-${subcommand}`,
+                status: 'rejected',
+                ...(reasonCode ? { reason_code: reasonCode } : {}),
+                error: message,
+                ...(details.length > 0 ? { details } : {})
+            }, null, 2));
         }
         else {
             console.error(message);
