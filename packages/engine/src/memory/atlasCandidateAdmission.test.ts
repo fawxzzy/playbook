@@ -210,6 +210,25 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     expect(readQueue(secondRepoRoot).candidates[0]?.source_artifact.path).toBe('project://candidate.json');
   });
 
+  it('keeps project-local identity when the Atlas contracts root is vendored inside the project', async () => {
+    const externalContractsRepoRoot = createRepo();
+    const vendoredContractsRepoRoot = createRepo();
+    const vendoredAtlasContractsRoot = path.join(vendoredContractsRepoRoot, 'packages', 'atlas-contracts');
+    fs.cpSync(atlasContractsRoot, vendoredAtlasContractsRoot, { recursive: true });
+    const externalArtifactPath = writeCandidate(externalContractsRepoRoot, readFixture());
+    const vendoredArtifactPath = writeCandidate(vendoredContractsRepoRoot, readFixture());
+
+    const external = await admit(externalContractsRepoRoot, externalArtifactPath);
+    const vendored = await admitAtlasKnowledgeCandidate({
+      projectRoot: vendoredContractsRepoRoot,
+      artifactPath: vendoredArtifactPath,
+      atlasContractsRoot: vendoredAtlasContractsRoot
+    });
+
+    expect(vendored.candidate_record_id).toBe(external.candidate_record_id);
+    expect(readQueue(vendoredContractsRepoRoot).candidates[0]?.source_artifact.path).toBe('project://candidate.json');
+  });
+
   it('rejects the Atlas bad-kind fixture through the Atlas-owned validator', async () => {
     await expect(admit(createRepo(), badKindFixturePath)).rejects.toMatchObject({
       reasonCode: 'KNOWLEDGE_ATLAS_VALIDATION_FAILED',

@@ -214,7 +214,9 @@ const describeSourceArtifact = (
   const atlasRoot = path.resolve(atlasContractsRoot, '..', '..');
   const atlasRelativePath = relativePathWithin(atlasRoot, absoluteArtifactPath);
   const projectRelativePath = relativePathWithin(projectRoot, absoluteArtifactPath);
-  const portablePath = atlasRelativePath ?? (projectRelativePath === null ? null : `project://${projectRelativePath}`);
+  const portablePath = projectRelativePath === null
+    ? atlasRelativePath
+    : `project://${projectRelativePath}`;
   if (portablePath === null) {
     return fail(
       'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH',
