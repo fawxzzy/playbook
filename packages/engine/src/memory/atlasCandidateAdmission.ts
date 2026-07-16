@@ -209,9 +209,21 @@ const resolveAtlasSourceRoot = (atlasContractsRoot: string): string => {
   const resolvedContractsRoot = path.resolve(atlasContractsRoot);
   const packagesRoot = path.dirname(resolvedContractsRoot);
   const checkoutRoot = path.dirname(packagesRoot);
+  const stackManifestPath = path.join(checkoutRoot, 'stack.yaml');
+  const gitMarkerPath = path.join(checkoutRoot, '.git');
+  let hasAtlasStackManifest = false;
+  try {
+    const stackManifest = fs.readFileSync(stackManifestPath, 'utf8');
+    hasAtlasStackManifest = /^name:\s*ATLAS\s*$/m.test(stackManifest)
+      && /^path_mode:\s*relative\s*$/m.test(stackManifest);
+  } catch {
+    hasAtlasStackManifest = false;
+  }
   const hasCanonicalCheckoutLayout = path.basename(resolvedContractsRoot) === 'atlas-contracts'
     && path.basename(packagesRoot) === 'packages'
-    && checkoutRoot !== path.parse(checkoutRoot).root;
+    && checkoutRoot !== path.parse(checkoutRoot).root
+    && fs.existsSync(gitMarkerPath)
+    && hasAtlasStackManifest;
   return hasCanonicalCheckoutLayout ? checkoutRoot : resolvedContractsRoot;
 };
 
