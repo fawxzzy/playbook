@@ -195,7 +195,9 @@
       "duplicate_registry_records": 0
     },
     "doctrine_invariance": {
-      "snapshot_sha256": "134089fb353043084fe8b32686776e2112efe289880d44a8fdd35e17e0b1358b",
+      "baseline_revision": "8aa912b492e689fca4c296d59a438c2813cba4fc",
+      "evidence_basis": "git-blob-at-base-and-current-head",
+      "snapshot_sha256": "9707a8e59f8f17d12e3f09b86db02bd6d7ef1accd458321f97c59769f7eabc2f",
       "paths": [
         {
           "path": ".playbook/memory/candidates.json",
@@ -224,8 +226,8 @@
         },
         {
           "path": ".playbook/patterns.json",
-          "before_sha256": "sha256:89835b58eab7b973481d032fc08ae73fcba0c722196e656ec458e70a8772d9f0",
-          "after_sha256": "sha256:89835b58eab7b973481d032fc08ae73fcba0c722196e656ec458e70a8772d9f0"
+          "before_sha256": null,
+          "after_sha256": null
         },
         {
           "path": ".playbook/patterns-promoted.json",
@@ -244,8 +246,8 @@
         },
         {
           "path": "docs/PLAYBOOK_NOTES.md",
-          "before_sha256": "sha256:8edac3529a6ed072d7fadb0cefebf640777c0d035a1f24fee562254b295dec87",
-          "after_sha256": "sha256:8edac3529a6ed072d7fadb0cefebf640777c0d035a1f24fee562254b295dec87"
+          "before_sha256": "sha256:e623deabc66f536074d453a7adcd9c123a4e0a0315c292929965c6cf3db079c1",
+          "after_sha256": "sha256:e623deabc66f536074d453a7adcd9c123a4e0a0315c292929965c6cf3db079c1"
         }
       ]
     },

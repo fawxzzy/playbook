@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,6 +16,7 @@ const receiptPath = path.join(
 );
 const queuePath = path.join(repoRoot, '.playbook', 'memory', 'atlas-knowledge-candidates.json');
 const sourceRevision = '66f756768792de35ef00d1741cf8c6f6c965b733';
+const playbookBaseRevision = '8aa912b492e689fca4c296d59a438c2813cba4fc';
 const excludedDecisionId = 'creation-os-software-repo-voice-first-wedge';
 const expectedDoctrinePaths = [
   '.playbook/memory/candidates.json',
@@ -82,13 +83,14 @@ const canonicalize = (value) => {
 };
 
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
-const isTrackedPath = (relativePath) => {
-  try {
-    execFileSync('git', ['ls-files', '--error-unmatch', '--', relativePath], { cwd: repoRoot, stdio: 'ignore' });
-    return true;
-  } catch {
-    return false;
-  }
+const gitBlobSha256 = (revision, relativePath) => {
+  const result = spawnSync('git', ['cat-file', 'blob', `${revision}:${relativePath}`], {
+    cwd: repoRoot,
+    encoding: null,
+    maxBuffer: 10 * 1024 * 1024
+  });
+  if (result.status !== 0) return null;
+  return `sha256:${sha256(result.stdout)}`;
 };
 const contentDigest = (value) => sha256(JSON.stringify(canonicalize(value)));
 const clone = (value) => structuredClone(value);
@@ -227,13 +229,32 @@ const validateCreationOsIntake = ({ receipt, queue, queueBytes }) => {
     expectedDoctrinePaths,
     'canonical doctrine path set drifted'
   );
+  assert.equal(receipt.proof.doctrine_invariance.baseline_revision, playbookBaseRevision);
+  assert.equal(receipt.proof.doctrine_invariance.evidence_basis, 'git-blob-at-base-and-current-head');
   for (const doctrinePath of receipt.proof.doctrine_invariance.paths) {
     assert.equal(doctrinePath.before_sha256, doctrinePath.after_sha256, `doctrine changed: ${doctrinePath.path}`);
-    if (!isTrackedPath(doctrinePath.path)) continue;
-    const absolutePath = path.join(repoRoot, doctrinePath.path);
-    const liveSha256 = fs.existsSync(absolutePath) ? `sha256:${sha256(fs.readFileSync(absolutePath))}` : null;
-    assert.equal(liveSha256, doctrinePath.after_sha256, `doctrine byte hash drift: ${doctrinePath.path}`);
+    assert.equal(
+      gitBlobSha256(playbookBaseRevision, doctrinePath.path),
+      doctrinePath.before_sha256,
+      `doctrine base blob drift: ${doctrinePath.path}`
+    );
+    assert.equal(
+      gitBlobSha256('HEAD', doctrinePath.path),
+      doctrinePath.after_sha256,
+      `doctrine head blob drift: ${doctrinePath.path}`
+    );
   }
+  const doctrineSnapshot = Object.fromEntries(
+    receipt.proof.doctrine_invariance.paths.map((entry) => [
+      entry.path,
+      entry.after_sha256?.replace(/^sha256:/, '') ?? null
+    ])
+  );
+  assert.equal(
+    receipt.proof.doctrine_invariance.snapshot_sha256,
+    contentDigest(doctrineSnapshot),
+    'doctrine snapshot digest drifted'
+  );
 };
 
 test('admits exactly the six Creation OS candidates with correlated accept dispositions', () => {
