@@ -24,6 +24,9 @@ Admission guarantees:
 - loads the official `@atlas/contracts` `./validator` export from the caller-supplied Atlas contracts package root; Playbook does not embed the Atlas schema or validator logic
 - accepts only exact supported proposals: `Playbook/rules`, `Playbook/patterns`, and `Playbook/failure-modes`; spelling and meaning are never normalized silently
 - retains `candidate_id`, `kind`, `name`, `statement`, `scope`, the complete ordered provenance array and classifications, review state, `suggested_destination`, `created_at`, and extensions
+- preserves the portable Atlas source artifact path and exact source-byte SHA-256 in every candidate record and correlated receipt
+- records Atlas-root artifacts with Atlas-relative paths and consuming-project artifacts with `project://` paths; inputs outside both stable roots fail closed instead of persisting machine-specific absolute paths
+- records the owner disposition `accept` explicitly, scoped only to governed candidate review and never doctrine promotion
 - treats `suggested_destination` as proposal-only metadata and requires `review.status=candidate`
 - emits and stores a deterministic receipt correlated to the external candidate identity and deterministic Playbook record id
 - replays idempotently without duplicate candidate records or byte changes
@@ -37,6 +40,7 @@ Stable fail-closed reason codes:
 - `KNOWLEDGE_IDENTITY_LOST`
 - `KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN`
 - `KNOWLEDGE_CONSUMER_RECEIPT_MISSING`
+- `KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH`
 - `KNOWLEDGE_ATLAS_VALIDATION_FAILED`
 - `KNOWLEDGE_ATLAS_VALIDATOR_UNAVAILABLE`
 

@@ -499,9 +499,9 @@ Command boundary note:
 - Failure Mode: Hidden memory pressure logic feels random even when the policy is deterministic.
 - `knowledge` = normalized inspection/query surface for governed knowledge retrieval and provenance, plus one narrow Atlas review-candidate admission boundary.
 
-`pnpm playbook knowledge` keeps its retrieval surfaces read-only. `knowledge atlas-admit --artifact <path> --atlas-contracts-root <dir> --json` is the explicit exception: it consumes the Atlas-owned validator, preserves exact identity/classified provenance, and writes only `.playbook/memory/atlas-knowledge-candidates.json` with a deterministic correlated receipt and no promotion authority.
+`pnpm playbook knowledge` keeps its retrieval surfaces read-only. `knowledge atlas-admit --artifact <path> --atlas-contracts-root <dir> --json` is the explicit exception: it consumes the Atlas-owned validator, preserves exact identity, portable source artifact path, exact byte SHA-256, classified provenance, and an explicit candidate-review-only `accept` disposition, and writes only the governed `.playbook/memory/atlas-knowledge-candidates.json` queue with a deterministic correlated receipt and no promotion authority.
 
-- `knowledge atlas-admit` accepts exact supported `Playbook/rules`, `Playbook/patterns`, or `Playbook/failure-modes` destination proposals, replays idempotently, and rejects any automatic-promotion attempt.
+- `knowledge atlas-admit` accepts exact supported `Playbook/rules`, `Playbook/patterns`, or `Playbook/failure-modes` destination proposals, replays idempotently, rejects source path/byte drift, and rejects any automatic-promotion attempt.
 - `knowledge list` enumerates all record types.
 - `knowledge query` filters by type, status, module, rule, or text.
 - `knowledge inspect <id>` reads one record.

@@ -1,4 +1,12 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.53.1 - 2026-07-16
+- Recommended bump: patch
+- @fawxzzy/playbook: 0.53.0 -> 0.53.1 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.53.0 -> 0.53.1 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.53.0 -> 0.53.1 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.53.0 -> 0.53.1 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.53.0 -> 0.53.1 (playbook-installable-workspace)
+
 ## 0.53.0 - 2026-07-15
 - Recommended bump: minor
 - @fawxzzy/playbook: 0.52.2 -> 0.53.0 (playbook-installable-workspace)
@@ -1414,5 +1422,6 @@
 - Rule: Atlas owns contract semantics; Playbook consumes without copying, and KnowledgeCandidate admission never grants doctrine-promotion authority.
 - Pattern: Candidate-only intake with exact identity/provenance preservation and deterministic correlated receipt.
 - Failure Mode: Candidate-to-Doctrine Collapse occurs when suggested destination or review state is silently treated as promotion authority.
+- WHAT: Hardened Atlas KnowledgeCandidate admission records with portable source artifact paths, exact source-byte SHA-256 values, and explicit candidate-review-only `accept` owner dispositions; the governed queue is now durable while replay rejects path or byte drift. WHY: Owner intake evidence must bind every candidate record to the exact Atlas artifact without converting acceptance into doctrine promotion.
 - WHAT: Updated `pnpm playbook docs audit` idea-leakage scanning to ignore managed AGENTS command/example sections, added regression coverage for that false-positive path, and refreshed repo scorecard examples to reflect docs governance as verified rather than warning-bearing. WHY: Managed command metadata should not cause AGENTS planning-language warnings, and the support artifacts now match the actual docs-audit contract.
 - WHAT: Recorded the recent stack sustain patterns in `docs/PATTERNS.md`, covering merge-repin-validate archive closure, atomic topology admission, release-safety waves before runtime expansion, and clean-worktree lane execution. WHY: These were reused successfully across ATLAS, Foundation, and Lifeline and are now explicit Playbook doctrine rather than task-local memory.
