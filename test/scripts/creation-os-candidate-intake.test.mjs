@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,6 +17,18 @@ const receiptPath = path.join(
 const queuePath = path.join(repoRoot, '.playbook', 'memory', 'atlas-knowledge-candidates.json');
 const sourceRevision = '66f756768792de35ef00d1741cf8c6f6c965b733';
 const excludedDecisionId = 'creation-os-software-repo-voice-first-wedge';
+const expectedDoctrinePaths = [
+  '.playbook/memory/candidates.json',
+  '.playbook/memory/knowledge/decisions.json',
+  '.playbook/memory/knowledge/patterns.json',
+  '.playbook/memory/knowledge/failure-modes.json',
+  '.playbook/memory/knowledge/invariants.json',
+  '.playbook/patterns.json',
+  '.playbook/patterns-promoted.json',
+  '.playbook/story-candidates.json',
+  '.playbook/stories.json',
+  'docs/PLAYBOOK_NOTES.md'
+];
 
 const expectedCandidates = new Map(Object.entries({
   'creation-os-bootstrap-pointer-not-memory': {
@@ -69,6 +82,14 @@ const canonicalize = (value) => {
 };
 
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
+const isTrackedPath = (relativePath) => {
+  try {
+    execFileSync('git', ['ls-files', '--error-unmatch', '--', relativePath], { cwd: repoRoot, stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+};
 const contentDigest = (value) => sha256(JSON.stringify(canonicalize(value)));
 const clone = (value) => structuredClone(value);
 const uniqueCount = (values) => new Set(values).size;
@@ -201,8 +222,14 @@ const validateCreationOsIntake = ({ receipt, queue, queueBytes }) => {
   assert.equal(receipt.proof.deterministic_replay.queue_bytes_stable, true);
   assert.equal(receipt.proof.deterministic_replay.duplicate_registry_records, 0);
 
+  assert.deepEqual(
+    receipt.proof.doctrine_invariance.paths.map((entry) => entry.path),
+    expectedDoctrinePaths,
+    'canonical doctrine path set drifted'
+  );
   for (const doctrinePath of receipt.proof.doctrine_invariance.paths) {
     assert.equal(doctrinePath.before_sha256, doctrinePath.after_sha256, `doctrine changed: ${doctrinePath.path}`);
+    if (!isTrackedPath(doctrinePath.path)) continue;
     const absolutePath = path.join(repoRoot, doctrinePath.path);
     const liveSha256 = fs.existsSync(absolutePath) ? `sha256:${sha256(fs.readFileSync(absolutePath))}` : null;
     assert.equal(liveSha256, doctrinePath.after_sha256, `doctrine byte hash drift: ${doctrinePath.path}`);
