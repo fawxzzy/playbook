@@ -9,6 +9,11 @@ coverage
 !.playbook/pr-metadata.json
 !.playbook/demo-artifacts/
 !.playbook/demo-artifacts/*.json
+!.playbook/memory/
+.playbook/memory/*
+!.playbook/memory/atlas-knowledge-candidates.json
+!.playbook/memory/atlas-knowledge-candidate-intake-receipts/
+!.playbook/memory/atlas-knowledge-candidate-intake-receipts/*.json
 packages/engine/.playbook/
 packages/engine/.playbook/**
 merged*.json

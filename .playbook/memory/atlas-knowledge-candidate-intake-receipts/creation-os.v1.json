@@ -1,0 +1,263 @@
+{
+  "schema_version": "1.0",
+  "kind": "playbook.atlas-knowledge-candidate.owner-intake-receipt.v1",
+  "receipt_id": "playbook-akc-intake-creation-os-66f756768792",
+  "authority": {
+    "mode": "candidate-review-only",
+    "promotion_authority": "none",
+    "doctrine_mutation": false,
+    "allowed_owner_dispositions": [
+      "accept",
+      "revise",
+      "split",
+      "reject"
+    ]
+  },
+  "source": {
+    "repository": "fawxzzy/ATLAS",
+    "revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+    "contract_version": "atlas.knowledge-candidate.v2",
+    "manifest_path": "data/knowledge-candidates/creation-os/manifest.v1.json",
+    "manifest_sha256": "sha256:eaab80257186a1f1d32e45106ed87858e0e254065df315ccb26b1e89b854efe2",
+    "handoff_path": "docs/ops/ATLAS-CREATION-OS-PLAYBOOK-CANDIDATE-INTAKE-HANDOFF-2026-07-16.md",
+    "handoff_sha256": "sha256:28bc231614c687033cca8abb0e6361a8dbb74d48ac3d807385746cf4e63d2a15",
+    "counts": {
+      "total_source_records": 7,
+      "knowledge_candidates": 6,
+      "deferred_decisions": 1
+    }
+  },
+  "registry": {
+    "path": ".playbook/memory/atlas-knowledge-candidates.json",
+    "kind": "playbook.atlas-knowledge-candidate.queue.v1",
+    "queue_sha256": "sha256:206e30ff026969dec954f04b2aa722fb047f6c8540e9258ddda8b9887dba0d75",
+    "candidate_count": 6,
+    "unique_source_id_count": 6,
+    "unique_source_hash_count": 6,
+    "unique_registry_identity_count": 6,
+    "owner_disposition_count": 6
+  },
+  "candidates": [
+    {
+      "candidate_id": "creation-os-bootstrap-pointer-not-memory",
+      "source_revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+      "source_artifact_path": "data/knowledge-candidates/creation-os/creation-os-bootstrap-pointer-not-memory.knowledge-candidate.v2.json",
+      "source_artifact_sha256": "sha256:71170a9442e24862e0f79876e3f8e7028c9146efe5a91bc20daacf1b3a679c05",
+      "manifest_record_sha256": "sha256:51c608f096ffbcc7480bc06e027953ad7fe00d67e30ba20eccce089eddaa803f",
+      "source_statement_sha256": "sha256:ec2ba71e59c57f2e625a88184970f573f84e59493dc9e136a6dcd77ee3e55702",
+      "source_scope_sha256": "sha256:3d816f53c3df64a5555737c1b04284fabb41200040f2e5ffb80d9c8e93e18814",
+      "contract_version": "atlas.knowledge-candidate.v2",
+      "kind": "rule",
+      "review_status": "candidate",
+      "suggested_destination": "Playbook/rules",
+      "candidate_record_id": "playbook-akc-0db48d64ec1fb5a401d45b55",
+      "candidate_content_sha256": "1787d8672266c30a0822a5a5025466e8aa9c264bbc6d23bb3b61d34389c3730f",
+      "consumer_receipt_id": "playbook-akc-receipt-4fc34f7a000cac0eed01ce2f",
+      "provenance_preserved": true,
+      "owner_disposition": {
+        "decision": "accept",
+        "effect": "candidate-review-only",
+        "reason_code": "PLAYBOOK_CANDIDATE_REVIEW_ACCEPTED",
+        "rationale": "Exact Atlas v2 artifact validated, supported destination retained, and admission grants no doctrine-promotion authority."
+      }
+    },
+    {
+      "candidate_id": "creation-os-builder-creative-loop-separation",
+      "source_revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+      "source_artifact_path": "data/knowledge-candidates/creation-os/creation-os-builder-creative-loop-separation.knowledge-candidate.v2.json",
+      "source_artifact_sha256": "sha256:8c50f2611698756850c88c15ff4ba3d3f09a8807378e4aeb339572842bf4d986",
+      "manifest_record_sha256": "sha256:f9d9b094e1d05a0888d6ec316bf1278be3251dedaa43dd51e15f04c6d4e12036",
+      "source_statement_sha256": "sha256:45b131a2ca8dbaa28863fc1c7bd80524deb7db17d8427e96bab89fb9b64134e3",
+      "source_scope_sha256": "sha256:5f3ec0991ea23bc61a139f87e8ca0ad39d3519f28a9216efb72c613beea106e7",
+      "contract_version": "atlas.knowledge-candidate.v2",
+      "kind": "pattern",
+      "review_status": "candidate",
+      "suggested_destination": "Playbook/patterns",
+      "candidate_record_id": "playbook-akc-977164b00694cefc34b07b05",
+      "candidate_content_sha256": "5d99b77776c15da7dad0847907a483285cf3cc574e9b06425a92eddfdda3b890",
+      "consumer_receipt_id": "playbook-akc-receipt-9264f977b2cada4f13039f43",
+      "provenance_preserved": true,
+      "owner_disposition": {
+        "decision": "accept",
+        "effect": "candidate-review-only",
+        "reason_code": "PLAYBOOK_CANDIDATE_REVIEW_ACCEPTED",
+        "rationale": "Exact Atlas v2 artifact validated, supported destination retained, and admission grants no doctrine-promotion authority."
+      }
+    },
+    {
+      "candidate_id": "creation-os-human-directed-authority",
+      "source_revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+      "source_artifact_path": "data/knowledge-candidates/creation-os/creation-os-human-directed-authority.knowledge-candidate.v2.json",
+      "source_artifact_sha256": "sha256:0aee7841a054b2460d0260699151d0e878602af4fd63961ca9697e5cf71e2b4a",
+      "manifest_record_sha256": "sha256:8a53222e45e99d36e10e07d5c9b8f6ec3d1543aa4ce8d9e95f7ac8ce0c2658c8",
+      "source_statement_sha256": "sha256:4b17a2fbe026529c61041a9af494fbeb63aa4827a009c78ef31b026ec28149e0",
+      "source_scope_sha256": "sha256:e277c24dff69cb94304f19d45239c96c09f68e0773ca278cda4b95bb0acb6a60",
+      "contract_version": "atlas.knowledge-candidate.v2",
+      "kind": "rule",
+      "review_status": "candidate",
+      "suggested_destination": "Playbook/rules",
+      "candidate_record_id": "playbook-akc-c23ab6b35474f0b204980113",
+      "candidate_content_sha256": "3140aaf513523f1434aef97b0788eff3e651d036216abcf8f4848d8856af9d7f",
+      "consumer_receipt_id": "playbook-akc-receipt-82d79237e9e63b6eb9fb8740",
+      "provenance_preserved": true,
+      "owner_disposition": {
+        "decision": "accept",
+        "effect": "candidate-review-only",
+        "reason_code": "PLAYBOOK_CANDIDATE_REVIEW_ACCEPTED",
+        "rationale": "Exact Atlas v2 artifact validated, supported destination retained, and admission grants no doctrine-promotion authority."
+      }
+    },
+    {
+      "candidate_id": "creation-os-infrastructure-shopping-before-wedge",
+      "source_revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+      "source_artifact_path": "data/knowledge-candidates/creation-os/creation-os-infrastructure-shopping-before-wedge.knowledge-candidate.v2.json",
+      "source_artifact_sha256": "sha256:44f882ae82ee35b4691457a6ac5039ff481c37d9aecb37fed75bbf659673405a",
+      "manifest_record_sha256": "sha256:10aadcddbcf6e2c9f448da34f17aa3d404e7e8fab41d3c32c382085f264d4efb",
+      "source_statement_sha256": "sha256:1d6a53a2298696bc28e52c3149fae4fb2ab3bd5f3d87aba3bbaefde8d0cbaca1",
+      "source_scope_sha256": "sha256:8d66a9fc8d7a9b7bfa179047c4f58ec8c94b88e0357aafe2c699ae480f4c5c2b",
+      "contract_version": "atlas.knowledge-candidate.v2",
+      "kind": "failure-mode",
+      "review_status": "candidate",
+      "suggested_destination": "Playbook/failure-modes",
+      "candidate_record_id": "playbook-akc-4418898f4736de7692057c43",
+      "candidate_content_sha256": "5401577af1cbc2573af12d0f13edef5e88c8a8cf2c6f0249ade063eca608f241",
+      "consumer_receipt_id": "playbook-akc-receipt-f3094d5e6325199f1e5f92fa",
+      "provenance_preserved": true,
+      "owner_disposition": {
+        "decision": "accept",
+        "effect": "candidate-review-only",
+        "reason_code": "PLAYBOOK_CANDIDATE_REVIEW_ACCEPTED",
+        "rationale": "Exact Atlas v2 artifact validated, supported destination retained, and admission grants no doctrine-promotion authority."
+      }
+    },
+    {
+      "candidate_id": "creation-os-platform-surface-vertical-contracts",
+      "source_revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+      "source_artifact_path": "data/knowledge-candidates/creation-os/creation-os-platform-surface-vertical-contracts.knowledge-candidate.v2.json",
+      "source_artifact_sha256": "sha256:b8ce18b2720dbcc5900721e43de96dc660e91f4625223b683550c52de8bb8da2",
+      "manifest_record_sha256": "sha256:d41a7f04aeb116e84937d33f1156d72ac4302c260f0c27a19b8a13a45a61e55e",
+      "source_statement_sha256": "sha256:6acbfe34686350cf933dbc43cdad5f66885549223c7abc35af402fdb985dae5b",
+      "source_scope_sha256": "sha256:a16c24e2d2b598738aeb106ab139d4fd23b14d7371ff02dc16e47580f69544c0",
+      "contract_version": "atlas.knowledge-candidate.v2",
+      "kind": "pattern",
+      "review_status": "candidate",
+      "suggested_destination": "Playbook/patterns",
+      "candidate_record_id": "playbook-akc-9aa9ae6370f4325fab7c0220",
+      "candidate_content_sha256": "0aa8697a23cf4baab7bf3bfacfb28e52f7a48ceba3b6f49940c9d6d6edffe657",
+      "consumer_receipt_id": "playbook-akc-receipt-5507535cb989b78a37b5a414",
+      "provenance_preserved": true,
+      "owner_disposition": {
+        "decision": "accept",
+        "effect": "candidate-review-only",
+        "reason_code": "PLAYBOOK_CANDIDATE_REVIEW_ACCEPTED",
+        "rationale": "Exact Atlas v2 artifact validated, supported destination retained, and admission grants no doctrine-promotion authority."
+      }
+    },
+    {
+      "candidate_id": "creation-os-xr-device-novelty-trap",
+      "source_revision": "66f756768792de35ef00d1741cf8c6f6c965b733",
+      "source_artifact_path": "data/knowledge-candidates/creation-os/creation-os-xr-device-novelty-trap.knowledge-candidate.v2.json",
+      "source_artifact_sha256": "sha256:d44055c02c0acb69a58e15a9f28fd8a69421b083d927cecbe6828e0aebad390d",
+      "manifest_record_sha256": "sha256:303bd8a13845679399fc9a889f15ccc909e7e8b82c14aac80a7f684699b024bf",
+      "source_statement_sha256": "sha256:792d0a78d60d3997e2a9a0256908a3ff0c2c57f19f506c9a0be160cf2f9892b8",
+      "source_scope_sha256": "sha256:3ef15743b0c02b1ad98eed32b0abafcf424bf57b0122792c4bd06aadcd43a964",
+      "contract_version": "atlas.knowledge-candidate.v2",
+      "kind": "failure-mode",
+      "review_status": "candidate",
+      "suggested_destination": "Playbook/failure-modes",
+      "candidate_record_id": "playbook-akc-3ade8b73362c0e05c2b90d0e",
+      "candidate_content_sha256": "f9dcdc47e7786dc5553da567bea4c0fabe3886869eb5e4ec7f913c2bdf8a71bc",
+      "consumer_receipt_id": "playbook-akc-receipt-ade7dad59008ec1fd7055b61",
+      "provenance_preserved": true,
+      "owner_disposition": {
+        "decision": "accept",
+        "effect": "candidate-review-only",
+        "reason_code": "PLAYBOOK_CANDIDATE_REVIEW_ACCEPTED",
+        "rationale": "Exact Atlas v2 artifact validated, supported destination retained, and admission grants no doctrine-promotion authority."
+      }
+    }
+  ],
+  "excluded": [
+    {
+      "candidate_id": "creation-os-software-repo-voice-first-wedge",
+      "classification": "atlas-product-decision",
+      "kind": "decision",
+      "disposition": "deferred-atlas-product-decision",
+      "reason": "Decision is not an atlas.knowledge-candidate.v2 kind and Playbook has no Decision destination."
+    }
+  ],
+  "proof": {
+    "deterministic_replay": {
+      "replayed_candidate_count": 6,
+      "queue_bytes_stable": true,
+      "queue_sha256_before": "sha256:206e30ff026969dec954f04b2aa722fb047f6c8540e9258ddda8b9887dba0d75",
+      "queue_sha256_after": "sha256:206e30ff026969dec954f04b2aa722fb047f6c8540e9258ddda8b9887dba0d75",
+      "duplicate_registry_records": 0
+    },
+    "doctrine_invariance": {
+      "snapshot_sha256": "134089fb353043084fe8b32686776e2112efe289880d44a8fdd35e17e0b1358b",
+      "paths": [
+        {
+          "path": ".playbook/memory/candidates.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/memory/knowledge/decisions.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/memory/knowledge/patterns.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/memory/knowledge/failure-modes.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/memory/knowledge/invariants.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/patterns.json",
+          "before_sha256": "sha256:89835b58eab7b973481d032fc08ae73fcba0c722196e656ec458e70a8772d9f0",
+          "after_sha256": "sha256:89835b58eab7b973481d032fc08ae73fcba0c722196e656ec458e70a8772d9f0"
+        },
+        {
+          "path": ".playbook/patterns-promoted.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/story-candidates.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": ".playbook/stories.json",
+          "before_sha256": null,
+          "after_sha256": null
+        },
+        {
+          "path": "docs/PLAYBOOK_NOTES.md",
+          "before_sha256": "sha256:8edac3529a6ed072d7fadb0cefebf640777c0d035a1f24fee562254b295dec87",
+          "after_sha256": "sha256:8edac3529a6ed072d7fadb0cefebf640777c0d035a1f24fee562254b295dec87"
+        }
+      ]
+    },
+    "decision_exclusion": {
+      "candidate_id": "creation-os-software-repo-voice-first-wedge",
+      "absent_from_registry": true,
+      "absent_from_candidate_outputs": true
+    },
+    "roadmap_reconciliation": {
+      "tracking_surface": "docs/PLAYBOOK_PRODUCT_ROADMAP.md existing Atlas KnowledgeCandidate implementation note",
+      "duplicate_card_created": false,
+      "project_board_owner_export_changed": false
+    }
+  }
+}

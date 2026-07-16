@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -20,8 +21,67 @@ const describeWithAtlas = fs.existsSync(validFixturePath) && fs.existsSync(badKi
 const createRepo = (): string => fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-atlas-candidate-'));
 const queuePath = (repoRoot: string): string => path.join(repoRoot, ATLAS_KNOWLEDGE_CANDIDATE_QUEUE_RELATIVE_PATH);
 const readQueue = (repoRoot: string): AtlasKnowledgeCandidateQueue => JSON.parse(fs.readFileSync(queuePath(repoRoot), 'utf8')) as AtlasKnowledgeCandidateQueue;
-const writeQueue = (repoRoot: string, queue: AtlasKnowledgeCandidateQueue): void => fs.writeFileSync(queuePath(repoRoot), `${JSON.stringify(queue, null, 2)}\n`, 'utf8');
+const writeQueue = (repoRoot: string, queue: AtlasKnowledgeCandidateQueue): void => {
+  fs.mkdirSync(path.dirname(queuePath(repoRoot)), { recursive: true });
+  fs.writeFileSync(queuePath(repoRoot), `${JSON.stringify(queue, null, 2)}\n`, 'utf8');
+};
 const readFixture = (): AtlasKnowledgeCandidate => JSON.parse(fs.readFileSync(validFixturePath, 'utf8')) as AtlasKnowledgeCandidate;
+const exactArtifactSha256 = (artifactPath: string): string => `sha256:${createHash('sha256').update(fs.readFileSync(artifactPath)).digest('hex')}`;
+const canonicalize = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map((entry) => canonicalize(entry));
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(Object.keys(record).sort().map((key) => [key, canonicalize(record[key])]));
+  }
+  return value;
+};
+const contentDigest = (value: unknown): string => createHash('sha256').update(JSON.stringify(canonicalize(value))).digest('hex');
+
+const buildLegacyRecord = (candidate: AtlasKnowledgeCandidate): AtlasKnowledgeCandidateQueue['candidates'][number] => {
+  const candidateContentSha256 = contentDigest(candidate);
+  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, candidate_content_sha256: candidateContentSha256 }).slice(0, 24)}`;
+  const receiptIdentity = {
+    candidate_id: candidate.candidate_id,
+    candidate_record_id: recordId,
+    candidate_content_sha256: candidateContentSha256,
+    source_contract: 'atlas.knowledge-candidate.v2',
+    suggested_destination: candidate.suggested_destination,
+    decision: 'candidate-only-admitted'
+  };
+  return {
+    record_id: recordId,
+    external_candidate_id: candidate.candidate_id,
+    candidate_content_sha256: candidateContentSha256,
+    candidate,
+    admission: {
+      state: 'review-candidate',
+      promotion_authority: 'none',
+      suggested_destination_authority: 'proposal-only'
+    },
+    consumer_receipt: {
+      schema_version: '1.0',
+      kind: 'playbook.atlas-knowledge-candidate.consumer-receipt.v1',
+      receipt_id: `playbook-akc-receipt-${contentDigest(receiptIdentity).slice(0, 24)}`,
+      candidate_id: candidate.candidate_id,
+      candidate_record_id: recordId,
+      candidate_content_sha256: candidateContentSha256,
+      source_contract: 'atlas.knowledge-candidate.v2',
+      suggested_destination: candidate.suggested_destination,
+      decision: 'candidate-only-admitted',
+      review_status: 'candidate',
+      promotion_authority: 'none',
+      atlas_validator: {
+        package: '@atlas/contracts',
+        export: './validator',
+        schema: 'atlas.knowledge-candidate.v2'
+      },
+      correlation: {
+        candidate_id: candidate.candidate_id,
+        candidate_record_id: recordId
+      }
+    }
+  } as unknown as AtlasKnowledgeCandidateQueue['candidates'][number];
+};
 
 const writeCandidate = (repoRoot: string, candidate: AtlasKnowledgeCandidate, name = 'candidate.json'): string => {
   const artifactPath = path.join(repoRoot, name);
@@ -64,7 +124,17 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     expect(queue.candidates[0]?.external_candidate_id).toBe(source.candidate_id);
     expect(queue.candidates[0]?.candidate).toEqual(source);
     expect(queue.candidates[0]?.candidate.provenance).toEqual(source.provenance);
+    expect(queue.candidates[0]?.source_artifact).toEqual({
+      path: 'packages/atlas-contracts/fixtures/valid/knowledge-candidate.v2.json',
+      sha256: exactArtifactSha256(validFixturePath)
+    });
+    expect(queue.candidates[0]?.owner_disposition).toBe('accept');
     expect(queue.candidates[0]?.consumer_receipt.candidate_id).toBe(source.candidate_id);
+    expect(queue.candidates[0]?.consumer_receipt.owner_disposition).toBe('accept');
+    expect(queue.candidates[0]?.consumer_receipt.correlation).toMatchObject({
+      source_artifact_path: 'packages/atlas-contracts/fixtures/valid/knowledge-candidate.v2.json',
+      source_artifact_sha256: exactArtifactSha256(validFixturePath)
+    });
     expect(queue.candidates[0]?.consumer_receipt.correlation.candidate_record_id).toBe(admitted.candidate_record_id);
     expect(queue.candidates[0]?.admission).toEqual({
       state: 'review-candidate',
@@ -73,7 +143,9 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     });
     expect(admitted.proof).toMatchObject({
       candidate_identity_exact: true,
+      source_artifact_exact: true,
       provenance_exact: true,
+      owner_disposition: 'accept',
       suggested_destination_proposal_only: true,
       consumer_receipt_correlated: true,
       auto_promotion: false,
@@ -155,6 +227,37 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     writeQueue(repoRoot, queue);
 
     await expect(admit(repoRoot)).rejects.toMatchObject({ reasonCode: 'KNOWLEDGE_IDENTITY_LOST' });
+  });
+
+  it('upgrades an exact legacy queue record once and then replays byte-identically', async () => {
+    const repoRoot = createRepo();
+    writeQueue(repoRoot, {
+      schema_version: '1.0',
+      kind: 'playbook.atlas-knowledge-candidate.queue.v1',
+      candidates: [buildLegacyRecord(readFixture())]
+    });
+
+    const upgraded = await admit(repoRoot);
+    const upgradedBytes = fs.readFileSync(queuePath(repoRoot), 'utf8');
+    const replayed = await admit(repoRoot);
+
+    expect(upgraded.status).toBe('upgraded');
+    expect(replayed.status).toBe('replayed');
+    expect(replayed.candidate_record_id).toBe(upgraded.candidate_record_id);
+    expect(fs.readFileSync(queuePath(repoRoot), 'utf8')).toBe(upgradedBytes);
+    expect(readQueue(repoRoot).candidates).toHaveLength(1);
+  });
+
+  it('rejects byte-different replay even when parsed candidate content is unchanged', async () => {
+    const repoRoot = createRepo();
+    const candidate = readFixture();
+    const artifactPath = writeCandidate(repoRoot, candidate);
+    await admit(repoRoot, artifactPath);
+    fs.writeFileSync(artifactPath, `${JSON.stringify(candidate)}\n`, 'utf8');
+
+    await expect(admit(repoRoot, artifactPath)).rejects.toMatchObject({
+      reasonCode: 'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+    });
   });
 
   it('rejects provenance classification loss on replay', async () => {

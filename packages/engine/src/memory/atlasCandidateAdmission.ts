@@ -12,6 +12,7 @@ export const ATLAS_KNOWLEDGE_ADMISSION_REASON_CODES = [
   'KNOWLEDGE_IDENTITY_LOST',
   'KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN',
   'KNOWLEDGE_CONSUMER_RECEIPT_MISSING',
+  'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH',
   'KNOWLEDGE_ATLAS_VALIDATION_FAILED',
   'KNOWLEDGE_ATLAS_VALIDATOR_UNAVAILABLE'
 ] as const;
@@ -58,8 +59,13 @@ export type AtlasKnowledgeConsumerReceipt = {
   candidate_record_id: string;
   candidate_content_sha256: string;
   source_contract: typeof ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT;
+  source_artifact: {
+    path: string;
+    sha256: string;
+  };
   suggested_destination: string;
   decision: 'candidate-only-admitted';
+  owner_disposition: 'accept';
   review_status: 'candidate';
   promotion_authority: 'none';
   atlas_validator: {
@@ -70,6 +76,8 @@ export type AtlasKnowledgeConsumerReceipt = {
   correlation: {
     candidate_id: string;
     candidate_record_id: string;
+    source_artifact_path: string;
+    source_artifact_sha256: string;
   };
 };
 
@@ -77,6 +85,11 @@ export type AtlasKnowledgeCandidateRecord = {
   record_id: string;
   external_candidate_id: string;
   candidate_content_sha256: string;
+  source_artifact: {
+    path: string;
+    sha256: string;
+  };
+  owner_disposition: 'accept';
   candidate: AtlasKnowledgeCandidate;
   admission: {
     state: 'review-candidate';
@@ -102,7 +115,7 @@ export type AdmitAtlasKnowledgeCandidateOptions = {
 export type AtlasKnowledgeCandidateAdmissionResult = {
   schemaVersion: '1.0';
   command: 'atlas-knowledge-candidate-admit';
-  status: 'admitted' | 'replayed';
+  status: 'admitted' | 'upgraded' | 'replayed';
   candidate_id: string;
   candidate_record_id: string;
   queue_path: typeof ATLAS_KNOWLEDGE_CANDIDATE_QUEUE_RELATIVE_PATH;
@@ -110,7 +123,9 @@ export type AtlasKnowledgeCandidateAdmissionResult = {
   receipt: AtlasKnowledgeConsumerReceipt;
   proof: {
     candidate_identity_exact: true;
+    source_artifact_exact: true;
     provenance_exact: true;
+    owner_disposition: 'accept';
     suggested_destination_proposal_only: true;
     consumer_receipt_correlated: true;
     auto_promotion: false;
@@ -175,10 +190,25 @@ const canonicalize = (value: unknown): unknown => {
 };
 
 const deterministicStringify = (value: unknown): string => `${JSON.stringify(canonicalize(value), null, 2)}\n`;
-const sha256 = (value: string): string => createHash('sha256').update(value, 'utf8').digest('hex');
+const sha256 = (value: string | Buffer): string => createHash('sha256').update(value).digest('hex');
 const contentDigest = (value: unknown): string => sha256(JSON.stringify(canonicalize(value)));
 const sameValue = (left: unknown, right: unknown): boolean => JSON.stringify(canonicalize(left)) === JSON.stringify(canonicalize(right));
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+const toPortablePath = (value: string): string => value.replaceAll(path.sep, '/');
+
+const describeSourceArtifact = (artifactPath: string, atlasContractsRoot: string): AtlasKnowledgeCandidateRecord['source_artifact'] => {
+  const absoluteArtifactPath = path.resolve(artifactPath);
+  const atlasRoot = path.resolve(atlasContractsRoot, '..', '..');
+  const relativeArtifactPath = path.relative(atlasRoot, absoluteArtifactPath);
+  const isWithinAtlasRoot = relativeArtifactPath !== ''
+    && relativeArtifactPath !== '..'
+    && !relativeArtifactPath.startsWith(`..${path.sep}`)
+    && !path.isAbsolute(relativeArtifactPath);
+  return {
+    path: toPortablePath(isWithinAtlasRoot ? relativeArtifactPath : absoluteArtifactPath),
+    sha256: `sha256:${sha256(fs.readFileSync(absoluteArtifactPath))}`
+  };
+};
 
 const fail = (reasonCode: AtlasKnowledgeAdmissionReasonCode, message: string, details: string[] = []): never => {
   throw new AtlasKnowledgeCandidateAdmissionError(reasonCode, message, details);
@@ -274,15 +304,18 @@ const readQueue = (projectRoot: string): AtlasKnowledgeCandidateQueue => {
 const buildReceipt = (
   candidate: AtlasKnowledgeCandidate,
   candidateRecordId: string,
-  candidateContentSha256: string
+  candidateContentSha256: string,
+  sourceArtifact: AtlasKnowledgeCandidateRecord['source_artifact']
 ): AtlasKnowledgeConsumerReceipt => {
   const receiptIdentity = {
     candidate_id: candidate.candidate_id,
     candidate_record_id: candidateRecordId,
     candidate_content_sha256: candidateContentSha256,
     source_contract: ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT,
+    source_artifact: sourceArtifact,
     suggested_destination: candidate.suggested_destination,
-    decision: 'candidate-only-admitted'
+    decision: 'candidate-only-admitted',
+    owner_disposition: 'accept'
   };
   return {
     schema_version: '1.0',
@@ -292,8 +325,10 @@ const buildReceipt = (
     candidate_record_id: candidateRecordId,
     candidate_content_sha256: candidateContentSha256,
     source_contract: ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT,
+    source_artifact: sourceArtifact,
     suggested_destination: candidate.suggested_destination,
     decision: 'candidate-only-admitted',
+    owner_disposition: 'accept',
     review_status: 'candidate',
     promotion_authority: 'none',
     atlas_validator: {
@@ -303,7 +338,55 @@ const buildReceipt = (
     },
     correlation: {
       candidate_id: candidate.candidate_id,
-      candidate_record_id: candidateRecordId
+      candidate_record_id: candidateRecordId,
+      source_artifact_path: sourceArtifact.path,
+      source_artifact_sha256: sourceArtifact.sha256
+    }
+  };
+};
+
+const buildLegacyRecord = (candidate: AtlasKnowledgeCandidate): Record<string, unknown> => {
+  const candidateContentSha256 = contentDigest(candidate);
+  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, candidate_content_sha256: candidateContentSha256 }).slice(0, 24)}`;
+  const receiptIdentity = {
+    candidate_id: candidate.candidate_id,
+    candidate_record_id: recordId,
+    candidate_content_sha256: candidateContentSha256,
+    source_contract: ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT,
+    suggested_destination: candidate.suggested_destination,
+    decision: 'candidate-only-admitted'
+  };
+  return {
+    record_id: recordId,
+    external_candidate_id: candidate.candidate_id,
+    candidate_content_sha256: candidateContentSha256,
+    candidate,
+    admission: {
+      state: 'review-candidate',
+      promotion_authority: 'none',
+      suggested_destination_authority: 'proposal-only'
+    },
+    consumer_receipt: {
+      schema_version: '1.0',
+      kind: 'playbook.atlas-knowledge-candidate.consumer-receipt.v1',
+      receipt_id: `playbook-akc-receipt-${contentDigest(receiptIdentity).slice(0, 24)}`,
+      candidate_id: candidate.candidate_id,
+      candidate_record_id: recordId,
+      candidate_content_sha256: candidateContentSha256,
+      source_contract: ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT,
+      suggested_destination: candidate.suggested_destination,
+      decision: 'candidate-only-admitted',
+      review_status: 'candidate',
+      promotion_authority: 'none',
+      atlas_validator: {
+        package: '@atlas/contracts',
+        export: './validator',
+        schema: ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT
+      },
+      correlation: {
+        candidate_id: candidate.candidate_id,
+        candidate_record_id: recordId
+      }
     }
   };
 };
@@ -334,10 +417,18 @@ export const assertAtlasKnowledgeCandidateAdmission = (input: {
   if (!sameValue(record.candidate, source)) {
     fail('KNOWLEDGE_IDENTITY_LOST', 'The stored Playbook review candidate does not retain the exact validated Atlas candidate fields.');
   }
+  if (!isRecord(record.source_artifact)
+    || typeof record.source_artifact.path !== 'string'
+    || record.source_artifact.path.length === 0
+    || typeof record.source_artifact.sha256 !== 'string'
+    || !/^sha256:[0-9a-f]{64}$/.test(record.source_artifact.sha256)) {
+    fail('KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH', 'The exact Atlas source artifact path and SHA-256 are required.');
+  }
   validateDestination(source);
   if (input.attemptedPromotion
     || source.review.status !== 'candidate'
     || record.admission?.state !== 'review-candidate'
+    || record.owner_disposition !== 'accept'
     || record.admission?.promotion_authority !== 'none'
     || record.admission?.suggested_destination_authority !== 'proposal-only') {
     fail('KNOWLEDGE_AUTO_PROMOTION_FORBIDDEN', 'Atlas KnowledgeCandidate admission cannot create or authorize promoted Playbook doctrine.');
@@ -351,8 +442,10 @@ export const assertAtlasKnowledgeCandidateAdmission = (input: {
     || receipt.candidate_record_id !== record.record_id
     || receipt.candidate_content_sha256 !== record.candidate_content_sha256
     || receipt.source_contract !== ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT
+    || !sameValue(receipt.source_artifact, record.source_artifact)
     || receipt.suggested_destination !== source.suggested_destination
     || receipt.decision !== 'candidate-only-admitted'
+    || receipt.owner_disposition !== 'accept'
     || receipt.review_status !== 'candidate'
     || receipt.promotion_authority !== 'none'
     || !isRecord(receipt.atlas_validator)
@@ -361,19 +454,26 @@ export const assertAtlasKnowledgeCandidateAdmission = (input: {
     || receipt.atlas_validator.schema !== ATLAS_KNOWLEDGE_CANDIDATE_CONTRACT
     || !isRecord(receipt.correlation)
     || receipt.correlation.candidate_id !== source.candidate_id
-    || receipt.correlation.candidate_record_id !== record.record_id) {
+    || receipt.correlation.candidate_record_id !== record.record_id
+    || receipt.correlation.source_artifact_path !== record.source_artifact.path
+    || receipt.correlation.source_artifact_sha256 !== record.source_artifact.sha256) {
     fail('KNOWLEDGE_CONSUMER_RECEIPT_MISSING', 'A valid deterministic consumer receipt correlated to the Atlas candidate and Playbook record is required.');
   }
 };
 
-const buildRecord = (candidate: AtlasKnowledgeCandidate): AtlasKnowledgeCandidateRecord => {
+const buildRecord = (
+  candidate: AtlasKnowledgeCandidate,
+  sourceArtifact: AtlasKnowledgeCandidateRecord['source_artifact']
+): AtlasKnowledgeCandidateRecord => {
   const candidateContentSha256 = contentDigest(candidate);
-  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, candidate_content_sha256: candidateContentSha256 }).slice(0, 24)}`;
-  const receipt = buildReceipt(candidate, recordId, candidateContentSha256);
+  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, source_artifact: sourceArtifact }).slice(0, 24)}`;
+  const receipt = buildReceipt(candidate, recordId, candidateContentSha256, sourceArtifact);
   return {
     record_id: recordId,
     external_candidate_id: candidate.candidate_id,
     candidate_content_sha256: candidateContentSha256,
+    source_artifact: sourceArtifact,
+    owner_disposition: 'accept',
     candidate,
     admission: {
       state: 'review-candidate',
@@ -395,8 +495,17 @@ const validateExistingQueue = (queue: AtlasKnowledgeCandidateQueue): void => {
       fail('KNOWLEDGE_IDENTITY_LOST', 'The Playbook Atlas candidate queue contains missing or duplicate external identities.');
     }
     seen.add(candidateId);
+    const candidate = record.candidate as AtlasKnowledgeCandidate;
+    const isEnrichedRecord = isRecord(record.source_artifact) || record.owner_disposition !== undefined;
+    if (!isEnrichedRecord) {
+      validateDestination(candidate);
+      if (candidate.review?.status !== 'candidate' || !sameValue(record, buildLegacyRecord(candidate))) {
+        fail('KNOWLEDGE_IDENTITY_LOST', 'A legacy Playbook Atlas candidate record does not match the exact prior deterministic contract.');
+      }
+      continue;
+    }
     assertAtlasKnowledgeCandidateAdmission({
-      source: record.candidate as AtlasKnowledgeCandidate,
+      source: candidate,
       record,
       receipt: record.consumer_receipt
     });
@@ -425,7 +534,8 @@ export const admitAtlasKnowledgeCandidate = async (
   const previousQueueBytes = fs.existsSync(absoluteQueuePath) ? fs.readFileSync(absoluteQueuePath, 'utf8') : null;
   const doctrineBefore = snapshotDoctrine(projectRoot);
   const candidate = await loadValidatedCandidate(options.artifactPath, options.atlasContractsRoot);
-  const prospectiveRecord = buildRecord(candidate);
+  const sourceArtifact = describeSourceArtifact(options.artifactPath, options.atlasContractsRoot);
+  const prospectiveRecord = buildRecord(candidate, sourceArtifact);
   assertAtlasKnowledgeCandidateAdmission({
     source: candidate,
     record: prospectiveRecord,
@@ -441,35 +551,56 @@ export const admitAtlasKnowledgeCandidate = async (
   }
 
   const existing = matches[0];
-  let status: AtlasKnowledgeCandidateAdmissionResult['status'];
-  let record: AtlasKnowledgeCandidateRecord;
-  let nextQueue: AtlasKnowledgeCandidateQueue;
-  let queueBytes: string;
-  if (existing) {
+  const admissionState = (() => {
+    if (!existing) {
+      const nextQueue: AtlasKnowledgeCandidateQueue = {
+        ...queue,
+        candidates: [...queue.candidates, prospectiveRecord]
+          .sort((left, right) => left.external_candidate_id.localeCompare(right.external_candidate_id))
+      };
+      return {
+        status: 'admitted' as const,
+        record: prospectiveRecord,
+        nextQueue,
+        queueBytes: writeQueueAtomically(projectRoot, nextQueue)
+      };
+    }
+
     if (!sameValue(existing.candidate.provenance, candidate.provenance)) {
       fail('KNOWLEDGE_PROVENANCE_MISMATCH', `Replay changed provenance for Atlas candidate ${JSON.stringify(candidate.candidate_id)}.`);
+    }
+    if (sameValue(existing, buildLegacyRecord(candidate))) {
+      const nextQueue: AtlasKnowledgeCandidateQueue = {
+        ...queue,
+        candidates: queue.candidates
+          .map((queuedRecord) => queuedRecord.external_candidate_id === candidate.candidate_id ? prospectiveRecord : queuedRecord)
+          .sort((left, right) => left.external_candidate_id.localeCompare(right.external_candidate_id))
+      };
+      return {
+        status: 'upgraded' as const,
+        record: prospectiveRecord,
+        nextQueue,
+        queueBytes: writeQueueAtomically(projectRoot, nextQueue)
+      };
+    }
+    if (!sameValue(existing.source_artifact, prospectiveRecord.source_artifact)) {
+      fail('KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH', `Replay changed the source path or exact bytes bound to Atlas candidate ${JSON.stringify(candidate.candidate_id)}.`);
     }
     if (!sameValue(existing, prospectiveRecord)) {
       fail('KNOWLEDGE_IDENTITY_LOST', `Replay changed the content bound to Atlas candidate identity ${JSON.stringify(candidate.candidate_id)}.`);
     }
-    status = 'replayed';
-    record = existing;
-    nextQueue = queue;
-    queueBytes = fs.readFileSync(absoluteQueuePath, 'utf8');
-  } else {
-    status = 'admitted';
-    record = prospectiveRecord;
-    nextQueue = {
-      ...queue,
-      candidates: [...queue.candidates, prospectiveRecord]
-        .sort((left, right) => left.external_candidate_id.localeCompare(right.external_candidate_id))
+    return {
+      status: 'replayed' as const,
+      record: existing,
+      nextQueue: queue,
+      queueBytes: fs.readFileSync(absoluteQueuePath, 'utf8')
     };
-    queueBytes = writeQueueAtomically(projectRoot, nextQueue);
-  }
+  })();
+  const { status, record, nextQueue, queueBytes } = admissionState;
 
   const doctrineAfter = snapshotDoctrine(projectRoot);
   if (!sameValue(doctrineBefore, doctrineAfter)) {
-    if (status === 'admitted') {
+    if (status !== 'replayed') {
       if (previousQueueBytes === null) fs.rmSync(absoluteQueuePath, { force: true });
       else fs.writeFileSync(absoluteQueuePath, previousQueueBytes, 'utf8');
     }
@@ -487,7 +618,9 @@ export const admitAtlasKnowledgeCandidate = async (
     receipt: record.consumer_receipt,
     proof: {
       candidate_identity_exact: true,
+      source_artifact_exact: true,
       provenance_exact: true,
+      owner_disposition: 'accept',
       suggested_destination_proposal_only: true,
       consumer_receipt_correlated: true,
       auto_promotion: false,
