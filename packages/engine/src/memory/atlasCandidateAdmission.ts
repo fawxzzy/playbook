@@ -196,16 +196,34 @@ const sameValue = (left: unknown, right: unknown): boolean => JSON.stringify(can
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const toPortablePath = (value: string): string => value.replaceAll(path.sep, '/');
 
-const describeSourceArtifact = (artifactPath: string, atlasContractsRoot: string): AtlasKnowledgeCandidateRecord['source_artifact'] => {
+const relativePathWithin = (rootPath: string, targetPath: string): string | null => {
+  const relativePath = path.relative(rootPath, targetPath);
+  const isWithinRoot = relativePath !== ''
+    && relativePath !== '..'
+    && !relativePath.startsWith(`..${path.sep}`)
+    && !path.isAbsolute(relativePath);
+  return isWithinRoot ? toPortablePath(relativePath) : null;
+};
+
+const describeSourceArtifact = (
+  artifactPath: string,
+  atlasContractsRoot: string,
+  projectRoot: string
+): AtlasKnowledgeCandidateRecord['source_artifact'] => {
   const absoluteArtifactPath = path.resolve(artifactPath);
   const atlasRoot = path.resolve(atlasContractsRoot, '..', '..');
-  const relativeArtifactPath = path.relative(atlasRoot, absoluteArtifactPath);
-  const isWithinAtlasRoot = relativeArtifactPath !== ''
-    && relativeArtifactPath !== '..'
-    && !relativeArtifactPath.startsWith(`..${path.sep}`)
-    && !path.isAbsolute(relativeArtifactPath);
+  const atlasRelativePath = relativePathWithin(atlasRoot, absoluteArtifactPath);
+  const projectRelativePath = relativePathWithin(projectRoot, absoluteArtifactPath);
+  const portablePath = atlasRelativePath ?? (projectRelativePath === null ? null : `project://${projectRelativePath}`);
+  if (portablePath === null) {
+    return fail(
+      'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH',
+      'The Atlas source artifact must be inside the Atlas root or the consuming Playbook project root.',
+      [toPortablePath(absoluteArtifactPath)]
+    );
+  }
   return {
-    path: toPortablePath(isWithinAtlasRoot ? relativeArtifactPath : absoluteArtifactPath),
+    path: portablePath,
     sha256: `sha256:${sha256(fs.readFileSync(absoluteArtifactPath))}`
   };
 };
@@ -534,7 +552,7 @@ export const admitAtlasKnowledgeCandidate = async (
   const previousQueueBytes = fs.existsSync(absoluteQueuePath) ? fs.readFileSync(absoluteQueuePath, 'utf8') : null;
   const doctrineBefore = snapshotDoctrine(projectRoot);
   const candidate = await loadValidatedCandidate(options.artifactPath, options.atlasContractsRoot);
-  const sourceArtifact = describeSourceArtifact(options.artifactPath, options.atlasContractsRoot);
+  const sourceArtifact = describeSourceArtifact(options.artifactPath, options.atlasContractsRoot, projectRoot);
   const prospectiveRecord = buildRecord(candidate, sourceArtifact);
   assertAtlasKnowledgeCandidateAdmission({
     source: candidate,

@@ -179,9 +179,35 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
       'knowledge-001',
       'knowledge-002'
     ]);
+    expect(queue.candidates[1]?.source_artifact.path).toBe('project://candidate-002.json');
     expect(new Set(queue.candidates.map((record) => record.record_id)).size).toBe(2);
     expect(new Set(queue.candidates.map((record) => record.consumer_receipt.receipt_id)).size).toBe(2);
     expect(PLAYBOOK_DOCTRINE_PATHS.every((relativePath) => !fs.existsSync(path.join(repoRoot, relativePath)))).toBe(true);
+  });
+
+  it('fails closed instead of persisting an artifact path outside stable roots', async () => {
+    const repoRoot = createRepo();
+    const externalRoot = createRepo();
+    const artifactPath = writeCandidate(externalRoot, readFixture());
+
+    await expect(admit(repoRoot, artifactPath)).rejects.toMatchObject({
+      reasonCode: 'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+    });
+    expect(fs.existsSync(queuePath(repoRoot))).toBe(false);
+  });
+
+  it('derives the same project-local record identity across checkout roots', async () => {
+    const firstRepoRoot = createRepo();
+    const secondRepoRoot = createRepo();
+    const firstArtifactPath = writeCandidate(firstRepoRoot, readFixture());
+    const secondArtifactPath = writeCandidate(secondRepoRoot, readFixture());
+
+    const first = await admit(firstRepoRoot, firstArtifactPath);
+    const second = await admit(secondRepoRoot, secondArtifactPath);
+
+    expect(first.candidate_record_id).toBe(second.candidate_record_id);
+    expect(readQueue(firstRepoRoot).candidates[0]?.source_artifact.path).toBe('project://candidate.json');
+    expect(readQueue(secondRepoRoot).candidates[0]?.source_artifact.path).toBe('project://candidate.json');
   });
 
   it('rejects the Atlas bad-kind fixture through the Atlas-owned validator', async () => {

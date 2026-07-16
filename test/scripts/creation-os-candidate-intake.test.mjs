@@ -17,6 +17,7 @@ const receiptPath = path.join(
 const queuePath = path.join(repoRoot, '.playbook', 'memory', 'atlas-knowledge-candidates.json');
 const sourceRevision = '66f756768792de35ef00d1741cf8c6f6c965b733';
 const playbookBaseRevision = '8aa912b492e689fca4c296d59a438c2813cba4fc';
+const playbookIntakeRevision = '44ce21cdff47bc88817d164ac8578141eb939651';
 const excludedDecisionId = 'creation-os-software-repo-voice-first-wedge';
 const expectedDoctrinePaths = [
   '.playbook/memory/candidates.json',
@@ -230,7 +231,8 @@ const validateCreationOsIntake = ({ receipt, queue, queueBytes }) => {
     'canonical doctrine path set drifted'
   );
   assert.equal(receipt.proof.doctrine_invariance.baseline_revision, playbookBaseRevision);
-  assert.equal(receipt.proof.doctrine_invariance.evidence_basis, 'git-blob-at-base-and-current-head');
+  assert.equal(receipt.proof.doctrine_invariance.intake_revision, playbookIntakeRevision);
+  assert.equal(receipt.proof.doctrine_invariance.evidence_basis, 'git-blob-at-base-and-intake-revision');
   for (const doctrinePath of receipt.proof.doctrine_invariance.paths) {
     assert.equal(doctrinePath.before_sha256, doctrinePath.after_sha256, `doctrine changed: ${doctrinePath.path}`);
     assert.equal(
@@ -239,9 +241,9 @@ const validateCreationOsIntake = ({ receipt, queue, queueBytes }) => {
       `doctrine base blob drift: ${doctrinePath.path}`
     );
     assert.equal(
-      gitBlobSha256('HEAD', doctrinePath.path),
+      gitBlobSha256(playbookIntakeRevision, doctrinePath.path),
       doctrinePath.after_sha256,
-      `doctrine head blob drift: ${doctrinePath.path}`
+      `doctrine intake blob drift: ${doctrinePath.path}`
     );
   }
   const doctrineSnapshot = Object.fromEntries(
