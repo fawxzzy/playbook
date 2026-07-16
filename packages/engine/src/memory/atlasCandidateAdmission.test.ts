@@ -196,6 +196,23 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     expect(fs.existsSync(queuePath(repoRoot))).toBe(false);
   });
 
+  it('does not broaden a standalone Atlas contracts package into an inferred checkout root', async () => {
+    const repoRoot = createRepo();
+    const standaloneAtlasContractsRoot = path.join(createRepo(), 'atlas-contracts');
+    const externalRoot = createRepo();
+    fs.cpSync(atlasContractsRoot, standaloneAtlasContractsRoot, { recursive: true });
+    const artifactPath = writeCandidate(externalRoot, readFixture());
+
+    await expect(admitAtlasKnowledgeCandidate({
+      projectRoot: repoRoot,
+      artifactPath,
+      atlasContractsRoot: standaloneAtlasContractsRoot
+    })).rejects.toMatchObject({
+      reasonCode: 'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+    });
+    expect(fs.existsSync(queuePath(repoRoot))).toBe(false);
+  });
+
   it('derives the same project-local record identity across checkout roots', async () => {
     const firstRepoRoot = createRepo();
     const secondRepoRoot = createRepo();

@@ -205,13 +205,23 @@ const relativePathWithin = (rootPath: string, targetPath: string): string | null
   return isWithinRoot ? toPortablePath(relativePath) : null;
 };
 
+const resolveAtlasSourceRoot = (atlasContractsRoot: string): string => {
+  const resolvedContractsRoot = path.resolve(atlasContractsRoot);
+  const packagesRoot = path.dirname(resolvedContractsRoot);
+  const checkoutRoot = path.dirname(packagesRoot);
+  const hasCanonicalCheckoutLayout = path.basename(resolvedContractsRoot) === 'atlas-contracts'
+    && path.basename(packagesRoot) === 'packages'
+    && checkoutRoot !== path.parse(checkoutRoot).root;
+  return hasCanonicalCheckoutLayout ? checkoutRoot : resolvedContractsRoot;
+};
+
 const describeSourceArtifact = (
   artifactPath: string,
   atlasContractsRoot: string,
   projectRoot: string
 ): AtlasKnowledgeCandidateRecord['source_artifact'] => {
   const absoluteArtifactPath = path.resolve(artifactPath);
-  const atlasRoot = path.resolve(atlasContractsRoot, '..', '..');
+  const atlasRoot = resolveAtlasSourceRoot(atlasContractsRoot);
   const atlasRelativePath = relativePathWithin(atlasRoot, absoluteArtifactPath);
   const projectRelativePath = relativePathWithin(projectRoot, absoluteArtifactPath);
   const portablePath = projectRelativePath === null
