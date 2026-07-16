@@ -197,7 +197,8 @@
     "doctrine_invariance": {
       "baseline_revision": "8aa912b492e689fca4c296d59a438c2813cba4fc",
       "intake_revision": "44ce21cdff47bc88817d164ac8578141eb939651",
-      "evidence_basis": "git-blob-at-base-and-intake-revision",
+      "evidence_basis": "recorded-git-blob-sha256-at-base-and-intake-revisions",
+      "verification_mode": "self-contained-recorded-byte-hashes",
       "snapshot_sha256": "9707a8e59f8f17d12e3f09b86db02bd6d7ef1accd458321f97c59769f7eabc2f",
       "paths": [
         {

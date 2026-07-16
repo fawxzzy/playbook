@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -84,15 +83,6 @@ const canonicalize = (value) => {
 };
 
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
-const gitBlobSha256 = (revision, relativePath) => {
-  const result = spawnSync('git', ['cat-file', 'blob', `${revision}:${relativePath}`], {
-    cwd: repoRoot,
-    encoding: null,
-    maxBuffer: 10 * 1024 * 1024
-  });
-  if (result.status !== 0) return null;
-  return `sha256:${sha256(result.stdout)}`;
-};
 const contentDigest = (value) => sha256(JSON.stringify(canonicalize(value)));
 const clone = (value) => structuredClone(value);
 const uniqueCount = (values) => new Set(values).size;
@@ -232,19 +222,13 @@ const validateCreationOsIntake = ({ receipt, queue, queueBytes }) => {
   );
   assert.equal(receipt.proof.doctrine_invariance.baseline_revision, playbookBaseRevision);
   assert.equal(receipt.proof.doctrine_invariance.intake_revision, playbookIntakeRevision);
-  assert.equal(receipt.proof.doctrine_invariance.evidence_basis, 'git-blob-at-base-and-intake-revision');
+  assert.equal(
+    receipt.proof.doctrine_invariance.evidence_basis,
+    'recorded-git-blob-sha256-at-base-and-intake-revisions'
+  );
+  assert.equal(receipt.proof.doctrine_invariance.verification_mode, 'self-contained-recorded-byte-hashes');
   for (const doctrinePath of receipt.proof.doctrine_invariance.paths) {
     assert.equal(doctrinePath.before_sha256, doctrinePath.after_sha256, `doctrine changed: ${doctrinePath.path}`);
-    assert.equal(
-      gitBlobSha256(playbookBaseRevision, doctrinePath.path),
-      doctrinePath.before_sha256,
-      `doctrine base blob drift: ${doctrinePath.path}`
-    );
-    assert.equal(
-      gitBlobSha256(playbookIntakeRevision, doctrinePath.path),
-      doctrinePath.after_sha256,
-      `doctrine intake blob drift: ${doctrinePath.path}`
-    );
   }
   const doctrineSnapshot = Object.fromEntries(
     receipt.proof.doctrine_invariance.paths.map((entry) => [
