@@ -196,6 +196,30 @@ describeWithAtlas('Atlas KnowledgeCandidate admission', () => {
     expect(fs.existsSync(queuePath(repoRoot))).toBe(false);
   });
 
+  it('maps an unresolvable source artifact to the stable mismatch reason code', async () => {
+    const repoRoot = createRepo();
+    const artifactPath = path.join(repoRoot, 'missing-candidate.json');
+
+    await expect(admit(repoRoot, artifactPath)).rejects.toMatchObject({
+      reasonCode: 'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+    });
+    expect(fs.existsSync(queuePath(repoRoot))).toBe(false);
+  });
+
+  it('fails closed when a project-local link resolves to an external artifact', async () => {
+    const repoRoot = createRepo();
+    const externalRoot = createRepo();
+    const externalArtifactPath = writeCandidate(externalRoot, readFixture());
+    const linkedRoot = path.join(repoRoot, 'linked-candidates');
+    fs.symlinkSync(externalRoot, linkedRoot, process.platform === 'win32' ? 'junction' : 'dir');
+    const linkedArtifactPath = path.join(linkedRoot, path.basename(externalArtifactPath));
+
+    await expect(admit(repoRoot, linkedArtifactPath)).rejects.toMatchObject({
+      reasonCode: 'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+    });
+    expect(fs.existsSync(queuePath(repoRoot))).toBe(false);
+  });
+
   it('does not broaden a standalone Atlas contracts package into an inferred checkout root', async () => {
     const repoRoot = createRepo();
     const standaloneAtlasContractsRoot = path.join(createRepo(), 'atlas-contracts');

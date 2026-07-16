@@ -227,6 +227,19 @@ const resolveAtlasSourceRoot = (atlasContractsRoot: string): string => {
   return hasCanonicalCheckoutLayout ? checkoutRoot : resolvedContractsRoot;
 };
 
+const canonicalizeAdmissionPath = (
+  value: string,
+  label: string,
+  reasonCode: AtlasKnowledgeAdmissionReasonCode
+): string => {
+  const absolutePath = path.resolve(value);
+  try {
+    return fs.realpathSync(absolutePath);
+  } catch (error) {
+    return fail(reasonCode, `${label} could not be resolved to a canonical filesystem path.`, [toPortablePath(absolutePath), String(error)]);
+  }
+};
+
 const describeSourceArtifact = (
   artifactPath: string,
   atlasContractsRoot: string,
@@ -571,12 +584,26 @@ const writeQueueAtomically = (projectRoot: string, queue: AtlasKnowledgeCandidat
 export const admitAtlasKnowledgeCandidate = async (
   options: AdmitAtlasKnowledgeCandidateOptions
 ): Promise<AtlasKnowledgeCandidateAdmissionResult> => {
-  const projectRoot = path.resolve(options.projectRoot);
+  const projectRoot = canonicalizeAdmissionPath(
+    options.projectRoot,
+    'The consuming Playbook project root',
+    'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+  );
+  const artifactPath = canonicalizeAdmissionPath(
+    options.artifactPath,
+    'The Atlas KnowledgeCandidate source artifact',
+    'KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH'
+  );
+  const atlasContractsRoot = canonicalizeAdmissionPath(
+    options.atlasContractsRoot,
+    'The Atlas contracts package root',
+    'KNOWLEDGE_ATLAS_VALIDATOR_UNAVAILABLE'
+  );
   const absoluteQueuePath = path.join(projectRoot, ATLAS_KNOWLEDGE_CANDIDATE_QUEUE_RELATIVE_PATH);
   const previousQueueBytes = fs.existsSync(absoluteQueuePath) ? fs.readFileSync(absoluteQueuePath, 'utf8') : null;
   const doctrineBefore = snapshotDoctrine(projectRoot);
-  const candidate = await loadValidatedCandidate(options.artifactPath, options.atlasContractsRoot);
-  const sourceArtifact = describeSourceArtifact(options.artifactPath, options.atlasContractsRoot, projectRoot);
+  const candidate = await loadValidatedCandidate(artifactPath, atlasContractsRoot);
+  const sourceArtifact = describeSourceArtifact(artifactPath, atlasContractsRoot, projectRoot);
   const prospectiveRecord = buildRecord(candidate, sourceArtifact);
   assertAtlasKnowledgeCandidateAdmission({
     source: candidate,
