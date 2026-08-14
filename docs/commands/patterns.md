@@ -128,7 +128,7 @@ Status: **preferred** cross-repo promotion surface.
 
 Compute cross-repository aggregates and write `.playbook/cross-repo-patterns.json`.
 
-- default pilot repos: `ZachariahRedfield/playbook`, `ZachariahRedfield/fawxzzy-fitness`
+- default pilot repos: `fawxzzy/playbook`, `fawxzzy/fawxzzy-fitness`
 - optional repeated `--repo <path-or-slug>` overrides defaults
 
 ### `patterns portability`

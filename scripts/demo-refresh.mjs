@@ -14,7 +14,7 @@ import {
 import { applyPlaybookDemoManagedDocsCompatibility } from './demo-managed-docs-compat.mjs';
 import { writeCommandTruthContract } from './managed-docs-lib.mjs';
 
-const DEFAULT_REPO_URL = 'https://github.com/ZachariahRedfield/playbook-demo.git';
+const DEFAULT_REPO_URL = 'https://github.com/fawxzzy/playbook-demo.git';
 const DEFAULT_BASE_BRANCH = 'main';
 const DEFAULT_FEATURE_ID = 'PB-V1-DEMO-REFRESH-001';
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));

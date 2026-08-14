@@ -2,7 +2,7 @@
 
 Deterministic repo runtime and trust layer for humans and AI agents.
 
-![CI](https://github.com/ZachariahRedfield/playbook/actions/workflows/ci.yml/badge.svg) [![Playbook Diagrams Check](https://github.com/ZachariahRedfield/playbook/actions/workflows/playbook-diagrams-check.yml/badge.svg)](https://github.com/ZachariahRedfield/playbook/actions/workflows/playbook-diagrams-check.yml) ![Version](https://img.shields.io/badge/version-v0.1.8-blue)
+![CI](https://github.com/fawxzzy/playbook/actions/workflows/ci.yml/badge.svg) [![Playbook Diagrams Check](https://github.com/fawxzzy/playbook/actions/workflows/playbook-diagrams-check.yml/badge.svg)](https://github.com/fawxzzy/playbook/actions/workflows/playbook-diagrams-check.yml) ![Version](https://img.shields.io/badge/version-v0.1.8-blue)
 [![Architecture](https://img.shields.io/badge/architecture-auto--generated%20by%20playbook-blueviolet?style=flat-square&logo=mermaid)](docs/ARCHITECTURE_DIAGRAMS.md)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
@@ -306,7 +306,7 @@ Failure Mode - Non-Idempotent Ignore Management.
 `pnpm playbook verify` and `pnpm playbook plan` provide deterministic, reviewable output for both humans and AI agents. For complete walkthrough output, use the official demo repository:
 
 ```bash
-git clone https://github.com/ZachariahRedfield/playbook-demo
+git clone https://github.com/fawxzzy/playbook-demo
 cd playbook-demo
 npm install
 pnpm playbook ai-context --json
@@ -545,7 +545,7 @@ Session continuity is repo-scoped and deterministic via `.playbook/session.json`
 
 ## Demo
 
-See [`playbook-demo`](https://github.com/ZachariahRedfield/playbook-demo), also discoverable via `pnpm playbook demo`.
+See [`playbook-demo`](https://github.com/fawxzzy/playbook-demo), also discoverable via `pnpm playbook demo`.
 
 ## Demo repository contract patterns
 
@@ -554,7 +554,7 @@ See [`playbook-demo`](https://github.com/ZachariahRedfield/playbook-demo), also 
 - Rule: Demo documentation should summarize generated artifacts, not replace them as the source of truth.
 - Rule: `explain <module>` examples in docs/demo must reference a module that is guaranteed to exist in `.playbook/repo-index.json`.
 - Pattern: Add a single demo refresh script to regenerate index/explain/rules/verify/plan/apply/diagram/doctor outputs deterministically.
-- Pattern: Cross-repo demo artifact refresh automation should run in dedicated maintenance workflows and open PRs against `ZachariahRedfield/playbook-demo` instead of mutating `main` directly.
+- Pattern: Cross-repo demo artifact refresh automation should run in dedicated maintenance workflows and open PRs against `fawxzzy/playbook-demo` instead of mutating `main` directly.
 
 ## Canonical remediation workflow
 
@@ -695,7 +695,7 @@ Cross-repo `playbook-demo` artifact/doc refresh automation is isolated from the 
 
 `demo-refresh` uses local branch-built CLI bits (`packages/cli/dist/main.js`) and runs `scripts/demo-refresh.mjs`, which:
 
-- clones `ZachariahRedfield/playbook-demo`
+- clones `fawxzzy/playbook-demo`
 - injects `PLAYBOOK_CLI_PATH`
 - resolves refresh execution by package manager lockfile (`npm run <script>` for npm, `pnpm run <script>` for pnpm, `yarn run <script>` for yarn)
 - runs refresh commands without `bash -lc` (argv/spawn execution)

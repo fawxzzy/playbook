@@ -1,6 +1,6 @@
 # playbook-demo companion changes for cross-repo refresh automation
 
-This repository now contains `scripts/demo-refresh.mjs`, which refreshes committed artifacts in `ZachariahRedfield/playbook-demo` by cloning that repository and running its refresh script with:
+This repository now contains `scripts/demo-refresh.mjs`, which refreshes committed artifacts in `fawxzzy/playbook-demo` by cloning that repository and running its refresh script with:
 
 - `PLAYBOOK_CLI_PATH=<absolute path to playbook/packages/cli/dist/main.js>`
 

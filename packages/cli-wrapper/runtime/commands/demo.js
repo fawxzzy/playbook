@@ -1,5 +1,5 @@
 import { ExitCode } from '../lib/cliContract.js';
-const DEMO_REPOSITORY_URL = 'https://github.com/ZachariahRedfield/playbook-demo';
+const DEMO_REPOSITORY_URL = 'https://github.com/fawxzzy/playbook-demo';
 const DEMO_WORKFLOW = [
     `git clone ${DEMO_REPOSITORY_URL}`,
     'cd playbook-demo',

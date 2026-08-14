@@ -12,7 +12,7 @@ describe('runDemo', () => {
     expect(exitCode).toBe(ExitCode.Success);
     const output = logSpy.mock.calls.map((call) => String(call[0])).join('\n');
     expect(output).toContain('Playbook Demo');
-    expect(output).toContain('https://github.com/ZachariahRedfield/playbook-demo');
+    expect(output).toContain('https://github.com/fawxzzy/playbook-demo');
     expect(output).toContain('pnpm playbook ai-context --json');
     expect(output).toContain('pnpm playbook ai-contract --json');
     expect(output).toContain('pnpm playbook context --json');
@@ -43,7 +43,7 @@ describe('runDemo', () => {
       command: 'demo',
       repository: {
         name: 'playbook-demo',
-        url: 'https://github.com/ZachariahRedfield/playbook-demo'
+        url: 'https://github.com/fawxzzy/playbook-demo'
       },
       expectedInitialFindings: {
         firstVerifyPasses: false,
@@ -54,7 +54,7 @@ describe('runDemo', () => {
     });
 
     expect(payload.workflow).toEqual([
-      'git clone https://github.com/ZachariahRedfield/playbook-demo',
+      'git clone https://github.com/fawxzzy/playbook-demo',
       'cd playbook-demo',
       'pnpm install',
       'pnpm playbook ai-context --json',
