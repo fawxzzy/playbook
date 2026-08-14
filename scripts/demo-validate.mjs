@@ -9,7 +9,7 @@ import {
   runPlaybookCli
 } from './demo-repo-utils.mjs';
 
-const DEMO_REPO_URL = process.env.PLAYBOOK_DEMO_REPO_URL ?? 'https://github.com/ZachariahRedfield/playbook-demo.git';
+const DEMO_REPO_URL = process.env.PLAYBOOK_DEMO_REPO_URL ?? 'https://github.com/fawxzzy/playbook-demo.git';
 const DEMO_REPO_LOCAL_PATH = process.env.PLAYBOOK_DEMO_LOCAL_PATH;
 const DEMO_DEBUG = process.env.PLAYBOOK_DEMO_DEBUG === '1';
 

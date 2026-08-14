@@ -5,7 +5,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const DEFAULT_OWNER = 'ZachariahRedfield';
+const DEFAULT_OWNER = 'fawxzzy';
 const DEFAULT_REPO = 'playbook';
 const IS_WINDOWS = process.platform === 'win32';
 

@@ -1,4 +1,12 @@
 <!-- PLAYBOOK:CHANGELOG_RELEASE_NOTES_START -->
+## 0.54.0 - 2026-08-14
+- Recommended bump: minor
+- @fawxzzy/playbook: 0.53.1 -> 0.54.0 (playbook-installable-workspace)
+- @fawxzzy/playbook-cli: 0.53.1 -> 0.54.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-core: 0.53.1 -> 0.54.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-engine: 0.53.1 -> 0.54.0 (playbook-installable-workspace)
+- @zachariahredfield/playbook-node: 0.53.1 -> 0.54.0 (playbook-installable-workspace)
+
 ## 0.53.1 - 2026-07-16
 - Recommended bump: patch
 - @fawxzzy/playbook: 0.53.0 -> 0.53.1 (playbook-installable-workspace)
@@ -144,6 +152,7 @@
 - @zachariahredfield/playbook-node: 0.41.0 -> 0.42.0 (playbook-installable-workspace)
 
 ## Unreleased
+- WHAT: Migrated active Playbook GitHub URLs and executable defaults from the retiring `ZachariahRedfield` account to the canonical `fawxzzy` repositories while preserving npm package scopes and historical records. WHY: Demo onboarding, demo refresh/validation, release fallback proof, badges, and current integration guidance must not depend on an account scheduled for deletion.
 - WHAT: Froze the reusable Playbook workflow-pack boundary in `docs/contracts/WORKFLOW_PACK_REUSE_CONTRACT.md`, expanded `pnpm playbook contracts --json` to register the local verification receipt schema plus workflow-pack owner docs, and published local verification receipt runtime defaults through the contracts registry. WHY: Downstream repos and operator layers can now adopt one discoverable workflow bundle for verification truth, staged promotion truth, versioning, and consumer boundaries instead of reassembling fragments into repo-local dialects.
 - Rule: Reusable workflow adoption must compose canonical verification, promotion, registry, and consumer contracts instead of creating repo-local workflow dialects.
 - Pattern: Freeze the reusable bundle once, then let downstream repos discover it through the contracts registry.

@@ -5,7 +5,7 @@ type DemoContract = {
   command: 'demo';
   repository: {
     name: 'playbook-demo';
-    url: 'https://github.com/ZachariahRedfield/playbook-demo';
+    url: 'https://github.com/fawxzzy/playbook-demo';
   };
   workflow: string[];
   expectedInitialFindings: {
@@ -18,7 +18,7 @@ type DemoContract = {
   summary: string;
 };
 
-const DEMO_REPOSITORY_URL = 'https://github.com/ZachariahRedfield/playbook-demo';
+const DEMO_REPOSITORY_URL = 'https://github.com/fawxzzy/playbook-demo';
 
 const DEMO_WORKFLOW: string[] = [
   `git clone ${DEMO_REPOSITORY_URL}`,

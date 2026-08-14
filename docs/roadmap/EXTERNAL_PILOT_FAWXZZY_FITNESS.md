@@ -2,7 +2,7 @@
 
 ## Pilot target
 
-- Repository: `https://github.com/ZachariahRedfield/fawxzzy-fitness`
+- Repository: `https://github.com/fawxzzy/fawxzzy-fitness`
 - Pilot role: **Primary external pilot target** for validating Playbook as an external deterministic runtime.
 
 ## Current product direction snapshot
