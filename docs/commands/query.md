@@ -24,6 +24,8 @@ Query deterministic repository intelligence contracts from `.playbook/repo-index
 
 `pnpm playbook query` is read-only. It does not regenerate repository intelligence artifacts.
 
+Base-field normalization accepts supported field names, the explicit `deps` alias, and unambiguous field phrases. Inherited JavaScript property names such as `constructor` and `__proto__` are not aliases: they produce the unsupported-field error before repository-index access, including when the index is absent. Raw and enveloped index artifacts follow the same rule (`PB-V03-QUERY-001`).
+
 Pattern knowledge graph support is currently exposed as engine query utilities for deterministic artifact reads (`read/list/get/filter/related/instances/evidence`) over `.playbook/pattern-knowledge-graph.json`; no mutation path is introduced in this phase.
 
 Base fields (read from `.playbook/repo-index.json`):
