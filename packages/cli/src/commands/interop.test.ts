@@ -234,6 +234,7 @@ describe('runInterop', () => {
     });
 
     const spy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    spy.mockClear();
     const exitCode = await runInterop(repo, ['followups'], { format: 'text', quiet: false });
 
     expect(exitCode).toBe(ExitCode.Success);
