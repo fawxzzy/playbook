@@ -28,9 +28,9 @@ const createFixtureRepo = (): string => {
   return repoRoot;
 };
 
-const buildPlan = (repoRoot: string, changedFiles: Array<{ path: string; status: string }>) =>
+const buildPlan = (repoRoot: string, changedFiles: Array<{ path: string; status: string }>, generatedAt = '2026-03-22T00:00:00.000Z') =>
   buildReleasePlanFromInputs(repoRoot, {
-    generatedAt: '2026-03-22T00:00:00.000Z',
+    generatedAt,
     baseRef: 'origin/main',
     baseSha: 'base',
     headSha: 'head',
@@ -109,6 +109,20 @@ describe('buildReleasePlanFromInputs', () => {
     expect(changelogTask?.write?.content).toContain('- Recommended bump: minor');
     expect(changelogTask?.write?.content).toContain('@scope/alpha: 1.2.3 -> 1.3.0');
     expect(changelogTask?.write?.content).toContain('@scope/beta: 1.2.3 -> 1.3.0');
+  });
+
+  it('preserves the date of an already generated release entry on later days', () => {
+    const repoRoot = createFixtureRepo();
+    const changedFiles = [{ path: 'packages/alpha/src/feature.ts', status: 'A' }];
+    fs.writeFileSync(path.join(repoRoot, 'packages', 'alpha', 'src', 'feature.ts'), 'export const value = 1;\n');
+
+    const first = buildPlan(repoRoot, changedFiles);
+    const releaseNotes = first.tasks.find((task) => task.task_kind === 'docs-managed-write')?.write?.content;
+    expect(releaseNotes).toContain('## 1.2.4 - 2026-03-22');
+    fs.writeFileSync(path.join(repoRoot, 'docs', 'CHANGELOG.md'), `# Changelog\n\n${releaseNotes}\n`);
+
+    const later = buildPlan(repoRoot, changedFiles, '2026-03-23T00:00:00.000Z');
+    expect(later.tasks.find((task) => task.task_kind === 'docs-managed-write')?.write?.content).toBe(releaseNotes);
   });
 
   it('does not inflate internal runtime artifacts', () => {

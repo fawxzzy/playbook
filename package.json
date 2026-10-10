@@ -73,7 +73,8 @@
     "esbuild": "^0.27.3",
     "eslint": "^9.24.0",
     "typescript": "^5.8.2",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "vite": "7.3.5"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "*",
