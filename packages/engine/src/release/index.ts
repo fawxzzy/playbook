@@ -239,12 +239,17 @@ const buildChangelogTask = (
     .slice()
     .sort((left, right) => left.name.localeCompare(right.name))
     .map((pkg) => `- ${pkg.name}: ${pkg.baseVersion} -> ${pkg.nextVersion}${pkg.versionGroup ? ` (${pkg.versionGroup})` : ''}`);
+  const existingBodyLines = existingBody.length > 0 ? existingBody.split('\n') : [];
+  const existingHeader = existingBodyLines[0];
+  const matchingHeader = existingHeader?.startsWith(`## ${releaseLabel} - `)
+    && /^## .+ - \d{4}-\d{2}-\d{2}$/u.test(existingHeader)
+    ? existingHeader
+    : null;
   const entryLines = [
-    `## ${releaseLabel} - ${generatedAt.slice(0, 10)}`,
+    matchingHeader ?? `## ${releaseLabel} - ${generatedAt.slice(0, 10)}`,
     `- Recommended bump: ${recommendedBump}`,
     ...packageLines
   ];
-  const existingBodyLines = existingBody.length > 0 ? existingBody.split('\n') : [];
   const alreadyAtTop = startsWithEntry(existingBodyLines, entryLines);
   const contentParts = alreadyAtTop
     ? [CHANGELOG_START_MARKER, existingBody, CHANGELOG_END_MARKER]

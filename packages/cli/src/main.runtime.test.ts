@@ -63,6 +63,7 @@ describe('runtime observability artifacts', () => {
         {
           name: 'playbook-source-fixture',
           private: true,
+          packageManager: 'pnpm@10.23.0',
           scripts: {
             playbook: `node "${cliEntrypoint.split(path.sep).join('/')}"`,
             'start:lifeline': startCommand

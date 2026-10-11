@@ -79,7 +79,7 @@ const normalizeRepositoryQueryField = (input: string): RepositoryQueryField | nu
     deps: 'dependencies'
   };
 
-  if (aliases[input.toLowerCase()]) {
+  if (Object.prototype.hasOwnProperty.call(aliases, input.toLowerCase())) {
     return aliases[input.toLowerCase()];
   }
 
