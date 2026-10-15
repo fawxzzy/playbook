@@ -78,7 +78,9 @@
       ],
       "tests": [
         "packages/engine/test/verify.plan.apply.workflow.test.ts",
-        "packages/cli/src/commands/apply.test.ts"
+        "packages/cli/src/commands/apply.test.ts",
+        "test/security/security-regression.test.mjs",
+        "test/contracts/security/security-contracts.test.mjs"
       ],
       "docs": [
         "docs/commands/plan.md",
