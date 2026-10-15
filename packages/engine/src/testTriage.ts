@@ -78,6 +78,7 @@ const matchesHttpReason = (code: string, text: string): boolean => {
 
 const classifyFailure = (joinedBlock: string): FailureClassification => {
   // A registry URL also appears in successful setup output; require failure evidence.
+  const registryRequestFailure = [...joinedBlock.matchAll(/\brequest to (https?:\/\/[^\s]+)[^\r\n]*?(?:failed|timed out)/gi)].some((match) => isRegistryUrl(match[1]));
   const registryFetchFailure = [...joinedBlock.matchAll(/\bError when performing the request to (https?:\/\/[^\s]+)/gi)].some((match) => isRegistryUrl(match[1]))
     && /\bfetch failed\b/i.test(joinedBlock);
   const registryTransportFailure = joinedBlock.split(/\r?\n/).some((line) => /\bregistry\.npmjs\.org\b/i.test(line)
@@ -99,7 +100,7 @@ const classifyFailure = (joinedBlock: string): FailureClassification => {
       || Boolean(leadingStatus && matchesHttpReason(leadingStatus[1], leadingStatus[2]))
       || Boolean(reasonStatus && matchesHttpReason(reasonStatus[2], reasonStatus[1].trim()));
   });
-  if (/ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|request to .*registry.*(?:failed|timed out)/i.test(joinedBlock) || registryGetFailure || registryFetchFailure || registryTransportFailure) {
+  if (/ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT/i.test(joinedBlock) || registryRequestFailure || registryGetFailure || registryFetchFailure || registryTransportFailure) {
     return {
       kind: 'registry_timeout_install_failure',
       confidence: 0.98,

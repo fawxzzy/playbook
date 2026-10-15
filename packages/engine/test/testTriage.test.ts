@@ -123,6 +123,7 @@ describe('test triage engine', () => {
     'Error: CERT_HAS_EXPIRED registry.npmjs.org',
     'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
     'request to https://registry.npmjs.org/vitest failed',
+    'request to https://packages.registry.example.test/vitest failed',
     'request to https://registry.npmjs.org/vitest timed out'
   ])('preserves actual registry failure evidence: %s', (log) => {
     const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
@@ -161,7 +162,8 @@ describe('test triage engine', () => {
     'Error: getaddrinfo ENOTFOUND api.example.test',
     'Error: Error when performing the request to https://api.example.test/data\nTypeError: fetch failed',
     'Error: Error when performing the request to https://api.example.test/registry/data\nTypeError: fetch failed',
-    'Error: GET https://api.example.test/registry/data 503 Service Unavailable'
+    'Error: GET https://api.example.test/registry/data 503 Service Unavailable',
+    'Error: request to https://api.example.test/registry/data failed'
   ])('does not correlate an unrelated network failure with registry configuration: %s', (error) => {
     const log = `FAIL packages/engine/test/request.test.ts\npnpm config set registry https://registry.npmjs.org/\n${error}`;
     const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });

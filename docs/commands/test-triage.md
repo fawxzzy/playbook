@@ -95,7 +95,7 @@ or error reason phrases; URL digits, durations and counters are not status evide
 A registry URL in configuration or successful setup output is
 not sufficient evidence. A later assertion failure retains its own diagnostic
 class and review requirements; this does not authorize an executable repair.
-Registry GET and Corepack request checks inspect the URL hostname, so an API
+Registry GET, failed-request and Corepack checks inspect the URL hostname, so an API
 path containing `registry` is not package-registry evidence.
 Corepack's explicit registry-request error can correlate with `fetch failed`
 within the same parsed block. Registry DNS/socket failures require the registry
