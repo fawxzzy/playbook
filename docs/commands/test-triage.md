@@ -89,7 +89,9 @@ Deterministic infra buckets include:
 - `tool_bootstrap_failure`
 
 Registry outage classification requires fetch (including pnpm metadata fetch),
-timeout, or a registry GET with an explicit error or HTTP 5xx status. A registry URL in configuration or successful setup output is
+timeout, or a registry GET with an explicit error or HTTP 5xx status before or
+after the URL on the same line. Digits inside the URL are not status evidence.
+A registry URL in configuration or successful setup output is
 not sufficient evidence. A later assertion failure retains its own diagnostic
 class and review requirements; this does not authorize an executable repair.
 

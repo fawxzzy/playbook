@@ -55,7 +55,15 @@ const readArrayLiteral = (text: string): string[] => {
 
 const classifyFailure = (joinedBlock: string): FailureClassification => {
   // A registry URL also appears in successful setup output; require failure evidence.
-  if (/ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|request to .*registry.*(?:failed|timed out)|\bGET[ \t]+https?:\/\/[^\s]*registry[^\s]*[ \t]+(?:error[ \t]*\(|(?:[^\r\n]*[ \t-])?5\d\d\b)/i.test(joinedBlock)) {
+  const registryGetFailure = joinedBlock.split(/\r?\n/).some((line) => {
+    const request = /\bGET[ \t]+https?:\/\/[^\s]*registry[^\s]*/i.exec(line);
+    if (!request) return false;
+    // Exclude the URL itself: package names and versions can contain 5xx digits.
+    const before = line.slice(0, request.index);
+    const after = line.slice(request.index + request[0].length);
+    return /\berror[ \t]*\(/i.test(after) || /\b5\d\d\b/.test(`${before} ${after}`);
+  });
+  if (/ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|request to .*registry.*(?:failed|timed out)/i.test(joinedBlock) || registryGetFailure) {
     return {
       kind: 'registry_timeout_install_failure',
       confidence: 0.98,
