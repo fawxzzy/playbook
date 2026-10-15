@@ -89,15 +89,18 @@ Deterministic infra buckets include:
 - `tool_bootstrap_failure`
 
 Registry outage classification requires fetch (including pnpm metadata fetch),
-timeout, or a registry GET with an explicit error or HTTP 5xx status before or
+timeout, or a registry GET with an explicit error or HTTP 4xx/5xx status before or
 after the URL on the same line. Status codes must occur in HTTP response fields
 or error reason phrases; URL digits, durations and counters are not status evidence.
 A registry URL in configuration or successful setup output is
 not sufficient evidence. A later assertion failure retains its own diagnostic
 class and review requirements; this does not authorize an executable repair.
+Registry GET and Corepack request checks inspect the URL hostname, so an API
+path containing `registry` is not package-registry evidence.
 Corepack's explicit registry-request error can correlate with `fetch failed`
 within the same parsed block. Registry DNS/socket failures require the registry
-hostname and transport error code on the same line; unrelated network failures
+hostname and transport error code on the same line, including socket, DNS and TLS
+failures. HTTP rate limits retain the infrastructure diagnosis. Unrelated network failures
 beside registry configuration remain product/runtime diagnostics.
 
 Full decorated job logs can contain workflow labels and echoed scripts that are

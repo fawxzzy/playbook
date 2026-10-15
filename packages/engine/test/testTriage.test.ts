@@ -106,10 +106,21 @@ describe('test triage engine', () => {
     'GET https://registry.npmjs.org/lodash 503 Service Unavailable',
     'GET https://registry.npmjs.org/lodash HTTP/1.1 503 Service Unavailable',
     'GET https://registry.npmjs.org/lodash status code: 503',
+    'npm ERR! 429 Too Many Requests - GET https://registry.npmjs.org/lodash',
+    'GET https://registry.npmjs.org/lodash 429 Too Many Requests',
+    'GET https://registry.npmjs.org/lodash Too Many Requests - 429',
+    'GET https://registry.npmjs.org/lodash HTTP/1.1 403 Forbidden',
+    'npm http fetch GET 401 https://registry.npmjs.org/lodash 40ms',
     'Error: Error when performing the request to https://registry.npmjs.org/pnpm/latest\nTypeError: fetch failed',
     'FAIL packages/engine/test/request.test.ts\nTypeError: fetch failed\nError when performing the request to https://registry.npmjs.org/pnpm/latest',
     'Error: getaddrinfo ENOTFOUND registry.npmjs.org',
     'Error: registry.npmjs.org request failed with EAI_AGAIN',
+    'Error: connect EHOSTUNREACH registry.npmjs.org',
+    'Error: write EPIPE registry.npmjs.org',
+    'Error: ENETUNREACH registry.npmjs.org',
+    'Error: ECONNABORTED registry.npmjs.org',
+    'Error: UND_ERR_SOCKET registry.npmjs.org',
+    'Error: CERT_HAS_EXPIRED registry.npmjs.org',
     'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
     'request to https://registry.npmjs.org/vitest failed',
     'request to https://registry.npmjs.org/vitest timed out'
@@ -148,11 +159,20 @@ describe('test triage engine', () => {
   it.each([
     'TypeError: fetch failed',
     'Error: getaddrinfo ENOTFOUND api.example.test',
-    'Error: Error when performing the request to https://api.example.test/data\nTypeError: fetch failed'
+    'Error: Error when performing the request to https://api.example.test/data\nTypeError: fetch failed',
+    'Error: Error when performing the request to https://api.example.test/registry/data\nTypeError: fetch failed',
+    'Error: GET https://api.example.test/registry/data 503 Service Unavailable'
   ])('does not correlate an unrelated network failure with registry configuration: %s', (error) => {
     const log = `FAIL packages/engine/test/request.test.ts\npnpm config set registry https://registry.npmjs.org/\n${error}`;
     const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
     expect(artifact.primaryFailureClass).toBe('runtime_failure');
+    expect(artifact.failureLayer).toBe('product_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it('keeps a missing artifact named after the registry outside the transport bucket', () => {
+    const artifact = buildTestTriageArtifact('Error: ENOENT registry.npmjs.org', { input: 'stdin', path: null });
+    expect(artifact.primaryFailureClass).toBe('missing_artifact');
     expect(artifact.failureLayer).toBe('product_failure');
     expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
   });
