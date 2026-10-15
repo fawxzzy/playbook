@@ -95,6 +95,10 @@ or error reason phrases; URL digits, durations and counters are not status evide
 A registry URL in configuration or successful setup output is
 not sufficient evidence. A later assertion failure retains its own diagnostic
 class and review requirements; this does not authorize an executable repair.
+Corepack's explicit registry-request error can correlate with `fetch failed`
+within the same parsed block. Registry DNS/socket failures require the registry
+hostname and transport error code on the same line; unrelated network failures
+beside registry configuration remain product/runtime diagnostics.
 
 Full decorated job logs can contain workflow labels and echoed scripts that are
 not failure evidence. This narrow classification correction does not normalize

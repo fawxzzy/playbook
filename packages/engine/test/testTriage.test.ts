@@ -106,6 +106,10 @@ describe('test triage engine', () => {
     'GET https://registry.npmjs.org/lodash 503 Service Unavailable',
     'GET https://registry.npmjs.org/lodash HTTP/1.1 503 Service Unavailable',
     'GET https://registry.npmjs.org/lodash status code: 503',
+    'Error: Error when performing the request to https://registry.npmjs.org/pnpm/latest\nTypeError: fetch failed',
+    'FAIL packages/engine/test/request.test.ts\nTypeError: fetch failed\nError when performing the request to https://registry.npmjs.org/pnpm/latest',
+    'Error: getaddrinfo ENOTFOUND registry.npmjs.org',
+    'Error: registry.npmjs.org request failed with EAI_AGAIN',
     'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
     'request to https://registry.npmjs.org/vitest failed',
     'request to https://registry.npmjs.org/vitest timed out'
@@ -137,6 +141,18 @@ describe('test triage engine', () => {
     const log = `FAIL packages/engine/test/request.test.ts\n${request}\nExpected: true\nReceived: false`;
     const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
     expect(artifact.primaryFailureClass).toBe('test_expectation_drift');
+    expect(artifact.failureLayer).toBe('product_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it.each([
+    'TypeError: fetch failed',
+    'Error: getaddrinfo ENOTFOUND api.example.test',
+    'Error: Error when performing the request to https://api.example.test/data\nTypeError: fetch failed'
+  ])('does not correlate an unrelated network failure with registry configuration: %s', (error) => {
+    const log = `FAIL packages/engine/test/request.test.ts\npnpm config set registry https://registry.npmjs.org/\n${error}`;
+    const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
+    expect(artifact.primaryFailureClass).toBe('runtime_failure');
     expect(artifact.failureLayer).toBe('product_failure');
     expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
   });
