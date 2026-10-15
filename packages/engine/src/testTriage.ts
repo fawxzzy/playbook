@@ -55,7 +55,7 @@ const readArrayLiteral = (text: string): string[] => {
 
 const classifyFailure = (joinedBlock: string): FailureClassification => {
   // A registry URL also appears in successful setup output; require failure evidence.
-  if (/ERR_PNPM_FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|request to .*registry.*(?:failed|timed out)/i.test(joinedBlock)) {
+  if (/ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|request to .*registry.*(?:failed|timed out)|\bGET[ \t]+https?:\/\/[^\s]*registry[^\s]*[ \t]+(?:error[ \t]*\(|(?:[^\r\n]*[ \t-])?5\d\d\b)/i.test(joinedBlock)) {
     return {
       kind: 'registry_timeout_install_failure',
       confidence: 0.98,

@@ -97,6 +97,9 @@ describe('test triage engine', () => {
 
   it.each([
     'ERR_SOCKET_TIMEOUT: package download timed out',
+    'ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/lodash: Bad Gateway - 502',
+    'WARN GET https://registry.npmjs.org/lodash error (ECONNRESET). Will retry in 10 seconds.',
+    'GET https://registry.npmjs.org/lodash: Bad Gateway - 502',
     'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
     'request to https://registry.npmjs.org/vitest failed',
     'request to https://registry.npmjs.org/vitest timed out'
@@ -106,6 +109,14 @@ describe('test triage engine', () => {
     expect(artifact.primaryFailureClass).toBe('registry_timeout_install_failure');
     expect(artifact.failureLayer).toBe('infra_failure');
     expect(artifact.automationEligibility).toBe('blocked_infra_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it.each(['lodash', 'package-502', 'lodash/5.0.0'])('does not infer an outage from a successful registry GET for %s before an assertion', (name) => {
+    const log = `GET https://registry.npmjs.org/${name} 200 OK\nExpected: true\nReceived: false`;
+    const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
+    expect(artifact.primaryFailureClass).toBe('test_expectation_drift');
+    expect(artifact.failureLayer).toBe('product_failure');
     expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
   });
 
