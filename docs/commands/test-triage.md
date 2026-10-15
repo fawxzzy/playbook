@@ -88,6 +88,16 @@ Deterministic infra buckets include:
 - `composite_action_manifest_parse_failure`
 - `tool_bootstrap_failure`
 
+Registry outage classification requires fetch, timeout, or an explicitly failed
+registry request. A registry URL in configuration or successful setup output is
+not sufficient evidence. A later assertion failure retains its own diagnostic
+class and review requirements; this does not authorize an executable repair.
+
+Full decorated job logs can contain workflow labels and echoed scripts that are
+not failure evidence. This narrow classification correction does not normalize
+every job-log format. Prefer the captured test output in `.playbook/ci-failure.log`
+and inspect raw evidence when the normalized diagnosis is ambiguous.
+
 Deterministic governance buckets include:
 
 - `release_governance_preflight_failure`

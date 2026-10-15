@@ -54,7 +54,8 @@ const readArrayLiteral = (text: string): string[] => {
 };
 
 const classifyFailure = (joinedBlock: string): FailureClassification => {
-  if (/ERR_PNPM_FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|registry\.npmjs\.org|request to .*registry.*failed/i.test(joinedBlock)) {
+  // A registry URL also appears in successful setup output; require failure evidence.
+  if (/ERR_PNPM_FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|request to .*registry.*(?:failed|timed out)/i.test(joinedBlock)) {
     return {
       kind: 'registry_timeout_install_failure',
       confidence: 0.98,

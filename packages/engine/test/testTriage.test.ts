@@ -1,5 +1,7 @@
+import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { buildTestTriageArtifact, renderTestTriageText } from '../src/testTriage.js';
+import { buildTestFixPlanArtifact } from '../src/testFixPlan.js';
 
 describe('test triage engine', () => {
   it('classifies snapshot mismatch and plans narrow reruns deterministically', () => {
@@ -63,6 +65,48 @@ describe('test triage engine', () => {
     expect(artifact.primaryFailureClass).toBe('registry_timeout_install_failure');
     expect(artifact.failureLayer).toBe('infra_failure');
     expect(artifact.automationEligibility).toBe('blocked_infra_failure');
+  });
+
+  it('keeps the real export assertion review-required when setup mentions the registry', () => {
+    // Minimized from a captured repository CI failure; raw logs stay outside source.
+    const log = fs.readFileSync(new URL('./fixtures/registry-config-export-failure.log', import.meta.url), 'utf8');
+    const source = { input: 'file' as const, path: 'fixtures/registry-config-export-failure.log' };
+    const artifact = buildTestTriageArtifact(log, source);
+    const plan = buildTestFixPlanArtifact(artifact);
+
+    expect(artifact.primaryFailureClass).toBe('test_expectation_drift');
+    expect(artifact.failureLayer).toBe('product_failure');
+    expect(artifact.findings).toHaveLength(1);
+    expect(artifact.findings[0]?.repair_class).toBe('review_required');
+    expect(artifact.findings[0]?.evidence).toContain("code: 'ERR_ASSERTION'");
+    expect(artifact.recommendedNextChecks.some((check) => check.includes('registry reachability'))).toBe(false);
+    expect(plan.tasks).toEqual([]);
+    expect(plan.excluded).toHaveLength(1);
+    expect(plan.excluded[0]?.repair_class).toBe('review_required');
+    expect(buildTestTriageArtifact(log, source)).toEqual(artifact);
+    expect(buildTestFixPlanArtifact(artifact)).toEqual(plan);
+  });
+
+  it('does not infer a registry outage from a configuration URL alone', () => {
+    const artifact = buildTestTriageArtifact('pnpm config set registry https://registry.npmjs.org/', { input: 'stdin', path: null });
+
+    expect(artifact.primaryFailureClass).not.toBe('registry_timeout_install_failure');
+    expect(artifact.findings.every((finding) => finding.repair_class === 'review_required')).toBe(true);
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it.each([
+    'ERR_SOCKET_TIMEOUT: package download timed out',
+    'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
+    'request to https://registry.npmjs.org/vitest failed',
+    'request to https://registry.npmjs.org/vitest timed out'
+  ])('preserves actual registry failure evidence: %s', (log) => {
+    const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
+
+    expect(artifact.primaryFailureClass).toBe('registry_timeout_install_failure');
+    expect(artifact.failureLayer).toBe('infra_failure');
+    expect(artifact.automationEligibility).toBe('blocked_infra_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
   });
 
   it('classifies release-governance preflight failures as governance failures', () => {
