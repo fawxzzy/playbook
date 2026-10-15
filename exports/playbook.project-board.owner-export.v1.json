@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_94eb480a64fc",
+  "export_id": "pbe_playbook_roadmap_210471f992db",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:94eb480a64fc81baee305e1fcd70009b280db110ddc3f58803fe417bb5e05b72",
+  "source_revision": "sha256:210471f992dbf744ff61d7ced389ee785033162076717f223ec2727b5c089b57",
   "generated_at": "2026-07-15T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:94eb480a64fc81baee305e1fcd70009b280db110ddc3f58803fe417bb5e05b72",
+      "revision": "sha256:210471f992dbf744ff61d7ced389ee785033162076717f223ec2727b5c089b57",
       "observed_at": "2026-07-15T00:00:00.000Z"
     }
   ],
@@ -69,7 +69,9 @@
           "repos/playbook/docs/commands/plan.md",
           "repos/playbook/docs/contracts/verify-output.md",
           "repos/playbook/packages/cli/src/commands/apply.test.ts",
-          "repos/playbook/packages/engine/test/verify.plan.apply.workflow.test.ts"
+          "repos/playbook/packages/engine/test/verify.plan.apply.workflow.test.ts",
+          "repos/playbook/test/contracts/security/security-contracts.test.mjs",
+          "repos/playbook/test/security/security-regression.test.mjs"
         ]
       },
       "relationships": {
@@ -2590,7 +2592,7 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:94eb480a64fc81baee305e1fcd70009b280db110ddc3f58803fe417bb5e05b72",
+    "source_digest": "sha256:210471f992dbf744ff61d7ced389ee785033162076717f223ec2727b5c089b57",
     "source_feature_count": 63,
     "exported_card_count": 35,
     "excluded_completed_statuses": [
