@@ -77,8 +77,8 @@
         "docs/architecture/REMEDIATION_TRUST_MODEL.md"
       ],
       "tests": [
-        "test/contracts/security/planSafety.test.mjs",
-        "test/security/validateRepoBoundary.test.mjs"
+        "packages/engine/test/verify.plan.apply.workflow.test.ts",
+        "packages/cli/src/commands/apply.test.ts"
       ],
       "docs": [
         "docs/commands/plan.md",
@@ -144,7 +144,7 @@
         "docs/contracts/COMMAND_CONTRACTS_V1.md"
       ],
       "tests": [
-        "tests/contracts/plugin-contracts.test.ts"
+        "packages/engine/test/plugins.test.ts"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md"

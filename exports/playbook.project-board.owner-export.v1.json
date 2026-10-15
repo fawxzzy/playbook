@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_c30d545dd6e3",
+  "export_id": "pbe_playbook_roadmap_94eb480a64fc",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:c30d545dd6e34632e89d4854a8b3cdad422a7473d746d7adb838edf297a7bf4b",
+  "source_revision": "sha256:94eb480a64fc81baee305e1fcd70009b280db110ddc3f58803fe417bb5e05b72",
   "generated_at": "2026-07-15T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:c30d545dd6e34632e89d4854a8b3cdad422a7473d746d7adb838edf297a7bf4b",
+      "revision": "sha256:94eb480a64fc81baee305e1fcd70009b280db110ddc3f58803fe417bb5e05b72",
       "observed_at": "2026-07-15T00:00:00.000Z"
     }
   ],
@@ -68,8 +68,8 @@
           "repos/playbook/docs/commands/apply.md",
           "repos/playbook/docs/commands/plan.md",
           "repos/playbook/docs/contracts/verify-output.md",
-          "repos/playbook/test/contracts/security/planSafety.test.mjs",
-          "repos/playbook/test/security/validateRepoBoundary.test.mjs"
+          "repos/playbook/packages/cli/src/commands/apply.test.ts",
+          "repos/playbook/packages/engine/test/verify.plan.apply.workflow.test.ts"
         ]
       },
       "relationships": {
@@ -140,7 +140,7 @@
           "repos/playbook/docs/architecture/V1_BOUNDARY_REFACTOR_PLAN.md",
           "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/tests/contracts/plugin-contracts.test.ts"
+          "repos/playbook/packages/engine/test/plugins.test.ts"
         ]
       },
       "relationships": {
@@ -2590,7 +2590,7 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:c30d545dd6e34632e89d4854a8b3cdad422a7473d746d7adb838edf297a7bf4b",
+    "source_digest": "sha256:94eb480a64fc81baee305e1fcd70009b280db110ddc3f58803fe417bb5e05b72",
     "source_feature_count": 63,
     "exported_card_count": 35,
     "excluded_completed_statuses": [
