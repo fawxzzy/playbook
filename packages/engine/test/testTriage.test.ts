@@ -146,6 +146,28 @@ describe('test triage engine', () => {
   });
 
   it.each([
+    'npm ERR! 503 Service Unavailable - GET https://registry.npmjs.org/lodash',
+    'npm error 429 Too Many Requests - GET https://registry.npmjs.org/lodash',
+    'ERR_PNPM_META_FETCH_FAIL GET https://registry.npmjs.org/lodash: Bad Gateway - 502',
+    'GET https://registry.npmjs.org/lodash 503 upstream connect error'
+  ])('preserves registry failure lines before an Actions exit trailer: %s', (error) => {
+    const log = `${error}\nError: Process completed with exit code 1.`;
+    const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
+    expect(artifact.primaryFailureClass).toBe('registry_timeout_install_failure');
+    expect(artifact.failureLayer).toBe('infra_failure');
+    expect(artifact.automationEligibility).toBe('blocked_infra_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it('keeps successful registry setup before an Actions exit trailer outside the outage bucket', () => {
+    const log = 'pnpm config set registry https://registry.npmjs.org/\nGET https://registry.npmjs.org/lodash 200 OK\nError: Process completed with exit code 1.';
+    const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
+    expect(artifact.primaryFailureClass).toBe('runtime_failure');
+    expect(artifact.failureLayer).toBe('product_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it.each([
     'GET https://registry.npmjs.org/lodash 200 OK in 503 ms',
     'npm http fetch GET 200 https://registry.npmjs.org/lodash 503ms (cache miss)',
     'GET https://registry.npmjs.org/lodash 503 ms',

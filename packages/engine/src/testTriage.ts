@@ -77,7 +77,7 @@ const matchesHttpReason = (code: string, text: string): boolean => {
     && (text.length === reason.length || /\W/.test(text[reason.length])));
 };
 
-const classifyFailure = (joinedBlock: string): FailureClassification => {
+const hasRegistryFailureEvidence = (joinedBlock: string): boolean => {
   // A registry URL also appears in successful setup output; require failure evidence.
   const registryRequestFailure = [...joinedBlock.matchAll(/\brequest to (https?:\/\/[^\s]+)[^\r\n]*?(?:failed|timed out)/gi)].some((match) => isRegistryUrl(match[1]));
   const registryFetchFailure = [...joinedBlock.matchAll(/\bError when performing the request to (https?:\/\/[^\s]+)/gi)].some((match) => isRegistryUrl(match[1]))
@@ -101,7 +101,11 @@ const classifyFailure = (joinedBlock: string): FailureClassification => {
       || Boolean(leadingStatus && matchesHttpReason(leadingStatus[1], leadingStatus[2]))
       || Boolean(reasonStatus && matchesHttpReason(reasonStatus[2], reasonStatus[1].trim()));
   });
-  if (/ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT/i.test(joinedBlock) || registryRequestFailure || registryGetFailure || registryFetchFailure || registryTransportFailure) {
+  return /ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT/i.test(joinedBlock) || registryRequestFailure || registryGetFailure || registryFetchFailure || registryTransportFailure;
+};
+
+const classifyFailure = (joinedBlock: string): FailureClassification => {
+  if (hasRegistryFailureEvidence(joinedBlock)) {
     return {
       kind: 'registry_timeout_install_failure',
       confidence: 0.98,
@@ -422,7 +426,7 @@ const parseFailureBlocks = (rawLog: string): MutableFinding[] => {
       continue;
     }
 
-    if (/AssertionError|Error:|Snapshot|Expected:|Received:|Cannot find module|ENOENT|ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL|eslint|TS\d{4}|missing expected finding|contract drift|runtime/i.test(line)) {
+    if (hasRegistryFailureEvidence(line) || /AssertionError|Error:|Snapshot|Expected:|Received:|Cannot find module|ENOENT|ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL|eslint|TS\d{4}|missing expected finding|contract drift|runtime/i.test(line)) {
       if (currentBlock.length === 0) currentBlock = [line];
       else currentBlock.push(line);
       continue;
