@@ -66,7 +66,7 @@ const classifyFailure = (joinedBlock: string): FailureClassification => {
     // Match response fields and reason phrases, not arbitrary timing/counter digits.
     const labeledStatus = /\b(?:HTTP(?:\/[\d.]+)?|status(?:[ \t]+code)?)[ \t:=]+5\d\d\b/i;
     const npmStatus = /\bnpm[ \t]+(?:ERR!|error)[ \t]+5\d\d\b/i;
-    const leadingStatus = /^5\d\d\b(?![ \t]*(?:ms|s|sec|seconds|bytes|requests)\b)/i;
+    const leadingStatus = /^5\d\d[ \t]+(?:Internal Server Error|Not Implemented|Bad Gateway|Service Unavailable|Gateway Timeout|HTTP Version Not Supported)\b/i;
     const reasonStatus = /^(?:Internal Server Error|Not Implemented|Bad Gateway|Service Unavailable|Gateway Timeout|HTTP Version Not Supported)[ \t]*[-:][ \t]*5\d\d\b/i;
     return npmStatus.test(before) || labeledStatus.test(`${before} ${after}`) || leadingStatus.test(after) || reasonStatus.test(after);
   });

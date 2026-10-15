@@ -103,6 +103,9 @@ describe('test triage engine', () => {
     'npm ERR! 503 Service Unavailable - GET https://registry.npmjs.org/lodash',
     'npm error 502 Bad Gateway - GET https://registry.npmjs.org/lodash',
     'npm http fetch GET 503 https://registry.npmjs.org/lodash 40ms',
+    'GET https://registry.npmjs.org/lodash 503 Service Unavailable',
+    'GET https://registry.npmjs.org/lodash HTTP/1.1 503 Service Unavailable',
+    'GET https://registry.npmjs.org/lodash status code: 503',
     'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
     'request to https://registry.npmjs.org/vitest failed',
     'request to https://registry.npmjs.org/vitest timed out'
@@ -127,6 +130,8 @@ describe('test triage engine', () => {
     'GET https://registry.npmjs.org/lodash 200 OK in 503 ms',
     'npm http fetch GET 200 https://registry.npmjs.org/lodash 503ms (cache miss)',
     'GET https://registry.npmjs.org/lodash 503 ms',
+    'GET https://registry.npmjs.org/lodash 503 cache hits',
+    'GET https://registry.npmjs.org/lodash 503 kB/s',
     'GET https://registry.npmjs.org/lodash 200 OK\n503 ms elapsed'
   ])('does not treat registry latency as HTTP failure evidence: %s', (request) => {
     const log = `FAIL packages/engine/test/request.test.ts\n${request}\nExpected: true\nReceived: false`;
