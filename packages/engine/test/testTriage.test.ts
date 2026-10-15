@@ -106,6 +106,9 @@ describe('test triage engine', () => {
     'GET https://registry.npmjs.org/lodash 503 Service Unavailable',
     'GET https://registry.npmjs.org/lodash HTTP/1.1 503 Service Unavailable',
     'GET https://registry.npmjs.org/lodash status code: 503',
+    'GET https://registry.npmjs.org/lodash 503 upstream connect error',
+    'GET https://registry.npmjs.org/lodash 503 upstream connect error or disconnect/reset before headers. reset reason: connection failure',
+    'FAIL packages/engine/test/request.test.ts\nGET https://registry.npmjs.org/lodash 503 upstream connect error\nExpected: true\nReceived: false',
     'npm ERR! 429 Too Many Requests - GET https://registry.npmjs.org/lodash',
     'GET https://registry.npmjs.org/lodash 429 Too Many Requests',
     'GET https://registry.npmjs.org/lodash Too Many Requests - 429',
@@ -148,6 +151,7 @@ describe('test triage engine', () => {
     'GET https://registry.npmjs.org/lodash 503 ms',
     'GET https://registry.npmjs.org/lodash 503 cache hits',
     'GET https://registry.npmjs.org/lodash 503 kB/s',
+    'GET https://registry.npmjs.org/lodash 503 upstream connect error count',
     'GET https://registry.npmjs.org/lodash 200 OK\n503 ms elapsed'
   ])('does not treat registry latency as HTTP failure evidence: %s', (request) => {
     const log = `FAIL packages/engine/test/request.test.ts\n${request}\nExpected: true\nReceived: false`;

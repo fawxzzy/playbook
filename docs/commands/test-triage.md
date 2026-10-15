@@ -92,6 +92,7 @@ Registry outage classification requires fetch (including pnpm metadata fetch),
 timeout, or a registry GET with an explicit error or HTTP 4xx/5xx status before or
 after the URL on the same line. Status codes must occur in HTTP response fields
 or error reason phrases; URL digits, durations and counters are not status evidence.
+Recognized proxy reasons include `upstream connect error` and its `or disconnect/reset` detail.
 A registry URL in configuration or successful setup output is
 not sufficient evidence. A later assertion failure retains its own diagnostic
 class and review requirements; this does not authorize an executable repair.

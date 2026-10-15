@@ -71,6 +71,7 @@ const registryTransportCodes = new Set([
 ]);
 
 const matchesHttpReason = (code: string, text: string): boolean => {
+  if (/^upstream connect error(?:$|[ \t]+or disconnect\/reset\b)/i.test(text)) return true;
   const reason = STATUS_CODES[Number(code)]?.toLowerCase();
   return Boolean(reason && text.toLowerCase().startsWith(reason)
     && (text.length === reason.length || /\W/.test(text[reason.length])));
