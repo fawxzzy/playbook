@@ -1,3 +1,4 @@
+import { STATUS_CODES } from 'node:http';
 import {
   TEST_TRIAGE_ARTIFACT_KIND,
   TEST_TRIAGE_SCHEMA_VERSION,
@@ -53,8 +54,58 @@ const readArrayLiteral = (text: string): string[] => {
   return uniqueSorted(matches);
 };
 
+const isRegistryUrl = (value: string): boolean => {
+  try {
+    return /registry/i.test(new URL(value).hostname);
+  } catch {
+    return false;
+  }
+};
+
+const registryTransportCodes = new Set([
+  'ENOTFOUND', 'ENODATA', 'ECONNRESET', 'ECONNREFUSED', 'ECONNABORTED',
+  'EHOSTUNREACH', 'EHOSTDOWN', 'ENETUNREACH', 'ENETDOWN', 'ENETRESET',
+  'EPIPE', 'ENOTCONN', 'EPROTO', 'ETIMEDOUT', 'ESOCKETTIMEDOUT',
+  'CERT_HAS_EXPIRED', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'DEPTH_ZERO_SELF_SIGNED_CERT', 'SELF_SIGNED_CERT_IN_CHAIN', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'
+]);
+
+const matchesHttpReason = (code: string, text: string): boolean => {
+  if (/^upstream connect error(?:$|[ \t]+or disconnect\/reset\b)/i.test(text)) return true;
+  const reason = STATUS_CODES[Number(code)]?.toLowerCase();
+  return Boolean(reason && text.toLowerCase().startsWith(reason)
+    && (text.length === reason.length || /\W/.test(text[reason.length])));
+};
+
+const hasRegistryFailureEvidence = (joinedBlock: string): boolean => {
+  // A registry URL also appears in successful setup output; require failure evidence.
+  const registryRequestFailure = [...joinedBlock.matchAll(/\brequest to (https?:\/\/[^\s]+)[^\r\n]*?(?:failed|timed out)/gi)].some((match) => isRegistryUrl(match[1]));
+  const registryFetchFailure = [...joinedBlock.matchAll(/\bError when performing the request to (https?:\/\/[^\s]+)/gi)].some((match) => isRegistryUrl(match[1]))
+    && /\bfetch failed\b/i.test(joinedBlock);
+  const registryTransportFailure = joinedBlock.split(/\r?\n/).some((line) => /\bregistry\.npmjs\.org\b/i.test(line)
+    && (line.match(/\b[A-Z][A-Z_]+\b/g) ?? []).some((code) => registryTransportCodes.has(code) || /^(?:EAI_|ERR_(?:TLS|SSL)_|UND_ERR_)/.test(code)));
+  const registryGetFailure = joinedBlock.split(/\r?\n/).some((line) => {
+    const request = /\bGET(?:[ \t]+([1-5]\d\d))?[ \t]+(https?:\/\/[^\s]+)/i.exec(line);
+    if (!request || !isRegistryUrl(request[2])) return false;
+    // Exclude the URL itself: package names and versions can contain 5xx digits.
+    const before = line.slice(0, request.index).trim();
+    const after = line.slice(request.index + request[0].length).trim();
+    if (/\berror[ \t]*\(/i.test(after)) return true;
+    if (request[1]) return /^[45]/.test(request[1]);
+    // Match response fields and reason phrases, not arbitrary timing/counter digits.
+    const labeledStatus = /\b(?:HTTP(?:\/[\d.]+)?|status(?:[ \t]+code)?)[ \t:=]+[45]\d\d\b/i;
+    const npmStatus = /\bnpm[ \t]+(?:ERR!|error)[ \t]+[45]\d\d\b/i;
+    const leadingStatus = /^([45]\d\d)[ \t]+(.+)/.exec(after);
+    const reasonStatus = /^(.+?)[ \t]*[-:][ \t]*([45]\d\d)\b/.exec(after);
+    return npmStatus.test(before) || labeledStatus.test(`${before} ${after}`)
+      || Boolean(leadingStatus && matchesHttpReason(leadingStatus[1], leadingStatus[2]))
+      || Boolean(reasonStatus && matchesHttpReason(reasonStatus[2], reasonStatus[1].trim()));
+  });
+  return /ERR_PNPM_(?:META_)?FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT/i.test(joinedBlock) || registryRequestFailure || registryGetFailure || registryFetchFailure || registryTransportFailure;
+};
+
 const classifyFailure = (joinedBlock: string): FailureClassification => {
-  if (/ERR_PNPM_FETCH|ERR_SOCKET_TIMEOUT|ETIMEDOUT|registry\.npmjs\.org|request to .*registry.*failed/i.test(joinedBlock)) {
+  if (hasRegistryFailureEvidence(joinedBlock)) {
     return {
       kind: 'registry_timeout_install_failure',
       confidence: 0.98,
@@ -375,7 +426,7 @@ const parseFailureBlocks = (rawLog: string): MutableFinding[] => {
       continue;
     }
 
-    if (/AssertionError|Error:|Snapshot|Expected:|Received:|Cannot find module|ENOENT|ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL|eslint|TS\d{4}|missing expected finding|contract drift|runtime/i.test(line)) {
+    if (hasRegistryFailureEvidence(line) || /AssertionError|Error:|Snapshot|Expected:|Received:|Cannot find module|ENOENT|ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL|eslint|TS\d{4}|missing expected finding|contract drift|runtime/i.test(line)) {
       if (currentBlock.length === 0) currentBlock = [line];
       else currentBlock.push(line);
       continue;
