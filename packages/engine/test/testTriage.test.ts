@@ -102,6 +102,7 @@ describe('test triage engine', () => {
     'GET https://registry.npmjs.org/lodash: Bad Gateway - 502',
     'npm ERR! 503 Service Unavailable - GET https://registry.npmjs.org/lodash',
     'npm error 502 Bad Gateway - GET https://registry.npmjs.org/lodash',
+    'npm http fetch GET 503 https://registry.npmjs.org/lodash 40ms',
     'GET https://registry.npmjs.org/vitest error (ETIMEDOUT)',
     'request to https://registry.npmjs.org/vitest failed',
     'request to https://registry.npmjs.org/vitest timed out'
@@ -115,7 +116,20 @@ describe('test triage engine', () => {
   });
 
   it.each(['lodash', 'package-502', 'lodash/5.0.0', 'lodash/503'])('does not infer an outage from a successful registry GET for %s before an assertion', (name) => {
-    const log = `GET https://registry.npmjs.org/${name} 200 OK\nExpected: true\nReceived: false`;
+    const log = `FAIL packages/engine/test/request.test.ts\nGET https://registry.npmjs.org/${name} 200 OK\nExpected: true\nReceived: false`;
+    const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
+    expect(artifact.primaryFailureClass).toBe('test_expectation_drift');
+    expect(artifact.failureLayer).toBe('product_failure');
+    expect(buildTestFixPlanArtifact(artifact).tasks).toEqual([]);
+  });
+
+  it.each([
+    'GET https://registry.npmjs.org/lodash 200 OK in 503 ms',
+    'npm http fetch GET 200 https://registry.npmjs.org/lodash 503ms (cache miss)',
+    'GET https://registry.npmjs.org/lodash 503 ms',
+    'GET https://registry.npmjs.org/lodash 200 OK\n503 ms elapsed'
+  ])('does not treat registry latency as HTTP failure evidence: %s', (request) => {
+    const log = `FAIL packages/engine/test/request.test.ts\n${request}\nExpected: true\nReceived: false`;
     const artifact = buildTestTriageArtifact(log, { input: 'stdin', path: null });
     expect(artifact.primaryFailureClass).toBe('test_expectation_drift');
     expect(artifact.failureLayer).toBe('product_failure');
