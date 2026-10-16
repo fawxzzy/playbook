@@ -32,3 +32,16 @@ Eliminate boundary drift between CLI, core, and engine by making CLI commands th
 - Core/engine behavior drift for the same command.
 - Plugin bifurcation where execution and explainability see different rule sets.
 - SCM normalization drift across diff-based commands.
+
+## Analyze migration status (2026-10-16)
+
+The CLI now calls the engine's context-based `analyze` entrypoint. Recommendation,
+summary and architecture-marker policy is shared as pure functions in core;
+the synchronous core API remains a deprecated compatibility adapter, preserving
+the acyclic core <- engine <- CLI package graph. Engine `analyzeRepo` retains
+its filesystem/plugin detector contract and uses the same policy.
+
+This is the analyze ownership slice of PB-V05. Unified plugin loading across
+verify/rules/explain and retirement of the legacy core adapter remain open.
+CLI dependency-only detection and engine filesystem/plugin detection retain
+their previous behavior pending that separately parity-checked migration.

@@ -28,6 +28,9 @@ declare module "@zachariahredfield/playbook-node" {
 }
 
 declare module "@zachariahredfield/playbook-engine" {
+  export const analyze: (...args: any[]) => any;
+  export const formatAnalyzeCi: (...args: any[]) => string;
+  export const formatAnalyzeHuman: (...args: any[]) => string;
   export const loadConfig: (...args: any[]) => Promise<any>;
   export const resolveLocalVerificationCommand: (...args: any[]) => any;
   export const runLocalVerification: (...args: any[]) => any;

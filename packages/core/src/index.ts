@@ -1,3 +1,7 @@
+import { createAnalyzeReport, detectAnalyzeDependencies, renderAnalyzeArchitecture } from './analyzePolicy.js';
+export { createAnalyzeReport, detectAnalyzeDependencies, renderAnalyzeArchitecture } from './analyzePolicy.js';
+export type { AnalyzePackageJson, AnalyzeDetectedItem } from './analyzePolicy.js';
+
 export type { ScmContext, ScmDiffBase, ScmRenameEntry } from './scm/context.js';
 export { collectScmContext } from './scm/context.js';
 export type {
@@ -346,79 +350,17 @@ const parseConfig = (raw?: string): { config: PlaybookConfig; warning?: string }
   };
 };
 
+/** @deprecated Command callers should use the engine analyze entrypoint. */
 export const analyze = (ctx: ProjectContext): AnalyzeResult => {
   const pkgRaw = ctx.readTextFile('package.json');
   const pkg = (pkgRaw ? JSON.parse(pkgRaw) : {}) as PackageJson;
-  const deps = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
-  const detected = [
-    deps.next ? { id: 'nextjs', label: 'Next.js', evidence: ['package.json: next'] } : undefined,
-    deps['@supabase/supabase-js'] ? { id: 'supabase', label: 'Supabase', evidence: ['package.json: @supabase/supabase-js'] } : undefined,
-    deps.tailwindcss ? { id: 'tailwind', label: 'Tailwind CSS', evidence: ['package.json: tailwindcss'] } : undefined
-  ].filter((v): v is { id: string; label: string; evidence: string[] } => Boolean(v));
-
-  const recommendations: Finding[] = detected.length
-    ? [
-        {
-          id: 'analyze-run-verify',
-          title: 'Run governance verification',
-          severity: 'RECOMMEND',
-          message: 'Use verify after analyze to enforce policy checks.',
-          why: 'Analyze surfaces signals while verify enforces deterministic governance rules.',
-          fix: 'Run `playbook verify` before opening a pull request.'
-        },
-        ...detected.map((item) => ({
-          id: `analyze-detected-${item.id}`,
-          title: `${item.label} detected`,
-          severity: 'INFO' as const,
-          message: `${item.label} signal detected from repository evidence.`,
-          why: `${item.label} detection helps tailor architecture-aware guidance.`,
-          fix: 'Review generated architecture suggestions and keep docs aligned with implementation.',
-          files: ['package.json']
-        }))
-      ]
-    : [
-        {
-          id: 'analyze-no-signals',
-          title: 'No stack signals detected',
-          severity: 'WARN',
-          message: 'No known stack detectors matched this repository.',
-          why: 'Without stack signals, generated guidance may miss architecture-specific checks.',
-          fix: 'Add key framework/database dependencies to package.json, then rerun playbook analyze.',
-          files: ['package.json']
-        },
-        {
-          id: 'analyze-run-init',
-          title: 'Initialize governance baseline',
-          severity: 'RECOMMEND',
-          message: 'Ensure governance docs are initialized for this repository.',
-          why: 'A documented baseline keeps architecture and delivery expectations explicit.',
-          fix: 'Run `playbook init` to scaffold governance docs if they do not exist.'
-        }
-      ];
-
-  const architectureSuggestions = detected
-    .map((item) => (item.id === 'nextjs' ? '- Framework: Next.js' : item.id === 'supabase' ? '- Database: Supabase' : item.id === 'tailwind' ? '- Styling: Tailwind CSS' : ''))
-    .filter(Boolean);
-
-  const architectureDoc = ctx.readTextFile('docs/ARCHITECTURE.md');
-  const marker = '<!-- PLAYBOOK:ANALYZE_SUGGESTIONS -->';
-  if (architectureDoc && architectureDoc.includes(marker) && architectureSuggestions.length) {
-    const block = `${marker}\n${architectureSuggestions.join('\n')}\n`;
-    const markerLineRegex = new RegExp(`${marker}\\n(?:- (?:Framework|Database|Styling): .*\\n?)*`, 'g');
-    const replaced = architectureDoc.replace(markerLineRegex, block);
-    if (replaced !== architectureDoc) ctx.writeTextFile('docs/ARCHITECTURE.md', replaced);
+  const result = createAnalyzeReport(ctx.repoRoot, detectAnalyzeDependencies(pkg), ['nextjs', 'supabase', 'tailwind']);
+  const architecture = ctx.readTextFile('docs/ARCHITECTURE.md');
+  if (architecture !== undefined) {
+    const updated = renderAnalyzeArchitecture(architecture, result.architectureSuggestions);
+    if (updated !== architecture) ctx.writeTextFile('docs/ARCHITECTURE.md', updated);
   }
-
-  return {
-    repoPath: ctx.repoRoot,
-    ok: !recommendations.some((r) => r.severity === 'WARN'),
-    detectorsRun: ['nextjs', 'supabase', 'tailwind'],
-    detected,
-    summary: detected.length ? `Detected stack:\n${detected.map((d) => `- ${d.label}`).join('\n')}` : 'Detected stack: none',
-    signals: detected.length ? `${detected.length} stack signal(s): ${detected.map((d) => d.label).join(', ')}` : 'No known stack signals detected',
-    recommendations,
-    architectureSuggestions
-  };
+  return result;
 };
 
 export const verify = (ctx: ProjectContext): VerifyResult => {
