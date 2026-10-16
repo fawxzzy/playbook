@@ -1,5 +1,12 @@
 # Playbook Notes
 
+## 2026-10-16 - Governance rule explanation parity
+
+- WHAT: Explain recognizes the existing protected-doc and release-version governance rule IDs already used by verify and rules.
+- WHY: An enforced rule should resolve to its specific purpose and remediation instead of an unknown-rule response.
+- Boundary: This adds metadata only; verify execution, plugin loading, rule precedence, and command envelopes do not change.
+- Remaining PB-V05: The verify/rules/explain plugin registries still need separate loader parity work.
+
 ## 2026-10-16 - Analyze engine command boundary
 
 - WHAT: CLI analyze calls engine; core and engine share one pure report and marker policy.
