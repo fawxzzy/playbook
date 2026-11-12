@@ -4,6 +4,7 @@
 
 ### WHAT
 
+- Made the project-board owner export check (`pnpm board:export:check`) and its canonical-export test compare the LF form of the committed export, so Windows checkouts that materialize it with CRLF no longer report a false stale export; added a regression test that a CRLF-materialized export passes while real drift still fails.
 - Added a reusable `.github/actions/atlas-ui-proof/action.yml` compatibility gate that reruns ATLAS semantic drift, reruns ATLAS visual proof, derives the combined proof summary, and exports completion-facing outputs for downstream workflow consumers.
 - Clarified workflow-pack reuse docs so consumer-side proof gating remains a read-only compatibility layer over owner reports rather than a replacement verification truth surface.
 - Introduced Simple Rule Theory and Triadic System Pattern as first-class architectural doctrines.
@@ -12,6 +13,7 @@
 
 ### WHY
 
+- Keeps the owner export gate portable across Git line-ending settings, matching the roadmap source-revision hash that already normalizes to LF.
 - Lets Playbook and `_stack` enforce proof-backed completion for the ATLAS UI-governance lane without creating a second UI truth store.
 - Keeps workflow-pack reuse explicit about the difference between canonical verification contracts and downstream compatibility projections.
 - Establish consistent design primitives for deterministic automation and governance.

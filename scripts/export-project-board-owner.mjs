@@ -29,6 +29,9 @@ const STATUS_MAPPING = new Map([
 
 const uniqueSorted = (values) => [...new Set(values)].sort((left, right) => left.localeCompare(right));
 
+// Git may materialize text files with CRLF on Windows and LF elsewhere; hash and compare the LF form.
+const normalizeLineEndings = (text) => text.replace(/\r\n?/g, '\n');
+
 const normalizeTimestamp = (value) => {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new Error('roadmap.updatedAt must be a non-empty date or date-time string');
@@ -153,11 +156,8 @@ export function buildProjectBoardOwnerExport(roadmap, roadmapBytes) {
   }
 
   const generatedAt = normalizeTimestamp(roadmap.updatedAt);
-  // Git may materialize JSON with CRLF on Windows and LF in CI. Hash the
-  // canonical UTF-8/LF representation so one source revision is portable.
-  const canonicalRoadmapBytes = Buffer.from(roadmapBytes)
-    .toString('utf8')
-    .replace(/\r\n?/g, '\n');
+  // Hash the canonical UTF-8/LF representation so one source revision is portable.
+  const canonicalRoadmapBytes = normalizeLineEndings(Buffer.from(roadmapBytes).toString('utf8'));
   const digest = crypto.createHash('sha256').update(canonicalRoadmapBytes, 'utf8').digest('hex');
   const sourceRevision = `sha256:${digest}`;
   const cards = roadmap.features
@@ -226,7 +226,7 @@ export function runProjectBoardOwnerExport(argv, repoRoot = process.cwd()) {
 
   if (options.stdout) process.stdout.write(rendered);
   if (options.check) {
-    if (!fs.existsSync(outputPath) || fs.readFileSync(outputPath, 'utf8') !== rendered) {
+    if (!fs.existsSync(outputPath) || normalizeLineEndings(fs.readFileSync(outputPath, 'utf8')) !== rendered) {
       throw new Error(`${path.relative(repoRoot, outputPath)} is stale; run pnpm board:export`);
     }
     process.stdout.write(`project-board-owner-export: ok (${JSON.parse(rendered).cards.length} cards)\n`);
