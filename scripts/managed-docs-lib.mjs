@@ -7,6 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const repoRoot = path.resolve(process.env.PLAYBOOK_MANAGED_DOCS_REPO_ROOT ?? path.resolve(__dirname, '..'));
 
+const normalizeLineEndings = (text) => text.replace(/\r\n?/g, '\n');
+
 const COMMANDS_START = '<!-- PLAYBOOK:COMMANDS_START -->';
 const COMMANDS_END = '<!-- PLAYBOOK:COMMANDS_END -->';
 const EXAMPLES_START = '<!-- PLAYBOOK:EXAMPLES_START -->';
@@ -231,7 +233,8 @@ export const generateManagedDocsArtifacts = async () => {
   const outputs = [];
   for (const target of targets) {
     const filePath = path.join(repoRoot, target.relativePath);
-    const current = await fs.readFile(filePath, 'utf8');
+    // Git may materialize these files with CRLF on Windows; compare and regenerate from the LF form.
+    const current = normalizeLineEndings(await fs.readFile(filePath, 'utf8'));
     const next = updateFile(current, target.updates);
     outputs.push({ relativePath: target.relativePath, current, next });
   }
@@ -239,7 +242,7 @@ export const generateManagedDocsArtifacts = async () => {
   const truthPath = 'docs/contracts/command-truth.json';
   let truthCurrent = null;
   try {
-    truthCurrent = await fs.readFile(path.join(repoRoot, truthPath), 'utf8');
+    truthCurrent = normalizeLineEndings(await fs.readFile(path.join(repoRoot, truthPath), 'utf8'));
   } catch {
     truthCurrent = null;
   }
