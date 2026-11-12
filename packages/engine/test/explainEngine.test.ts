@@ -6,6 +6,29 @@ import { explainTarget } from '../src/explain/explainEngine.js';
 
 const createRepo = (name: string): string => fs.mkdtempSync(path.join(os.tmpdir(), `${name}-`));
 
+describe('active governance rule explanations', () => {
+  it.each([
+    ['protected-doc.governance', 'protected singleton-doc consolidation', 'docs-consolidation-plan.json'],
+    ['release.version-governance', 'release/version governance updates', 'release sync --check']
+  ])('explains %s using registered metadata', (id, purpose, fixFragment) => {
+    const repo = createRepo('playbook-explain-governance');
+    writeRepoIndex(repo, { schemaVersion: '1.0', modules: [], rules: [] });
+    const result = explainTarget(repo, `rule:${id}`);
+    expect(result.type).toBe('rule');
+    if (result.type !== 'rule') return;
+    expect(result.id).toBe(id);
+    expect(result.purpose).toContain(purpose);
+    expect(result.fix.some((step) => step.includes(fixFragment))).toBe(true);
+    expect(result.resolvedTarget.canonical).toBe(`rule:${id}`);
+  });
+
+  it('leaves unknown rules unknown', () => {
+    const repo = createRepo('playbook-explain-unknown-governance');
+    writeRepoIndex(repo, { schemaVersion: '1.0', modules: [], rules: [] });
+    expect(explainTarget(repo, 'rule:missing.governance').type).toBe('unknown');
+  });
+});
+
 const writeRepoIndex = (repo: string, payload: Record<string, unknown>): void => {
   const indexPath = path.join(repo, '.playbook', 'repo-index.json');
   fs.mkdirSync(path.dirname(indexPath), { recursive: true });

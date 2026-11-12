@@ -59,6 +59,33 @@ const RULE_REGISTRY: Record<string, RuleMetadata> = {
       owners: ['cli', 'testing'],
       remediationType: 'test-coverage'
     }
+  },
+  'protected-doc.governance': {
+    id: 'protected-doc.governance',
+    purpose: 'Require protected singleton-doc consolidation to be reviewed, conflict-free, and drift-free before merge.',
+    fix: [
+      'Create or refresh `.playbook/docs-consolidation-plan.json` from the reviewed consolidation artifacts.',
+      'Resolve protected-doc conflicts or drift before retrying apply or merge.'
+    ],
+    ownership: {
+      area: 'governance',
+      owners: ['docs'],
+      remediationType: 'protected-doc-consolidation'
+    }
+  },
+  'release.version-governance': {
+    id: 'release.version-governance',
+    purpose: 'Require evidence-backed release/version governance updates for release-relevant changes.',
+    fix: [
+      'Run `pnpm playbook release sync --check` to detect version/changelog mismatches and review actionable tasks.',
+      'Run `pnpm playbook release sync` to materialize reviewed version/changelog updates through the canonical apply boundary.',
+      'Rerun `pnpm playbook verify --json` after release sync reports aligned version/changelog state.'
+    ],
+    ownership: {
+      area: 'release',
+      owners: ['release'],
+      remediationType: 'version-changelog-sync'
+    }
   }
 };
 

@@ -1,4 +1,4 @@
-export { analyzeRepo } from './analyze/index.js';
+export { analyze, analyzeRepo } from './analyze/index.js';
 export { VERIFY_PHASE_RULES, verifyRepo } from './verify/index.js';
 export type { VerifyPhase, VerifyRepoOptions } from './verify/index.js';
 export {

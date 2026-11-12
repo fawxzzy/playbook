@@ -13,6 +13,19 @@ const writeRepoIndex = (repo: string, payload: Record<string, unknown>): void =>
 };
 
 describe('resolveRepositoryTarget', () => {
+  it.each(['protected-doc.governance', 'release.version-governance'])('resolves active governance rule %s without an index entry', (id) => {
+    const repo = createRepo('playbook-target-resolver-governance');
+    writeRepoIndex(repo, { schemaVersion: '1.0', modules: [], rules: [] });
+    expect(resolveRepositoryTarget(repo, `rule:${id.toUpperCase()}`)).toEqual({
+      input: `rule:${id.toUpperCase()}`,
+      kind: 'rule',
+      selector: id,
+      canonical: `rule:${id}`,
+      matched: true
+    });
+    expect(resolveRepositoryTarget(repo, 'rule:missing.governance').kind).toBe('unknown');
+  });
+
   it('resolves bare and explicit module targets for indexed feature modules', () => {
     const repo = createRepo('playbook-target-resolver-modules');
     writeRepoIndex(repo, {

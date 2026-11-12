@@ -703,6 +703,18 @@ describe('queryRepositoryIndex', () => {
           remediationType: 'docs-sync'
         },
         {
+          ruleId: 'protected-doc.governance',
+          area: 'governance',
+          owners: ['docs'],
+          remediationType: 'protected-doc-consolidation'
+        },
+        {
+          ruleId: 'release.version-governance',
+          area: 'release',
+          owners: ['release'],
+          remediationType: 'version-changelog-sync'
+        },
+        {
           ruleId: 'requireNotesOnChanges',
           area: 'governance',
           owners: ['governance'],

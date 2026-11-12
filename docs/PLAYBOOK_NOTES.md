@@ -1,5 +1,21 @@
 # Playbook Notes
 
+## 2026-10-16 - Governance rule explanation parity
+
+- WHAT: Explain recognizes the existing protected-doc and release-version governance rule IDs already used by verify and rules.
+- WHY: An enforced rule should resolve to its specific purpose and remediation instead of an unknown-rule response.
+- Boundary: This adds metadata only; verify execution, plugin loading, rule precedence, and command envelopes do not change.
+- Remaining PB-V05: The verify/rules/explain plugin registries still need separate loader parity work.
+
+## 2026-10-16 - Analyze engine command boundary
+
+- WHAT: CLI analyze calls engine; core and engine share one pure report and marker policy.
+- WHY: Prevent recommendation drift while preserving synchronous core compatibility and each detector surface.
+- Rule: Core compatibility must not introduce an engine dependency cycle.
+- Pattern: Keep IO and plugin orchestration in engine; preserve output and file effects with captured parity fixtures.
+- Failure Mode: Swapping a core analyzer for the filesystem/plugin analyzer silently changes detection and architecture updates.
+- Remaining PB-V05: unified verify/rules/explain plugin loader and legacy-adapter retirement.
+
 • Rule: Atlas owns contract semantics; Playbook consumes without copying.
 The Atlas KnowledgeCandidate adapter resolves the official `@atlas/contracts` `./validator` export at runtime and never embeds the Atlas schema or validator behavior.
 
