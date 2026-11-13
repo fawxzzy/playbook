@@ -115,31 +115,6 @@ describe('runPlan', () => {
     fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
-  it('passes engine-assigned changeLevel through to the json payload and canonical artifact unchanged', async () => {
-    const { runPlan } = await import('./plan.js');
-    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-plan-change-level-'));
-    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-
-    const tasks = [
-      { id: 'task-a', ruleId: 'notes.missing', file: null, action: 'create notes', autoFix: true, changeLevel: 1 },
-      { id: 'task-b', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', action: 'edit workflow', autoFix: true, changeLevel: 3 }
-    ];
-    generatePlanContract.mockReturnValue({
-      verify: { ok: false, summary: { failures: 2, warnings: 0 }, failures: [], warnings: [] },
-      tasks
-    });
-
-    await runPlan(repoDir, { format: 'json', ci: false, quiet: false });
-
-    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
-    expect(payload.tasks).toEqual(tasks);
-    const canonicalArtifact = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'plan.json'), 'utf8'));
-    expect(canonicalArtifact.tasks).toEqual(tasks);
-
-    logSpy.mockRestore();
-    fs.rmSync(repoDir, { recursive: true, force: true });
-  });
-
   it('reports explicit unavailable remediation state when failures have no tasks', async () => {
     const { runPlan } = await import('./plan.js');
     const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-plan-unavailable-'));

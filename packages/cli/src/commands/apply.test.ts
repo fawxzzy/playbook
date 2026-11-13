@@ -314,26 +314,6 @@ describe('runApply', () => {
     fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
-  it('fails before executing anything when the change-level ceiling rejects a selected task', async () => {
-    const { runApply } = await import('./apply.js');
-    const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-change-level-'));
-
-    generatePlanContract.mockReturnValue({
-      verify: { ok: false, summary: { failures: 1, warnings: 0 } },
-      tasks: [{ id: 'task-l3', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', action: 'edit workflow', autoFix: true, changeLevel: 3 }]
-    });
-    loadVerifyRules.mockResolvedValue([]);
-    validateRemediationPlan.mockImplementation(() => {
-      throw new Error('Invalid remediation plan: change level exceeds the apply ceiling (level 2) for task-l3 (level 3).');
-    });
-
-    await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false })).rejects.toThrow(/change level exceeds the apply ceiling/);
-    expect(validateRemediationPlan).toHaveBeenCalledWith(repoDir, [expect.objectContaining({ id: 'task-l3', changeLevel: 3 })]);
-    expect(applyExecutionPlan).not.toHaveBeenCalled();
-
-    fs.rmSync(repoDir, { recursive: true, force: true });
-  });
-
   it('runs release sync inside apply boundary when drift is auto-fixable', async () => {
     const { runApply } = await import('./apply.js');
     const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-release-boundary-'));

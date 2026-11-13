@@ -1,17 +1,20 @@
 {
   "id": "change.level",
-  "description": "Plan tasks carry a trust-model change level, and apply refuses to execute auto-fix tasks above the default ceiling (Level 2) so Level 3 stays advisory-only.",
+  "description": "Plan tasks carry a trust-model change level, and apply refuses to execute auto-fix tasks above the default ceiling (Level 2) so Level 3 stays advisory-only. The ceiling gates the file a task declares; it does not constrain which files a plugin handler writes.",
   "enforcedBy": "validateRemediationPlan",
   "expectedBehavior": [
-    "generatePlanContract labels every plan task with changeLevel 1, 2, or 3 derived deterministically from ruleId and file.",
+    "generatePlanContract labels every plan task with changeLevel 1, 2, or 3 derived deterministically from ruleId and the canonical repo-relative file path.",
+    "Classification runs on the canonical path: dot segments resolved, backslashes normalized, absolute in-repo paths made repo-relative, trailing dots and spaces stripped per segment, lowercased. Paths that escape the repository are Level 3.",
     "A plan artifact may raise a task's declared changeLevel but can never lower it below the level Playbook classifies from the task itself.",
     "parsePlanArtifact rejects a declared changeLevel that is not 1, 2, or 3.",
-    "validateRemediationPlan and FixExecutor.apply reject any auto-fix task above Level 2 before any handler runs, including plugin handlers.",
+    "A rule id outside the reviewed built-in table, and any rule id served by a plugin-registered handler, is never below Level 2.",
+    "validateRemediationPlan and FixExecutor.apply reject any auto-fix task above Level 2 before any handler runs.",
     "Non-auto-fix tasks are skipped by apply and are not gated by the ceiling."
   ],
   "failureModes": [
     "levelThreeAutoApplied",
     "declaredLevelUnderstatesRisk",
-    "pluginHandlerBypassesCeiling"
+    "obfuscatedPathSpellingDodgesLevelThree",
+    "pluginHandlerWritesOutsideDeclaredFile"
   ]
 }

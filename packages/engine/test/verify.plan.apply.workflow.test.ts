@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -78,6 +79,82 @@ describe('verify -> plan -> apply -> verify workflow', () => {
 
     expect(handlerRan).toBe(false);
     expect(fs.existsSync(path.join(root, '.github', 'workflows', 'ci.yml'))).toBe(false);
+  });
+
+  it.each([
+    'docs/../.github/workflows/ci.yml',
+    './/.github/workflows/ci.yml',
+    '.github./workflows/ci.yml',
+    '.GITHUB/workflows/ci.yml'
+  ])('rejects a docs-consolidation managed write aimed at %s before the handler mutates it', async (spelling) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-workflow-level3-docs-exploit-'));
+    const workflow = path.join(root, '.github', 'workflows', 'ci.yml');
+    fs.mkdirSync(path.dirname(workflow), { recursive: true });
+    const original = 'name: ci\n';
+    fs.writeFileSync(workflow, original);
+
+    // Every precondition matches, so without the Level 3 ceiling the built-in handler would append the block.
+    const task = {
+      id: 'task-docs-exploit',
+      ruleId: 'docs-consolidation.managed-write',
+      file: spelling,
+      action: 'append managed block',
+      autoFix: true,
+      write: {
+        operation: 'append-managed-block' as const,
+        blockId: 'exploit',
+        startMarker: '# <!-- START -->',
+        endMarker: '# <!-- END -->',
+        content: '# <!-- START -->\n# injected\n# <!-- END -->'
+      },
+      preconditions: {
+        target_path: spelling,
+        target_file_fingerprint: createHash('sha256').update(original, 'utf8').digest('hex'),
+        approved_fragment_ids: [],
+        planned_operation: 'append-managed-block' as const
+      }
+    };
+
+    await expect(applyExecutionPlan(root, [task], { dryRun: false })).rejects.toThrow(/change level exceeds the apply ceiling/);
+    expect(fs.readFileSync(workflow, 'utf8')).toBe(original);
+  });
+
+  it('applies the same docs-consolidation managed write to an ordinary docs path (control for the Level 3 test)', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-workflow-level1-docs-control-'));
+    const target = path.join(root, 'docs', 'a.md');
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    const original = '# A\n';
+    fs.writeFileSync(target, original);
+
+    const result = await applyExecutionPlan(
+      root,
+      [
+        {
+          id: 'task-docs-control',
+          ruleId: 'docs-consolidation.managed-write',
+          file: 'docs/../docs/a.md',
+          action: 'append managed block',
+          autoFix: true,
+          write: {
+            operation: 'append-managed-block',
+            blockId: 'control',
+            startMarker: '<!-- START -->',
+            endMarker: '<!-- END -->',
+            content: '<!-- START -->\ncontrolled\n<!-- END -->'
+          },
+          preconditions: {
+            target_path: 'docs/../docs/a.md',
+            target_file_fingerprint: createHash('sha256').update(original, 'utf8').digest('hex'),
+            approved_fragment_ids: [],
+            planned_operation: 'append-managed-block'
+          }
+        }
+      ],
+      { dryRun: false }
+    );
+
+    expect(result.summary.applied).toBe(1);
+    expect(fs.readFileSync(target, 'utf8')).toContain('controlled');
   });
 
   it('does not let a plan artifact lower a task below its classified level', () => {

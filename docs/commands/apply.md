@@ -26,7 +26,7 @@ Contract rules:
 - `not_needed` does not guarantee that the paired plan artifact has zero tasks. Plans may still include advisory or hygiene tasks that are not required to resolve verify failures.
 
 - Executes only tasks with `autoFix: true`.
-- Rejects the entire selection, before any handler runs, when any `autoFix` task resolves above change Level 2. A task's level is the higher of its declared `changeLevel` (if any) and the level Playbook classifies from `ruleId` and `file`, so a plan artifact cannot lower it. Level 3 (security-sensitive: `.github/`, `.git/`, `.husky/`, `.env*`, `.npmrc`, `secrets/`) is advisory-only; there is no override flag yet (`TM-GAP-01`). See `docs/architecture/REMEDIATION_TRUST_MODEL.md`.
+- Rejects the entire selection, before any handler runs, when any `autoFix` task resolves above change Level 2. A task's level is the highest of its declared `changeLevel` (if any), the level Playbook classifies from `ruleId` and the canonical repo-relative `file` (`.`/`..`, `.//`, absolute-in-repo, trailing-dot and case variants are normalized first), and Level 2 for any rule id served by a plugin handler or outside the built-in table. A plan artifact therefore cannot lower it. Level 3 (security-sensitive: `.github/`, `.git/`, `.husky/`, `.env*` including `.env.example`, `.npmrc`, `secrets/`) is advisory-only; there is no override flag yet (`TM-GAP-01`). The ceiling gates the file a task declares, not what a plugin handler writes (`TM-GAP-11`). See `docs/architecture/REMEDIATION_TRUST_MODEL.md`.
 - Fails when a task declares `changeLevel` other than `1`, `2`, or `3`.
 - Marks non-auto-fix tasks as `skipped`.
 - Marks missing handlers as `unsupported`.

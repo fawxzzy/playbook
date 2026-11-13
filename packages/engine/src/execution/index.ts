@@ -110,7 +110,7 @@ export const generatePlanContract = (repoRoot: string): PlanContract => {
       warnings: verify.warnings
     },
     // Change-level labels are attached after the memory event so event fingerprints stay unchanged.
-    tasks: tasks.map((task) => ({ ...task, changeLevel: resolveTaskChangeLevel(task) }))
+    tasks: tasks.map((task) => ({ ...task, changeLevel: resolveTaskChangeLevel(task, { repoRoot }) }))
   };
 };
 

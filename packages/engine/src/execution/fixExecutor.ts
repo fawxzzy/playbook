@@ -113,6 +113,11 @@ const summarize = (results: ApplyTaskResult[]): ApplySummary => ({
 export class HandlerResolver {
   constructor(private readonly registry: HandlerRegistry) {}
 
+  /** Rule ids whose handler is plugin-registered; a plugin handler overrides the built-in one. */
+  pluginRuleIds(): Set<string> {
+    return new Set(Object.entries(this.registry.plugin ?? {}).filter(([, handler]) => Boolean(handler)).map(([ruleId]) => ruleId));
+  }
+
   resolve(task: PlanTask): ResolvedHandler | null {
     const pluginHandler = this.registry.plugin?.[task.ruleId];
     if (pluginHandler) {
@@ -141,7 +146,7 @@ export class FixExecutor {
 
   async apply(tasks: PlanTask[], options: { repoRoot: string; dryRun: boolean }): Promise<FixExecutionResult> {
     const results: ApplyTaskResult[] = [];
-    validateRemediationPlan(options.repoRoot, tasks);
+    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds: this.resolver.pluginRuleIds() });
 
     for (const task of tasks) {
       if (!task.autoFix) {

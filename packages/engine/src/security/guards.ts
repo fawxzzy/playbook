@@ -68,7 +68,7 @@ const validateTaskShape = (task: PlanTask, repoRoot: string): void => {
 export const validateRemediationPlan = (
   repoRoot: string,
   tasks: PlanTask[],
-  options: { maxChangeLevel?: ChangeLevel } = {}
+  options: { maxChangeLevel?: ChangeLevel; pluginRuleIds?: ReadonlySet<string> } = {}
 ): void => {
   if (tasks.length > MAX_PLAN_TASKS) {
     throw new Error(`Invalid remediation plan: task count ${tasks.length} exceeds policy limit ${MAX_PLAN_TASKS}.`);
@@ -83,7 +83,11 @@ export const validateRemediationPlan = (
     validateTaskShape(task, repoRoot);
   }
 
-  enforceChangeLevelCeiling(tasks, options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL);
+  // Classify the repo-relative resolved path (not the raw task string) so `..`, `.//`, absolute and trailing-dot forms cannot dodge Level 3.
+  enforceChangeLevelCeiling(tasks, options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL, {
+    repoRoot,
+    pluginRuleIds: options.pluginRuleIds
+  });
 };
 
 export const redactSecretsForLogs = (message: string): string => {
