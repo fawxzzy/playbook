@@ -42,6 +42,10 @@ Show highest-ranked patterns by the latest attractor score (`--limit <n>` option
 
 Apply explicit local promotion decisions for compacted pattern candidates.
 
+- `approve` writes the pattern to `.playbook/patterns-promoted.json`; `reject` promotes nothing. Both remove the candidate from `.playbook/pattern-review-queue.json`.
+- Both outcomes are appended to the decision log `.playbook/pattern-review-decisions.json` (decision, candidate id, `decidedAt`, `decidedBy`, rationale, `sourcePatternId`, `evidenceFingerprint`). The log is append-only and not a registered schema.
+- A rejected candidate does not reappear in `playbook query pattern-review` after the next `verify` unless its evidence (examples or recurrence count) changes.
+
 Status: supported **legacy review surface**. Prefer [`patterns proposals promote`](promote.md) for new cross-repo promotion doctrine because it makes the source proposal, target scope, and destination artifact explicit.
 
 

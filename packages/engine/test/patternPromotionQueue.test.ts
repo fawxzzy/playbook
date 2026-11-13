@@ -6,6 +6,8 @@ import {
   buildDoctrineCandidatesArtifact,
   buildPatternReviewQueue,
   PATTERN_CONVERGENCE_RELATIVE_PATH,
+  PATTERN_REVIEW_DECISIONS_RELATIVE_PATH,
+  readPatternReviewDecisions,
   queryPatternReviewQueue,
   queryPromotedPatterns,
   promotePatternCandidate,
@@ -91,6 +93,75 @@ describe('pattern promotion queue', () => {
     const promoted = queryPromotedPatterns(repo);
     expect(promoted.promotedPatterns).toHaveLength(1);
     expect(promoted.promotedPatterns[0].id).toBe('MODULE_TEST_ABSENCE');
+  });
+
+  it('records rejections durably, keeps them out of the rebuilt queue, and re-queues on changed evidence', () => {
+    const repo = createRepo('playbook-pattern-reject');
+    const compacted = (occurrences: number): PatternCompactionArtifact => ({
+      schemaVersion: '1.0',
+      command: 'pattern-compaction',
+      patterns: [{ id: 'MODULE_TEST_ABSENCE', bucket: 'testing', occurrences, examples: ['module lacks tests'] }]
+    });
+
+    const queue = buildPatternReviewQueue(compacted(3), '2026-01-01T00:00:00.000Z', { repoRoot: repo });
+    expect(queue.candidates).toHaveLength(1);
+    writePatternReviewQueue(repo, queue);
+
+    const record = promotePatternCandidate(repo, {
+      id: 'candidate-module_test_absence',
+      decision: 'reject',
+      rationale: 'Too noisy.',
+      decidedAt: '2026-01-02T00:00:00.000Z'
+    });
+    expect(record.decision.decision).toBe('reject');
+    expect(queryPatternReviewQueue(repo).candidates).toHaveLength(0);
+    expect(queryPromotedPatterns(repo).promotedPatterns).toHaveLength(0);
+
+    const log = JSON.parse(fs.readFileSync(path.join(repo, PATTERN_REVIEW_DECISIONS_RELATIVE_PATH), 'utf8'));
+    expect(log).toMatchObject({ schemaVersion: '1.0', kind: 'playbook-pattern-review-decisions' });
+    expect(log.decisions).toHaveLength(1);
+    expect(log.decisions[0]).toMatchObject({
+      candidateId: 'candidate-module_test_absence',
+      sourcePatternId: 'MODULE_TEST_ABSENCE',
+      decision: { decision: 'reject', decidedBy: 'human-reviewed-local', decidedAt: '2026-01-02T00:00:00.000Z', rationale: 'Too noisy.' }
+    });
+    expect(log.decisions[0].evidenceFingerprint).toMatch(/^[0-9a-f]{64}$/);
+
+    // Same evidence: rejected candidate stays out of a rebuilt queue.
+    expect(buildPatternReviewQueue(compacted(3), '2026-01-03T00:00:00.000Z', { repoRoot: repo }).candidates).toHaveLength(0);
+    // Changed evidence (higher recurrence): candidate returns for review.
+    expect(buildPatternReviewQueue(compacted(4), '2026-01-03T00:00:00.000Z', { repoRoot: repo }).candidates).toHaveLength(1);
+  });
+
+  it('appends every decision in recorded order and stops suppressing after a later approval', () => {
+    const repo = createRepo('playbook-pattern-decision-log');
+    const compacted: PatternCompactionArtifact = {
+      schemaVersion: '1.0',
+      command: 'pattern-compaction',
+      patterns: [{ id: 'MODULE_TEST_ABSENCE', bucket: 'testing', occurrences: 3, examples: ['module lacks tests'] }]
+    };
+
+    for (const [decision, decidedAt] of [
+      ['reject', '2026-01-02T00:00:00.000Z'],
+      ['approve', '2026-01-03T00:00:00.000Z']
+    ] as const) {
+      writePatternReviewQueue(repo, {
+        schemaVersion: '1.0',
+        kind: 'playbook-pattern-review-queue',
+        generatedAt: '2026-01-01T00:00:00.000Z',
+        candidates: buildPatternReviewQueue(compacted, '2026-01-01T00:00:00.000Z').candidates
+      });
+      promotePatternCandidate(repo, { id: 'candidate-module_test_absence', decision, decidedAt });
+    }
+
+    const decisions = readPatternReviewDecisions(repo).decisions;
+    expect(decisions.map((entry) => entry.decision.decision)).toEqual(['reject', 'approve']);
+    expect(decisions.map((entry) => entry.decision.decidedAt)).toEqual(['2026-01-02T00:00:00.000Z', '2026-01-03T00:00:00.000Z']);
+    expect(buildPatternReviewQueue(compacted, '2026-01-04T00:00:00.000Z', { repoRoot: repo }).candidates).toHaveLength(1);
+  });
+
+  it('returns an empty decision log when none has been recorded', () => {
+    expect(readPatternReviewDecisions(createRepo('playbook-pattern-no-decisions')).decisions).toEqual([]);
   });
 
   it('builds doctrine candidates artifact from strong review candidates only', () => {

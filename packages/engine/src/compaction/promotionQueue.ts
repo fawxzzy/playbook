@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { PatternCompactionArtifact } from './compactPatterns.js';
@@ -77,6 +78,7 @@ type PromotedPattern = {
 
 const REVIEW_QUEUE_RELATIVE_PATH = '.playbook/pattern-review-queue.json' as const;
 const PROMOTED_PATTERNS_RELATIVE_PATH = '.playbook/patterns-promoted.json' as const;
+const REVIEW_DECISIONS_RELATIVE_PATH = '.playbook/pattern-review-decisions.json' as const;
 const DOCTRINE_CANDIDATES_RELATIVE_PATH = '.playbook/doctrine-candidates.json' as const;
 const MIN_RECURRENCE_FOR_REVIEW = 2;
 const MIN_SCORE_FOR_REVIEW = 0.55;
@@ -91,6 +93,18 @@ export type PatternReviewQueueArtifact = {
   kind: 'playbook-pattern-review-queue';
   generatedAt: string;
   candidates: CandidatePattern[];
+};
+
+export type PatternReviewDecisionEntry = PromotionReviewRecord & {
+  sourcePatternId: string;
+  evidenceFingerprint: string;
+};
+
+// Append-only decision log. Intentionally not a registered contract schema; entries are kept in recorded order.
+export type PatternReviewDecisionsArtifact = {
+  schemaVersion: '1.0';
+  kind: 'playbook-pattern-review-decisions';
+  decisions: PatternReviewDecisionEntry[];
 };
 
 export type PromotedPatternsArtifact = {
@@ -219,6 +233,37 @@ const buildConvergencePrioritySuggestion = (patternId: string, promotionScore: n
   };
 };
 
+const toEvidenceFingerprint = (candidate: { examples: string[]; recurrenceCount: number }): string =>
+  createHash('sha256')
+    .update(JSON.stringify({ examples: [...candidate.examples].sort(), recurrenceCount: candidate.recurrenceCount }))
+    .digest('hex');
+
+export const readPatternReviewDecisions = (repoRoot: string): PatternReviewDecisionsArtifact =>
+  readJsonIfExists<PatternReviewDecisionsArtifact>(path.join(repoRoot, REVIEW_DECISIONS_RELATIVE_PATH)) ?? {
+    schemaVersion: '1.0',
+    kind: 'playbook-pattern-review-decisions',
+    decisions: []
+  };
+
+const appendPatternReviewDecision = (repoRoot: string, entry: PatternReviewDecisionEntry): void => {
+  const existing = readPatternReviewDecisions(repoRoot);
+  const outputPath = path.join(repoRoot, REVIEW_DECISIONS_RELATIVE_PATH);
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, `${JSON.stringify({ ...existing, decisions: [...existing.decisions, entry] }, null, 2)}
+`, 'utf8');
+};
+
+// A candidate stays suppressed only while its latest recorded decision is a rejection made against identical evidence.
+const buildRejectedFingerprintIndex = (repoRoot?: string): Map<string, string> => {
+  const rejected = new Map<string, string>();
+  if (!repoRoot) return rejected;
+  for (const entry of readPatternReviewDecisions(repoRoot).decisions) {
+    if (entry.decision.decision === 'reject') rejected.set(entry.candidateId, entry.evidenceFingerprint);
+    else rejected.delete(entry.candidateId);
+  }
+  return rejected;
+};
+
 export const buildPatternReviewQueue = (
   patternsArtifact: PatternCompactionArtifact,
   generatedAt?: string,
@@ -226,6 +271,7 @@ export const buildPatternReviewQueue = (
 ): PatternReviewQueueArtifact => {
   const convergenceArtifact = readConvergenceArtifactIfPresent(options?.repoRoot);
   const convergenceClusters = convergenceArtifact?.clusters ?? [];
+  const rejectedFingerprints = buildRejectedFingerprintIndex(options?.repoRoot);
   const candidates = patternsArtifact.patterns
     .map((pattern): CandidatePattern | null => {
       const score = scorePatternCandidate(pattern);
@@ -253,6 +299,7 @@ export const buildPatternReviewQueue = (
       };
     })
     .filter((entry): entry is CandidatePattern => entry !== null)
+    .filter((entry) => rejectedFingerprints.get(entry.id) !== toEvidenceFingerprint(entry))
     .sort(
       (left, right) =>
         right.convergencePrioritySuggestion.weightedScore - left.convergencePrioritySuggestion.weightedScore ||
@@ -378,6 +425,12 @@ export const promotePatternCandidate = (
     decision
   };
 
+  appendPatternReviewDecision(repoRoot, {
+    ...reviewRecord,
+    sourcePatternId: candidate.sourcePatternId,
+    evidenceFingerprint: toEvidenceFingerprint(candidate)
+  });
+
   const remaining = queue.candidates.filter((entry) => entry.id !== input.id);
   writePatternReviewQueue(repoRoot, { ...queue, candidates: remaining });
 
@@ -412,5 +465,6 @@ export const promotePatternCandidate = (
 };
 
 export const PATTERN_REVIEW_QUEUE_RELATIVE_PATH = REVIEW_QUEUE_RELATIVE_PATH;
+export const PATTERN_REVIEW_DECISIONS_RELATIVE_PATH = REVIEW_DECISIONS_RELATIVE_PATH;
 export const PROMOTED_PATTERNS_ARTIFACT_RELATIVE_PATH = PROMOTED_PATTERNS_RELATIVE_PATH;
 export const DOCTRINE_CANDIDATES_ARTIFACT_RELATIVE_PATH = DOCTRINE_CANDIDATES_RELATIVE_PATH;
