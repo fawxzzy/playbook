@@ -73,7 +73,13 @@ test('multi-repo control-plane read interface slices agree across doc, engine, s
   const observerSlices = [...routeBlock.matchAll(/requestedSlice === "([a-z-]+)"/g)].map((match) => match[1]);
 
   const sorted = (values) => [...values].sort();
-  assert.deepEqual(sorted(engineSlices), sorted(docSlices), 'doc slice list must equal the engine MultiRepoReadInterfaceSlice type');
+  const declaredNotServed = doc.match(/Declared but not served:[^\n]*?additionally lists `([a-z-]+)`/)?.[1] ?? '';
+  assert.deepEqual(
+    sorted(engineSlices),
+    sorted(declaredNotServed ? [...docSlices, declaredNotServed] : docSlices),
+    'engine MultiRepoReadInterfaceSlice type must equal the served doc slices plus the documented declared-but-not-served slice'
+  );
+  assert.ok(!docSlices.includes(declaredNotServed), 'a declared-but-not-served slice must not also be listed as served');
   assert.deepEqual(sorted(querySlices), sorted(docSlices), 'doc query parameter list must equal the doc slice list');
   assert.deepEqual(sorted(schemaSlices), sorted(docSlices), 'schema request.slice enum must equal the doc slice list');
   assert.deepEqual(sorted(observerSlices), sorted(docSlices), 'observer endpoint must accept exactly the documented slices');

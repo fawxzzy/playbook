@@ -14,7 +14,7 @@ This slice is additive and does not alter engine authority boundaries.
 
 ## Scope for this first slice (read-only)
 
-The first governed interface slice is limited to read surfaces. The Observer API serves exactly these five `slice` values (the `MultiRepoReadInterfaceSlice` type in `packages/engine/src/controlPlane/multiRepoControlPlaneReadInterface.ts` and the `request.slice` enum in the schema list the same five):
+The first governed interface slice is limited to read surfaces. The Observer API serves exactly these five `slice` values (the `request.slice` enum in the schema lists the same five):
 
 1. `readiness-proof` - readiness / proof
 2. `run-state-inspection` - run-state inspection
@@ -22,7 +22,9 @@ The first governed interface slice is limited to read surfaces. The Observer API
 4. `cross-repo-pattern-comparison` - cross-repo pattern comparison / portability / proposals
 5. `workspace-tenant-governance` - read-only workspace/tenant governance summary (added after the original four; see `docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE.md`)
 
-Slices 1-4 were the original first slice; slice 5 was added later and is part of the same read-only interface. No other slice name is served. In particular, there is no `maintenance-plan-summary` slice: an earlier engine type listed it, but no code, schema, or endpoint referenced it, so it was removed from the type.
+Slices 1-4 were the original first slice; slice 5 was added later and is part of the same read-only interface. No other slice name is served.
+
+Declared but not served: the `MultiRepoReadInterfaceSlice` type in `packages/engine/src/controlPlane/multiRepoControlPlaneReadInterface.ts` additionally lists `maintenance-plan-summary`. No endpoint, schema enum entry, or other code references it, so requesting it falls back to `readiness-proof`. Treat it as an unimplemented placeholder; it is left in the type only because editing engine source forces a release version bump, so it should be removed or implemented in a change that already ships a release.
 
 No mutation endpoint is introduced in this slice.
 
