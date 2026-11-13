@@ -534,9 +534,9 @@ const commandRunners = {
             outFile: parseOptionValue(commandArgs, "--out"),
         });
     },
-    graph: async ({ cwd, format, quiet }) => {
+    graph: async ({ cwd, commandArgs, format, quiet }) => {
         const { runGraph } = await import("./graph.js");
-        return runGraph(cwd, { format, quiet });
+        return runGraph(cwd, { format, quiet, args: commandArgs });
     },
     ask: async ({ cwd, commandArgs, format, quiet }) => {
         const { runAsk } = await import("./ask.js");
