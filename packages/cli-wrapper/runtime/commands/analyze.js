@@ -1,5 +1,4 @@
-import { analyze, formatAnalyzeCi, formatAnalyzeHuman } from '@zachariahredfield/playbook-core';
-import { generateRepositoryIndex } from '@zachariahredfield/playbook-engine';
+import { analyze, formatAnalyzeCi, formatAnalyzeHuman, generateRepositoryIndex } from '@zachariahredfield/playbook-engine';
 import { createNodeContext } from '@zachariahredfield/playbook-node';
 import fs from 'node:fs';
 import path from 'node:path';

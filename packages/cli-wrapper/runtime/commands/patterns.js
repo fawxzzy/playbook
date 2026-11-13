@@ -10,6 +10,7 @@ import { runPatternsCandidates } from './patterns/candidates/index.js';
 import { runPatternsProposals } from './patterns/proposals.js';
 import { runPatternsConvergence } from './patterns/convergence.js';
 import { runPatternsCsia } from './patterns/csia.js';
+import { runPatternsVerta } from './patterns/verta.js';
 const readOptionValue = (args, flag) => {
     const index = args.indexOf(flag);
     return index >= 0 ? args[index + 1] : undefined;
@@ -24,7 +25,7 @@ const emitError = (cwd, options, message) => {
     return ExitCode.Failure;
 };
 const printHelp = () => {
-    console.log('playbook patterns subcommands: list | show <id> | related <id> | layers | score | top [--limit <n>] | outcomes <patternId> | doctrine-candidates | candidates [show <id>|unmatched|link|cross-repo|generalized|portability] | anti-patterns | proposals | convergence [--intent <value>] [--constraint <value>] [--resolution <value>] [--min-confidence <n>] | transfer export --pattern <id> --target-repo <repo-id> [--risk-class <level>] [--sanitization-status <status>] | transfer import --file <path> --repo <repo-id> [--repo-tag <tag>] | cross-repo [--repo <path-or-slug>] | portability | generalized | repo-delta --left <repoId> --right <repoId> | promote --id <pattern-id> --decision approve|reject | csia [--from <path>] [--regime <id>] [--primitive compute|simulate|interpret|adapt]');
+    console.log('playbook patterns subcommands: list | show <id> | related <id> | layers | score | top [--limit <n>] | outcomes <patternId> | doctrine-candidates | candidates [show <id>|unmatched|link|cross-repo|generalized|portability] | anti-patterns | proposals | convergence [--intent <value>] [--constraint <value>] [--resolution <value>] [--min-confidence <n>] | transfer export --pattern <id> --target-repo <repo-id> [--risk-class <level>] [--sanitization-status <status>] | transfer import --file <path> --repo <repo-id> [--repo-tag <tag>] | cross-repo [--repo <path-or-slug>] | portability | generalized | repo-delta --left <repoId> --right <repoId> | promote --id <pattern-id> --decision approve|reject | csia [--from <path>] [--regime <id>] [--primitive compute|simulate|interpret|adapt] | verta [gate --file <candidate-record.json>]');
 };
 const runScore = (cwd, options) => {
     const graph = readContractPatternGraph(cwd);
@@ -130,7 +131,7 @@ export const runPatterns = async (cwd, commandArgs, options) => {
                     payload: {
                         schemaVersion: '1.0',
                         command: 'patterns',
-                        subcommands: ['list', 'show', 'related', 'layers', 'score', 'top', 'outcomes', 'doctrine-candidates', 'candidates', 'anti-patterns', 'proposals', 'convergence', 'transfer', 'cross-repo', 'portability', 'generalized', 'repo-delta', 'promote', 'csia']
+                        subcommands: ['list', 'show', 'related', 'layers', 'score', 'top', 'outcomes', 'doctrine-candidates', 'candidates', 'anti-patterns', 'proposals', 'convergence', 'transfer', 'cross-repo', 'portability', 'generalized', 'repo-delta', 'promote', 'csia', 'verta']
                     },
                     outFile: options.outFile
                 });
@@ -184,6 +185,9 @@ export const runPatterns = async (cwd, commandArgs, options) => {
         }
         if (subcommand === 'csia') {
             return runPatternsCsia(cwd, commandArgs, options);
+        }
+        if (subcommand === 'verta') {
+            return runPatternsVerta(cwd, commandArgs.slice(1), options);
         }
         const graph = readPatternKnowledgeGraph(cwd);
         if (subcommand === 'list') {
@@ -259,7 +263,7 @@ export const runPatterns = async (cwd, commandArgs, options) => {
             }
             return ExitCode.Success;
         }
-        return emitError(cwd, options, 'playbook patterns: unsupported subcommand. Use list, show <id>, related <id>, layers, score, top [--limit <n>], outcomes <patternId>, doctrine-candidates, candidates [show <id>|unmatched|link|cross-repo|generalized|portability], anti-patterns, proposals, convergence [--intent <value>] [--constraint <value>] [--resolution <value>] [--min-confidence <n>], transfer export|import, cross-repo [--repo <path-or-slug>], portability, generalized, repo-delta --left <repoId> --right <repoId>, promote --id <pattern-id> --decision approve|reject, or csia [--from <path>] [--regime <id>] [--primitive compute|simulate|interpret|adapt].');
+        return emitError(cwd, options, 'playbook patterns: unsupported subcommand. Use list, show <id>, related <id>, layers, score, top [--limit <n>], outcomes <patternId>, doctrine-candidates, candidates [show <id>|unmatched|link|cross-repo|generalized|portability], anti-patterns, proposals, convergence [--intent <value>] [--constraint <value>] [--resolution <value>] [--min-confidence <n>], transfer export|import, cross-repo [--repo <path-or-slug>], portability, generalized, repo-delta --left <repoId> --right <repoId>, promote --id <pattern-id> --decision approve|reject, csia [--from <path>] [--regime <id>] [--primitive compute|simulate|interpret|adapt], or verta [gate --file <candidate-record.json>].');
     }
     catch (error) {
         const message = error instanceof Error ? error.message : String(error);
