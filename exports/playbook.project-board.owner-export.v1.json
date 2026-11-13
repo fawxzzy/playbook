@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_ad3dd784e1ba",
+  "export_id": "pbe_playbook_roadmap_7f13c4afcfbe",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:ad3dd784e1ba91e9cb5effd48ab765d2c61849acc67b76b6034d342ee96fb97d",
+  "source_revision": "sha256:7f13c4afcfbe8141caa3b6deda5e8a5285b83eb63666acbaab4bff4190da851d",
   "generated_at": "2026-11-13T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:ad3dd784e1ba91e9cb5effd48ab765d2c61849acc67b76b6034d342ee96fb97d",
+      "revision": "sha256:7f13c4afcfbe8141caa3b6deda5e8a5285b83eb63666acbaab4bff4190da851d",
       "observed_at": "2026-11-13T00:00:00.000Z"
     }
   ],
@@ -253,7 +253,7 @@
         "title": "Architecture intelligence graph v2",
         "description": "Evolve repository graph artifacts into a semantic architecture graph that powers explain/query/analyze-pr impact and risk reasoning.",
         "card_type": "feature",
-        "lifecycle": "planning",
+        "lifecycle": "in-progress",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -264,7 +264,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V07-ARCH-INTELLIGENCE-GRAPH-001",
         "extensions": {
-          "roadmap_status": "planned",
+          "roadmap_status": "in-progress",
           "roadmap_version": "v0.7"
         }
       },
@@ -296,8 +296,7 @@
           "repos/playbook/docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md",
           "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
           "repos/playbook/docs/contracts/repository-graph-contract.md",
-          "repos/playbook/tests/contracts/architecture-graph.contract.test.ts",
-          "repos/playbook/tests/integration/impact-analysis.integration.test.ts"
+          "repos/playbook/tests/contracts/architecture-graph.contract.test.ts"
         ]
       },
       "relationships": {
@@ -307,96 +306,15 @@
       },
       "extensions": {
         "commands": [
-          "analyze-pr",
           "explain",
           "graph",
           "index",
-          "plan",
           "query"
         ],
         "package_ownership": [
           "@fawxzzy/playbook",
           "@zachariahredfield/playbook-engine",
           "@zachariahredfield/playbook-node"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v08-arch-closure-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V08-ARCH-CLOSURE-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Architecture-closure roadmap bootstrap for memory/control-plane wave",
-        "description": "Define architecture-closure sequencing and stable feature IDs so memory and control-plane execution can proceed in parallel without roadmap conflicts.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V06-FAILURE-INTELLIGENCE-001",
-          "PB-V07-ARCH-INTELLIGENCE-GRAPH-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-ARCH-CLOSURE-001",
-        "extensions": {
-          "roadmap_status": "planned",
-          "roadmap_version": "v0.8"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-ARCH-CLOSURE-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Define architecture-closure sequencing and stable feature IDs so memory and control-plane execution can proceed in parallel without roadmap conflicts.",
-        "objective": "Define architecture-closure sequencing and stable feature IDs so memory and control-plane execution can proceed in parallel without roadmap conflicts.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook verify --json",
-          "Run: pnpm playbook plan --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook verify --json",
-          "pnpm playbook plan --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/CONTROL_PLANE_AND_AGENT_RUNTIME_V1.md",
-          "repos/playbook/docs/architecture/OUTCOME_LEARNING_AND_POLICY_IMPROVEMENT_V1.md",
-          "repos/playbook/docs/architecture/REPLAY_CONSOLIDATION_AND_PROMOTION_V1.md",
-          "repos/playbook/docs/architecture/REPOSITORY_MEMORY_SYSTEM_V1.md",
-          "repos/playbook/docs/architecture/STRUCTURAL_GRAPH_AND_MEMORY_INTEGRATION_V1.md",
-          "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "analyze-pr",
-          "apply",
-          "plan",
-          "verify"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
         ]
       }
     },
@@ -424,7 +342,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-GRAPH-MEMORY-001",
         "extensions": {
-          "roadmap_status": "planned",
+          "roadmap_status": "architecture-defined",
           "roadmap_version": "v0.8"
         }
       },
@@ -455,7 +373,8 @@
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/scripts/repository-memory-doc-pins.test.mjs"
         ]
       },
       "relationships": {
@@ -478,429 +397,6 @@
         "package_ownership": [
           "@fawxzzy/playbook",
           "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v08-knowledge-bucketing-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V08-KNOWLEDGE-BUCKETING-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Knowledge compaction deterministic bucketing",
-        "description": "Deterministically compare canonicalized candidate patterns and route them into discard / attach / merge / add outcomes before human review.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001",
-          "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-KNOWLEDGE-BUCKETING-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v0.8"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-KNOWLEDGE-BUCKETING-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Deterministically compare canonicalized candidate patterns and route them into discard / attach / merge / add outcomes before human review.",
-        "objective": "Deterministically compare canonicalized candidate patterns and route them into discard / attach / merge / add outcomes before human review.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook index --json",
-          "Run: pnpm -C packages/engine test -- compaction.buckets.test.ts"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook index --json",
-          "pnpm -C packages/engine test -- compaction.buckets.test.ts"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/KNOWLEDGE_COMPACTION_PHASE.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/packages/engine/test/compaction.buckets.test.ts"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "index"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v08-knowledge-candidate-extraction-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Knowledge compaction candidate extraction",
-        "description": "Convert trusted deterministic repository evidence into canonicalized candidate patterns for future compaction, comparison, and review workflows.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v0.8"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Convert trusted deterministic repository evidence into canonicalized candidate patterns for future compaction, comparison, and review workflows.",
-        "objective": "Convert trusted deterministic repository evidence into canonicalized candidate patterns for future compaction, comparison, and review workflows.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook index --json",
-          "Run: pnpm -C packages/engine test -- compaction.candidates.test.ts"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook index --json",
-          "pnpm -C packages/engine test -- compaction.candidates.test.ts"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/KNOWLEDGE_COMPACTION_PHASE.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/packages/engine/test/compaction.candidates.test.ts"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "index"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v08-knowledge-compaction-spec-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Knowledge Compaction Phase deterministic foundations",
-        "description": "Formalize and implement internal-first deterministic compaction foundations (canonicalization, deterministic bucketing, and review explanation artifacts) without expanding broad end-user command surface.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V07-ARCH-INTELLIGENCE-GRAPH-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-KNOWLEDGE-COMPACTION-SPEC-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v0.8"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-KNOWLEDGE-COMPACTION-SPEC-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Formalize and implement internal-first deterministic compaction foundations (canonicalization, deterministic bucketing, and review explanation artifacts) without expanding broad end-user command surface.",
-        "objective": "Formalize and implement internal-first deterministic compaction foundations (canonicalization, deterministic bucketing, and review explanation artifacts) without expanding broad end-user command surface.",
-        "acceptance_criteria": [
-          "Run: pnpm -C packages/engine test -- knowledge.compaction.test.ts",
-          "Run: pnpm agents:update",
-          "Run: pnpm agents:check",
-          "Run: pnpm playbook docs audit --json",
-          "Run: node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm -C packages/engine test -- knowledge.compaction.test.ts",
-          "pnpm agents:update",
-          "pnpm agents:check",
-          "pnpm playbook docs audit --json",
-          "node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/KNOWLEDGE_COMPACTION_PHASE.md",
-          "repos/playbook/docs/commands/README.md",
-          "repos/playbook/docs/ONBOARDING_DEMO.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/packages/engine/test/knowledge.compaction.test.ts",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v08-pattern-card-storage-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V08-PATTERN-CARD-STORAGE-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Pattern card storage and review drafts",
-        "description": "Persist graph-ready reusable pattern cards from deterministic compaction outcomes while keeping promotion human-reviewed.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V08-KNOWLEDGE-BUCKETING-001",
-          "PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001",
-          "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-PATTERN-CARD-STORAGE-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v0.8"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-PATTERN-CARD-STORAGE-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Persist graph-ready reusable pattern cards from deterministic compaction outcomes while keeping promotion human-reviewed.",
-        "objective": "Persist graph-ready reusable pattern cards from deterministic compaction outcomes while keeping promotion human-reviewed.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook index --json",
-          "Run: pnpm -C packages/engine test -- compaction.patternCards.test.ts"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook index --json",
-          "pnpm -C packages/engine test -- compaction.patternCards.test.ts"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/KNOWLEDGE_COMPACTION_PHASE.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/packages/engine/test/compaction.patternCards.test.ts"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "index"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v08-toroidal-flow-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V08-TOROIDAL-FLOW-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Toroidal Flow architecture overlay and RunCycle contract",
-        "description": "Formalize Playbook as a deterministic closed-loop architecture overlay with shared RunCycle contracts while preserving current runtime behavior.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001",
-          "PB-V08-PATTERN-CARD-STORAGE-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-TOROIDAL-FLOW-001",
-        "extensions": {
-          "roadmap_status": "planned",
-          "roadmap_version": "v0.8"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V08-TOROIDAL-FLOW-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Formalize Playbook as a deterministic closed-loop architecture overlay with shared RunCycle contracts while preserving current runtime behavior.",
-        "objective": "Formalize Playbook as a deterministic closed-loop architecture overlay with shared RunCycle contracts while preserving current runtime behavior.",
-        "acceptance_criteria": [
-          "Run: pnpm -r build",
-          "Run: pnpm agents:update",
-          "Run: pnpm agents:check",
-          "Run: pnpm playbook docs audit --json",
-          "Run: node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm -r build",
-          "pnpm agents:update",
-          "pnpm agents:check",
-          "pnpm playbook docs audit --json",
-          "node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/ARCHITECTURE.md",
-          "repos/playbook/docs/architecture/KNOWLEDGE_COMPACTION_PHASE.md",
-          "repos/playbook/docs/architecture/TOROIDAL_FLOW.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-core",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v09-automation-synthesis-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-AUTOMATION-SYNTHESIS-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Automation synthesis governed knowledge-consumption contract shell (Phase 15 thin slice)",
-        "description": "Define the Phase 15 architecture/contract shell for governed automation synthesis: Phase 15 consumes promoted, inspectable, provenance-linked knowledge only, remains suggestion-generation only, and attaches policy/provenance/rollback accountability hooks without autonomous mutation/deployment behavior.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V06-FAILURE-INTELLIGENCE-001",
-          "PB-V09-KNOWLEDGE-QUERY-INSPECTION-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-AUTOMATION-SYNTHESIS-001",
-        "extensions": {
-          "roadmap_status": "planned",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-AUTOMATION-SYNTHESIS-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Define the Phase 15 architecture/contract shell for governed automation synthesis: Phase 15 consumes promoted, inspectable, provenance-linked knowledge only, remains suggestion-generation only, and attaches policy/provenance/rollback accountability hooks without autonomous mutation/deployment behavior.",
-        "objective": "Define the Phase 15 architecture/contract shell for governed automation synthesis: Phase 15 consumes promoted, inspectable, provenance-linked knowledge only, remains suggestion-generation only, and attaches policy/provenance/rollback accountability hooks without autonomous mutation/deployment behavior.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook docs audit --json",
-          "Run: node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook docs audit --json",
-          "node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md",
-          "repos/playbook/docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md",
-          "repos/playbook/docs/AUTOMATION_SYNTHESIS_VISION.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/README.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine",
-          "@zachariahredfield/playbook-node"
         ]
       }
     },
@@ -1056,79 +552,6 @@
       }
     },
     {
-      "idempotency_key": "pbk_playbook_pb-v09-external-consumer-upgrade-boundary-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-EXTERNAL-CONSUMER-UPGRADE-BOUNDARY-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "External consumer managed-vs-local upgrade boundary hardening",
-        "description": "Define managed-vs-local repository boundaries for external consumer repos so future upgrade flows can evolve Playbook-owned surfaces without overwriting repo-local product intent.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-EXTERNAL-CONSUMER-UPGRADE-BOUNDARY-001",
-        "extensions": {
-          "roadmap_status": "planned",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-EXTERNAL-CONSUMER-UPGRADE-BOUNDARY-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Define managed-vs-local repository boundaries for external consumer repos so future upgrade flows can evolve Playbook-owned surfaces without overwriting repo-local product intent.",
-        "objective": "Define managed-vs-local repository boundaries for external consumer repos so future upgrade flows can evolve Playbook-owned surfaces without overwriting repo-local product intent.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/AGENTS.md",
-          "repos/playbook/docs/CHANGELOG.md",
-          "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "ai-contract",
-          "init",
-          "upgrade"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine",
-          "@zachariahredfield/playbook-node"
-        ]
-      }
-    },
-    {
       "idempotency_key": "pbk_playbook_pb-v09-governed-interface-api-001_v1",
       "record_kind": "project-work",
       "record_status": "active",
@@ -1140,7 +563,7 @@
         "title": "Governed interface/API surfaces for multi-repo control planes",
         "description": "Define optional, policy-aware server/API interface surfaces that coordinate many Playbook-enabled repositories over one deterministic runtime without collapsing per-repo boundaries.",
         "card_type": "feature",
-        "lifecycle": "blocked",
+        "lifecycle": "in-progress",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1151,7 +574,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-GOVERNED-INTERFACE-API-001",
         "extensions": {
-          "roadmap_status": "dependency-blocked",
+          "roadmap_status": "in-progress",
           "roadmap_version": "v0.9"
         }
       },
@@ -1173,18 +596,19 @@
           "pnpm playbook docs audit --json",
           "node scripts/validate-roadmap-contract.mjs --ci"
         ],
-        "blockers": [
-          "Blocked by roadmap dependency PB-V09-CONTROL-PLANE-001.",
-          "Blocked by roadmap dependency PB-V09-MULTI-REPO-TRANSFER-001."
-        ],
+        "blockers": [],
         "evidence": [
           "repos/playbook/docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md",
           "repos/playbook/docs/AUTOMATION_SYNTHESIS_VISION.md",
+          "repos/playbook/docs/commands/observer.md",
           "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/packages/cli/src/commands/observer.test.ts",
+          "repos/playbook/packages/engine/src/controlPlane/multiRepoControlPlaneReadInterface.test.ts",
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/contracts/roadmap/architecture-docs.test.mjs"
         ]
       },
       "relationships": {
@@ -1193,7 +617,9 @@
         "superseded_by": null
       },
       "extensions": {
-        "commands": [],
+        "commands": [
+          "observer"
+        ],
         "package_ownership": [
           "@fawxzzy/playbook",
           "@zachariahredfield/playbook-engine",
@@ -1273,94 +699,9 @@
       }
     },
     {
-      "idempotency_key": "pbk_playbook_pb-v09-knowledge-compaction-promotion-001_v1",
-      "record_kind": "project-work",
-      "record_status": "candidate",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Knowledge compaction and promotion layer",
-        "description": "Implement deterministic local pattern promotion pipeline with explicit review queue and decision-recorded approvals/rejections so compacted observations become durable knowledge only after governed promotion.",
-        "card_type": "feature",
-        "lifecycle": "intake",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V08-KNOWLEDGE-BUCKETING-001",
-          "PB-V08-PATTERN-CARD-STORAGE-001",
-          "PB-V09-KNOWLEDGE-PERSISTENCE-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001",
-        "extensions": {
-          "roadmap_status": "planned-later",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Implement deterministic local pattern promotion pipeline with explicit review queue and decision-recorded approvals/rejections so compacted observations become durable knowledge only after governed promotion.",
-        "objective": "Implement deterministic local pattern promotion pipeline with explicit review queue and decision-recorded approvals/rejections so compacted observations become durable knowledge only after governed promotion.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json",
-          "Run: pnpm playbook patterns promote --id <pattern-id> --decision approve --json",
-          "Run: pnpm playbook query pattern-review --json",
-          "Run: pnpm playbook query promoted-patterns --json",
-          "Run: pnpm playbook verify --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json",
-          "pnpm playbook patterns promote --id <pattern-id> --decision approve --json",
-          "pnpm playbook query pattern-review --json",
-          "pnpm playbook query promoted-patterns --json",
-          "pnpm playbook verify --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/ARCHITECTURE.md",
-          "repos/playbook/docs/architecture/pattern_compaction.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/README.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/packages/cli/src/commands/patterns.test.ts",
-          "repos/playbook/packages/engine/test/patternPromotionQueue.test.ts",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "patterns promote",
-          "query pattern-review",
-          "query patterns",
-          "query promoted-patterns"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
       "idempotency_key": "pbk_playbook_pb-v09-knowledge-persistence-001_v1",
       "record_kind": "project-work",
-      "record_status": "candidate",
+      "record_status": "active",
       "record": {
         "contract_version": "atlas.card-record.v2",
         "card_id": "PB-V09-KNOWLEDGE-PERSISTENCE-001",
@@ -1369,7 +710,7 @@
         "title": "Knowledge persistence layer",
         "description": "Define the post-observation persistence layer that retains deterministic evidence and knowledge artifacts with explicit lifecycle boundaries before broader platform scheduling.",
         "card_type": "feature",
-        "lifecycle": "intake",
+        "lifecycle": "planning",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1380,7 +721,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-KNOWLEDGE-PERSISTENCE-001",
         "extensions": {
-          "roadmap_status": "planned-later",
+          "roadmap_status": "architecture-defined",
           "roadmap_version": "v0.9"
         }
       },
@@ -1405,6 +746,7 @@
         "blockers": [],
         "evidence": [
           "repos/playbook/docs/ARCHITECTURE.md",
+          "repos/playbook/docs/architecture/PLAYBOOK_KNOWLEDGE_PERSISTENCE_LAYER.md",
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/README.md",
@@ -1437,7 +779,7 @@
         "title": "Metrics / ROI / Proof-of-Value Architecture",
         "description": "Define canonical value measurement architecture grounded in deterministic repository outcomes, trust, governance impact, and evidence-linked attribution across Open Core, Team, and Enterprise without cloud-required instrumentation.",
         "card_type": "feature",
-        "lifecycle": "blocked",
+        "lifecycle": "planning",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1448,7 +790,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-METRICS-ROI-PROOF-OF-VALUE-001",
         "extensions": {
-          "roadmap_status": "dependency-blocked",
+          "roadmap_status": "architecture-defined",
           "roadmap_version": "v0.9"
         }
       },
@@ -1470,10 +812,7 @@
           "pnpm playbook docs audit --json",
           "node scripts/validate-roadmap-contract.mjs --ci"
         ],
-        "blockers": [
-          "Blocked by roadmap dependency PB-V09-PACKAGING-SKU-ARCHITECTURE-001.",
-          "Blocked by roadmap dependency PB-V09-SESSION-EVIDENCE-001."
-        ],
+        "blockers": [],
         "evidence": [
           "repos/playbook/docs/architecture/PLAYBOOK_METRICS_ROI_AND_PROOF_OF_VALUE_ARCHITECTURE.md",
           "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
@@ -1481,7 +820,8 @@
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/contracts/roadmap/architecture-docs.test.mjs"
         ]
       },
       "relationships": {
@@ -1510,7 +850,7 @@
         "title": "Governed cross-repo pattern promotion and transfer",
         "description": "Promote proven, governed patterns across repositories only after local promotion and outcome evidence validate transfer readiness.",
         "card_type": "feature",
-        "lifecycle": "blocked",
+        "lifecycle": "in-progress",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1521,7 +861,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-MULTI-REPO-TRANSFER-001",
         "extensions": {
-          "roadmap_status": "dependency-blocked",
+          "roadmap_status": "in-progress",
           "roadmap_version": "v0.9"
         }
       },
@@ -1543,16 +883,18 @@
           "pnpm playbook docs audit --json",
           "node scripts/validate-roadmap-contract.mjs --ci"
         ],
-        "blockers": [
-          "Blocked by roadmap dependency PB-V09-LONGITUDINAL-STATE-001.",
-          "Blocked by roadmap dependency PB-V09-OUTCOME-FEEDBACK-LEARNING-001."
-        ],
+        "blockers": [],
         "evidence": [
           "repos/playbook/docs/architecture/PLAYBOOK_GOVERNED_CROSS_REPO_PATTERN_PROMOTION_AND_TRANSFER.md",
+          "repos/playbook/docs/commands/knowledge.md",
+          "repos/playbook/docs/commands/patterns.md",
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/README.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/packages/engine/src/learning/transferPlanning.test.ts",
+          "repos/playbook/packages/engine/src/learning/transferReadiness.test.ts",
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/contracts/roadmap/architecture-docs.test.mjs"
         ]
       },
       "relationships": {
@@ -1561,7 +903,10 @@
         "superseded_by": null
       },
       "extensions": {
-        "commands": [],
+        "commands": [
+          "knowledge",
+          "patterns"
+        ],
         "package_ownership": [
           "@fawxzzy/playbook",
           "@zachariahredfield/playbook-engine",
@@ -1581,7 +926,7 @@
         "title": "Packaging / SKU architecture (Open Core -> Team -> Enterprise)",
         "description": "Define a canonical SKU architecture where Open Core, Team, and Enterprise package coordination/governance/deployment surfaces over one deterministic runtime without introducing cloud-required or SKU-specific engine semantics.",
         "card_type": "feature",
-        "lifecycle": "blocked",
+        "lifecycle": "planning",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1591,7 +936,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-PACKAGING-SKU-ARCHITECTURE-001",
         "extensions": {
-          "roadmap_status": "dependency-blocked",
+          "roadmap_status": "architecture-defined",
           "roadmap_version": "v0.9"
         }
       },
@@ -1613,9 +958,7 @@
           "pnpm playbook docs audit --json",
           "node scripts/validate-roadmap-contract.mjs --ci"
         ],
-        "blockers": [
-          "Blocked by roadmap dependency PB-V09-WORKSPACE-TENANT-GOVERNANCE-001."
-        ],
+        "blockers": [],
         "evidence": [
           "repos/playbook/docs/architecture/PLAYBOOK_PACKAGING_AND_SKU_ARCHITECTURE_OPEN_CORE_TO_TEAM_TO_ENTERPRISE.md",
           "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
@@ -1623,7 +966,8 @@
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/contracts/roadmap/architecture-docs.test.mjs"
         ]
       },
       "relationships": {
@@ -1652,7 +996,7 @@
         "title": "Pilot / Design-Partner / Rollout Architecture",
         "description": "Define canonical staged adoption from local read-only proof through team/workspace and enterprise governance readiness so rollout is evidence-driven, trust-gated, and aligned to deterministic runtime/control-plane maturity.",
         "card_type": "feature",
-        "lifecycle": "blocked",
+        "lifecycle": "planning",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1662,7 +1006,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001",
         "extensions": {
-          "roadmap_status": "dependency-blocked",
+          "roadmap_status": "architecture-defined",
           "roadmap_version": "v0.9"
         }
       },
@@ -1684,9 +1028,7 @@
           "pnpm playbook docs audit --json",
           "node scripts/validate-roadmap-contract.mjs --ci"
         ],
-        "blockers": [
-          "Blocked by roadmap dependency PB-V09-METRICS-ROI-PROOF-OF-VALUE-001."
-        ],
+        "blockers": [],
         "evidence": [
           "repos/playbook/docs/architecture/PLAYBOOK_PILOT_DESIGN_PARTNER_AND_ROLLOUT_ARCHITECTURE.md",
           "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
@@ -1694,7 +1036,8 @@
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/contracts/roadmap/architecture-docs.test.mjs"
         ]
       },
       "relationships": {
@@ -1773,370 +1116,6 @@
       },
       "extensions": {
         "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v09-repo-memory-aware-retrieval-001_v1",
-      "record_kind": "project-work",
-      "record_status": "candidate",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-REPO-MEMORY-AWARE-RETRIEVAL-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Memory-aware retrieval composition",
-        "description": "Compose structural graph/index intelligence with episodic memory indexes and governed doctrine artifacts for deterministic memory-aware retrieval.",
-        "card_type": "feature",
-        "lifecycle": "intake",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V07-ARCH-INTELLIGENCE-GRAPH-001",
-          "PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-AWARE-RETRIEVAL-001",
-        "extensions": {
-          "roadmap_status": "planned-later",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-AWARE-RETRIEVAL-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Compose structural graph/index intelligence with episodic memory indexes and governed doctrine artifacts for deterministic memory-aware retrieval.",
-        "objective": "Compose structural graph/index intelligence with episodic memory indexes and governed doctrine artifacts for deterministic memory-aware retrieval.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/REPOSITORY_MEMORY_MODEL.md",
-          "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
-          "repos/playbook/docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "ask",
-          "explain",
-          "query"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v09-repo-memory-foundation-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-REPO-MEMORY-FOUNDATION-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Repository Memory System foundation",
-        "description": "Establish first-class repository memory architecture and contracts that separate structural intelligence from episodic memory and doctrine promotion boundaries without changing current runtime behavior.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V06-FAILURE-INTELLIGENCE-001",
-          "PB-V07-ARCH-INTELLIGENCE-GRAPH-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-FOUNDATION-001",
-        "extensions": {
-          "roadmap_status": "planned",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-FOUNDATION-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Establish first-class repository memory architecture and contracts that separate structural intelligence from episodic memory and doctrine promotion boundaries without changing current runtime behavior.",
-        "objective": "Establish first-class repository memory architecture and contracts that separate structural intelligence from episodic memory and doctrine promotion boundaries without changing current runtime behavior.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/ARCHITECTURE.md",
-          "repos/playbook/docs/architecture/REPOSITORY_MEMORY_MODEL.md",
-          "repos/playbook/docs/contracts/REPOSITORY_MEMORY_EVENT_CONTRACT.md",
-          "repos/playbook/docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md",
-          "repos/playbook/docs/contracts/repository-graph-contract.md",
-          "repos/playbook/docs/PLAYBOOK_NOTES.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v09-repo-memory-promotion-prune-001_v1",
-      "record_kind": "project-work",
-      "record_status": "candidate",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-REPO-MEMORY-PROMOTION-PRUNE-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Repository memory promotion and prune workflow",
-        "description": "Define deterministic promotion/demotion/prune workflow so durable doctrine remains compact, reviewable, and provenance-linked.",
-        "card_type": "feature",
-        "lifecycle": "intake",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001",
-          "PB-V09-REPO-MEMORY-AWARE-RETRIEVAL-001",
-          "PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-PROMOTION-PRUNE-001",
-        "extensions": {
-          "roadmap_status": "planned-later",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-PROMOTION-PRUNE-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Define deterministic promotion/demotion/prune workflow so durable doctrine remains compact, reviewable, and provenance-linked.",
-        "objective": "Define deterministic promotion/demotion/prune workflow so durable doctrine remains compact, reviewable, and provenance-linked.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/REPOSITORY_MEMORY_MODEL.md",
-          "repos/playbook/docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md",
-          "repos/playbook/docs/PLAYBOOK_NOTES.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "patterns",
-          "query"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v09-repo-memory-replay-consolidation-001_v1",
-      "record_kind": "project-work",
-      "record_status": "candidate",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Repository memory replay and consolidation",
-        "description": "Define deterministic replay/consolidation artifacts that derive candidate knowledge from episodic memory for human review before doctrine promotion.",
-        "card_type": "feature",
-        "lifecycle": "intake",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V06-FAILURE-INTELLIGENCE-001",
-          "PB-V07-ARCH-INTELLIGENCE-GRAPH-001",
-          "PB-V09-REPO-MEMORY-FOUNDATION-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001",
-        "extensions": {
-          "roadmap_status": "planned-later",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Define deterministic replay/consolidation artifacts that derive candidate knowledge from episodic memory for human review before doctrine promotion.",
-        "objective": "Define deterministic replay/consolidation artifacts that derive candidate knowledge from episodic memory for human review before doctrine promotion.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/REPOSITORY_MEMORY_MODEL.md",
-          "repos/playbook/docs/contracts/REPOSITORY_MEMORY_EVENT_CONTRACT.md",
-          "repos/playbook/docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v09-session-evidence-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V09-SESSION-EVIDENCE-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Session and evidence architecture layer",
-        "description": "Define first-class session envelope and evidence provenance contracts as prerequisites for policy orchestration, learning promotion, and broader AI runtime expansion.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V04-PLAN-APPLY-001",
-          "PB-V06-FAILURE-INTELLIGENCE-001",
-          "PB-V07-ARCH-INTELLIGENCE-GRAPH-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-SESSION-EVIDENCE-001",
-        "extensions": {
-          "roadmap_status": "architecture-defined",
-          "roadmap_version": "v0.9"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-SESSION-EVIDENCE-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Define first-class session envelope and evidence provenance contracts as prerequisites for policy orchestration, learning promotion, and broader AI runtime expansion.",
-        "objective": "Define first-class session envelope and evidence provenance contracts as prerequisites for policy orchestration, learning promotion, and broader AI runtime expansion.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook verify --json",
-          "Run: pnpm playbook plan --json",
-          "Run: pnpm playbook docs audit --json",
-          "Run: node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook verify --json",
-          "pnpm playbook plan --json",
-          "pnpm playbook docs audit --json",
-          "node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/PLAYBOOK_SESSION_EVIDENCE_ARCHITECTURE.md",
-          "repos/playbook/docs/AUTOMATION_SYNTHESIS_VISION.md",
-          "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "ai-contract",
-          "apply",
-          "plan",
-          "session",
-          "verify"
-        ],
         "package_ownership": [
           "@fawxzzy/playbook",
           "@zachariahredfield/playbook-engine"
@@ -2224,7 +1203,7 @@
         "title": "Workspace / tenant governance + optional hosted deployment model",
         "description": "Define explicit workspace/tenant policy boundaries and optional hosted/self-hosted control-plane packaging over one deterministic runtime without weakening CLI-first, offline-capable, private-first guarantees.",
         "card_type": "feature",
-        "lifecycle": "blocked",
+        "lifecycle": "in-progress",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -2235,7 +1214,7 @@
         "updated_at": "2026-11-13T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V09-WORKSPACE-TENANT-GOVERNANCE-001",
         "extensions": {
-          "roadmap_status": "dependency-blocked",
+          "roadmap_status": "in-progress",
           "roadmap_version": "v0.9"
         }
       },
@@ -2257,85 +1236,18 @@
           "pnpm playbook docs audit --json",
           "node scripts/validate-roadmap-contract.mjs --ci"
         ],
-        "blockers": [
-          "Blocked by roadmap dependency PB-V09-GOVERNED-INTERFACE-API-001.",
-          "Blocked by roadmap dependency PB-V09-CONTROL-PLANE-001."
-        ],
+        "blockers": [],
         "evidence": [
           "repos/playbook/docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE_AND_OPTIONAL_HOSTED_DEPLOYMENT.md",
+          "repos/playbook/docs/commands/observer.md",
           "repos/playbook/docs/CONSUMER_INTEGRATION_CONTRACT.md",
           "repos/playbook/docs/PLAYBOOK_BUSINESS_STRATEGY.md",
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
           "repos/playbook/docs/roadmap/IMPROVEMENTS_BACKLOG.md",
           "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine",
-          "@zachariahredfield/playbook-node"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v1-delivery-system-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V1-DELIVERY-SYSTEM-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Deterministic delivery system and CI gating",
-        "description": "Require roadmap IDs, roadmap contract validity, and docs and contract checks in branch validation.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V05-PACKAGE-BOUNDARIES-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V1-DELIVERY-SYSTEM-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v1.0"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V1-DELIVERY-SYSTEM-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Require roadmap IDs, roadmap contract validity, and docs and contract checks in branch validation.",
-        "objective": "Require roadmap IDs, roadmap contract validity, and docs and contract checks in branch validation.",
-        "acceptance_criteria": [
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
-          "repos/playbook/docs/PLAYBOOK_DEV_WORKFLOW.md",
-          "repos/playbook/docs/roadmap/README.md",
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
+          "repos/playbook/packages/cli/src/commands/observer.test.ts",
+          "repos/playbook/scripts/validate-roadmap-contract.mjs",
+          "repos/playbook/test/contracts/roadmap/architecture-docs.test.mjs"
         ]
       },
       "relationships": {
@@ -2345,13 +1257,12 @@
       },
       "extensions": {
         "commands": [
-          "docs",
-          "doctor",
-          "schema"
+          "observer"
         ],
         "package_ownership": [
           "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
+          "@zachariahredfield/playbook-engine",
+          "@zachariahredfield/playbook-node"
         ]
       }
     },
@@ -2592,9 +1503,9 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:ad3dd784e1ba91e9cb5effd48ab765d2c61849acc67b76b6034d342ee96fb97d",
+    "source_digest": "sha256:7f13c4afcfbe8141caa3b6deda5e8a5285b83eb63666acbaab4bff4190da851d",
     "source_feature_count": 63,
-    "exported_card_count": 35,
+    "exported_card_count": 20,
     "excluded_completed_statuses": [
       "complete",
       "completed",

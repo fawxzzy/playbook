@@ -849,15 +849,15 @@ Rule worth preserving:
 - Playbook should see clearly before it starts judging architecture.
 - Role inference currently remains read-only observation data; governance/policy gating is intentionally deferred.
 
-### 4) Later platform layers (dependency-blocked until prior trust slices are proven)
+### 4) Later platform layers (sequenced after the trust slices; dependencies are build-order intent, not a gate)
 
-- Automation and learning extensions: `PB-V09-AUTOMATION-SYNTHESIS-001`, `PB-V09-OUTCOME-FEEDBACK-LEARNING-001`.
-- Cross-repo and multi-tenant expansion: `PB-V09-MULTI-REPO-TRANSFER-001`, `PB-V09-GOVERNED-INTERFACE-API-001`, `PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`.
+- Automation and learning extensions: `PB-V09-AUTOMATION-SYNTHESIS-001`, `PB-V09-OUTCOME-FEEDBACK-LEARNING-001` (both shipped as hardening).
+- Cross-repo and multi-tenant expansion: `PB-V09-MULTI-REPO-TRANSFER-001`, `PB-V09-GOVERNED-INTERFACE-API-001`, `PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`. First read-only slices ship (candidate-only transfer import/export, observer control-plane reads, workspace governance read); the cards stay `in-progress` until the hosted, per-repo-auth and mutation surfaces exist.
 - Broader interface/routing direction remains later and proof-gated: `PB-V09-INTERFACE-SURFACES-001`, `PB-V09-CAPABILITY-ROUTING-001`.
 
 ### 5) Product/business overlays (not runtime prerequisites)
 
-- Packaging/SKU, metrics/ROI, and pilot/rollout architecture remain overlay layers scheduled over proven runtime evidence (`PB-V09-PACKAGING-SKU-ARCHITECTURE-001`, `PB-V09-METRICS-ROI-PROOF-OF-VALUE-001`, `PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001`).
+- Packaging/SKU, metrics/ROI, and pilot/rollout architecture remain overlay layers scheduled over proven runtime evidence (`PB-V09-PACKAGING-SKU-ARCHITECTURE-001`, `PB-V09-METRICS-ROI-PROOF-OF-VALUE-001`, `PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001`). Their architecture is defined and pinned by `test/contracts/roadmap/architecture-docs.test.mjs` (`architecture-defined`); no runtime is claimed.
 
 ## Platform evolution: deterministic runtime first, platform second
 
