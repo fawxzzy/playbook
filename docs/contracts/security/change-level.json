@@ -1,0 +1,17 @@
+{
+  "id": "change.level",
+  "description": "Plan tasks carry a trust-model change level, and apply refuses to execute auto-fix tasks above the default ceiling (Level 2) so Level 3 stays advisory-only.",
+  "enforcedBy": "validateRemediationPlan",
+  "expectedBehavior": [
+    "generatePlanContract labels every plan task with changeLevel 1, 2, or 3 derived deterministically from ruleId and file.",
+    "A plan artifact may raise a task's declared changeLevel but can never lower it below the level Playbook classifies from the task itself.",
+    "parsePlanArtifact rejects a declared changeLevel that is not 1, 2, or 3.",
+    "validateRemediationPlan and FixExecutor.apply reject any auto-fix task above Level 2 before any handler runs, including plugin handlers.",
+    "Non-auto-fix tasks are skipped by apply and are not gated by the ceiling."
+  ],
+  "failureModes": [
+    "levelThreeAutoApplied",
+    "declaredLevelUnderstatesRisk",
+    "pluginHandlerBypassesCeiling"
+  ]
+}

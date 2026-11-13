@@ -19,6 +19,7 @@
 - Expanded Simple Rule Theory to include data refinement, invariant extraction, and minimal sufficient representation.
 - Integrated these doctrines into architecture documentation, checklist guidance, and command metadata descriptions for `verify`, `plan`, and `apply`.
 - Added `packages/engine/vitest.config.mjs` (30s `testTimeout` and `hookTimeout` for the engine package) and an "Engine test timeouts and heavy fixtures" section in `docs/TESTING.md`. No source, command, bridge, research, scorecard or golden-path contract changed.
+- Added trust-model change levels to `plan`/`apply` (`PB-V04-PLAN-APPLY-001`): `plan --json` now labels every task with an additive `changeLevel` (`1 | 2 | 3`) derived deterministically from `ruleId` and `file`; `parsePlanArtifact` preserves and validates a declared `changeLevel`; `apply` (via `validateRemediationPlan`/`FixExecutor`) rejects any auto-fix task above Level 2 before any handler runs, and a plan artifact cannot lower a task below its classified level. Added the `docs/contracts/security/change-level.json` contract, engine/CLI/security regression tests, and a "Not yet enforced" section (`TM-GAP-01`..`TM-GAP-10`) in `docs/architecture/REMEDIATION_TRUST_MODEL.md`; corrected `docs/commands/plan.md` (only `--json` persists `.playbook/plan.json`) and `docs/contracts/verify-output.md` (failure count is the maximum across failure sources).
 
 ### WHY
 
@@ -35,6 +36,7 @@
 - Keeps workflow-pack reuse explicit about the difference between canonical verification contracts and downstream compatibility projections.
 - Establish consistent design primitives for deterministic automation and governance.
 - Encourage storing compact invariant state and deriving redundant views/behavior on demand.
+- Makes the remediation trust model's "Level 3 is never auto-applied" promise enforceable and machine-readable instead of documentation-only, and records the promises that are still unenforced as named gaps rather than implying they hold.
 - Align Playbook workflow framing with triadic system structure.
 - Keeps the engine package test run stable under full workspace and package-load execution: the same suite that passes alone previously failed `diffContext` with "Test timed out in 5000ms" when workers ran in parallel, because git- and temp-fixture tests take 3-20s under load. Tests and assertions are unchanged.
 

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyExecutionPlan, generateExecutionPlan, generatePlanContract, verifyRepo } from '../src/index.js';
+import { applyExecutionPlan, generateExecutionPlan, generatePlanContract, parsePlanArtifact, validateRemediationPlan, verifyRepo } from '../src/index.js';
 
 describe('verify -> plan -> apply -> verify workflow', () => {
   it('returns verify findings and plan tasks as an engine-backed contract', () => {
@@ -21,9 +21,74 @@ describe('verify -> plan -> apply -> verify workflow', () => {
         ruleId: 'notes.missing',
         file: null,
         action: 'create playbook notes file',
-        autoFix: true
+        autoFix: true,
+        changeLevel: 1
       }
     ]);
+  });
+
+  it('labels every plan-contract task with a trust-model change level and keeps ids/order stable', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-workflow-change-level-'));
+    fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'docs', 'PROJECT_GOVERNANCE.md'), '# Governance\n');
+
+    const first = generatePlanContract(root);
+    const second = generatePlanContract(root);
+
+    expect(first.tasks.length).toBeGreaterThan(0);
+    expect(first.tasks.every((task) => task.changeLevel === 1 || task.changeLevel === 2 || task.changeLevel === 3)).toBe(true);
+    expect(second).toEqual(first);
+  });
+
+  it('round-trips changeLevel through parsePlanArtifact and rejects invalid declared levels', () => {
+    const envelope = (changeLevel: unknown) => ({
+      schemaVersion: '1.0',
+      command: 'plan',
+      tasks: [{ id: 'task-1', ruleId: 'notes.missing', file: null, action: 'create', autoFix: true, changeLevel }]
+    });
+
+    expect(parsePlanArtifact(envelope(1)).tasks[0]?.changeLevel).toBe(1);
+    expect(
+      parsePlanArtifact({ schemaVersion: '1.0', command: 'plan', tasks: [{ id: 't', ruleId: 'r', file: null, action: 'a', autoFix: true }] }).tasks[0]
+    ).not.toHaveProperty('changeLevel');
+    for (const invalid of [0, 4, '2', null, 1.5]) {
+      expect(() => parsePlanArtifact(envelope(invalid))).toThrow(/task\.changeLevel must be 1, 2, or 3/);
+    }
+  });
+
+  it('rejects Level 3 auto-fix tasks before any handler runs, even when a plugin handler is registered', async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-workflow-level3-'));
+    fs.mkdirSync(path.join(root, '.github', 'workflows'), { recursive: true });
+    let handlerRan = false;
+
+    const task = { id: 'task-l3', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', action: 'edit workflow', autoFix: true };
+    expect(() => validateRemediationPlan(root, [task])).toThrow(/change level exceeds the apply ceiling/);
+
+    await expect(
+      applyExecutionPlan(root, [task], {
+        dryRun: false,
+        handlers: {
+          'plugin.workflow': async () => {
+            handlerRan = true;
+            return { status: 'applied', filesChanged: ['.github/workflows/ci.yml'], summary: 'edited' };
+          }
+        }
+      })
+    ).rejects.toThrow(/Level 3 changes are advisory-only/);
+
+    expect(handlerRan).toBe(false);
+    expect(fs.existsSync(path.join(root, '.github', 'workflows', 'ci.yml'))).toBe(false);
+  });
+
+  it('does not let a plan artifact lower a task below its classified level', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-workflow-level-floor-'));
+    const parsed = parsePlanArtifact({
+      schemaVersion: '1.0',
+      command: 'plan',
+      tasks: [{ id: 'task-floor', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', action: 'edit workflow', autoFix: true, changeLevel: 1 }]
+    });
+
+    expect(() => validateRemediationPlan(root, parsed.tasks)).toThrow(/task-floor \(level 3\)/);
   });
 
   it('resolves notes.missing with engine default handlers', async () => {

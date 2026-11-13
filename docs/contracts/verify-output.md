@@ -4,12 +4,13 @@
 
 Playbook remediation decisions are driven exclusively by failures.
 
-Failure count is derived using the following precedence:
+Failure count is derived from every failure source present in the verify payload, and the highest count wins (`deriveVerifyFailureFacts` in `packages/cli/src/lib/remediationContract.ts`):
 
-1. `verify.failures[]` array (**authoritative**)
+1. `verify.failures[]` array (**authoritative** when present)
 2. `verify.findings[]` entries with `level: "failure"` or `level: "error"`
+3. `verify.summary.failures` when it is a non-negative integer
 
-Warnings never contribute to failure count.
+Taking the maximum is fail-safe: a source that under-reports can never turn a failing verify into `not_needed` remediation. Warnings never contribute to failure count.
 
 This contract prevents rule authors from misinterpreting findings and accidentally triggering remediation from non-failure results.
 

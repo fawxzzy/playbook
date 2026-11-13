@@ -20,12 +20,16 @@ export type DocsWritePreconditions = {
   planned_operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor';
 };
 
+/** Trust-model change level (docs/architecture/REMEDIATION_TRUST_MODEL.md). Level 0 is read-only and never labels a task. */
+export type ChangeLevel = 1 | 2 | 3;
+
 export type PlanTask = {
   id: string;
   ruleId: string;
   file: string | null;
   action: string;
   autoFix: boolean;
+  changeLevel?: ChangeLevel;
   task_kind?: string;
   write?: {
     operation: 'replace-managed-block' | 'append-managed-block' | 'insert-under-anchor';
