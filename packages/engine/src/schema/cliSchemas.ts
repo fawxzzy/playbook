@@ -701,7 +701,8 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
             ruleId: { type: 'string' },
             file: { type: ['string', 'null'] },
             action: { type: 'string' },
-            autoFix: { type: 'boolean' }
+            autoFix: { type: 'boolean' },
+            changeLevel: { enum: [1, 2, 3] }
           }
         }
       }

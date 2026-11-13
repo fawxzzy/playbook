@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { PlanTask } from '../execution/types.js';
+import { DEFAULT_MAX_APPLY_CHANGE_LEVEL, enforceChangeLevelCeiling } from '../execution/changeLevel.js';
+import type { ChangeLevel, PlanTask } from '../execution/types.js';
 
 const DISALLOWED_PREFIXES = ['/etc', '/proc', '/sys', '/dev', '/var/run'];
 const ALLOWED_FILE_EXTENSIONS = new Set(['.md', '.json', '.yml', '.yaml', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs']);
@@ -64,7 +65,11 @@ const validateTaskShape = (task: PlanTask, repoRoot: string): void => {
   }
 };
 
-export const validateRemediationPlan = (repoRoot: string, tasks: PlanTask[]): void => {
+export const validateRemediationPlan = (
+  repoRoot: string,
+  tasks: PlanTask[],
+  options: { maxChangeLevel?: ChangeLevel; pluginRuleIds?: ReadonlySet<string> } = {}
+): void => {
   if (tasks.length > MAX_PLAN_TASKS) {
     throw new Error(`Invalid remediation plan: task count ${tasks.length} exceeds policy limit ${MAX_PLAN_TASKS}.`);
   }
@@ -77,6 +82,12 @@ export const validateRemediationPlan = (repoRoot: string, tasks: PlanTask[]): vo
     seenTaskIds.add(task.id);
     validateTaskShape(task, repoRoot);
   }
+
+  // Classify the repo-relative resolved path (not the raw task string) so `..`, `.//`, absolute and trailing-dot forms cannot dodge Level 3.
+  enforceChangeLevelCeiling(tasks, options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL, {
+    repoRoot,
+    pluginRuleIds: options.pluginRuleIds
+  });
 };
 
 export const redactSecretsForLogs = (message: string): string => {

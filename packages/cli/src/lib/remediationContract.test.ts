@@ -72,6 +72,26 @@ describe('remediationContract', () => {
     });
   });
 
+  it('takes the highest count across failures[], failure-level findings, and summary.failures', () => {
+    expect(
+      deriveVerifyFailureFacts({
+        failures: [],
+        findings: [{ id: 'f-1', level: 'failure' }],
+        summary: { failures: 3, warnings: 0 }
+      })
+    ).toEqual({
+      failureCount: 3,
+      sources: ['failures.length', 'findings[level=failure|error].length', 'summary.failures']
+    });
+    expect(
+      deriveVerifyFailureFacts({
+        failures: [{ id: 'f-1' }, { id: 'f-2' }],
+        findings: [{ id: 'f-1', level: 'failure' }],
+        summary: { failures: 1, warnings: 0 }
+      }).failureCount
+    ).toBe(2);
+  });
+
   it('does not treat warnings as remediable failures', () => {
     expect(
       deriveVerifyFailureFacts({

@@ -12,6 +12,7 @@ import {
 } from '../../../packages/engine/dist/security/guards.js';
 import { FixExecutor, HandlerResolver } from '../../../packages/engine/dist/execution/fixExecutor.js';
 import { PlanGenerator } from '../../../packages/engine/dist/execution/planGenerator.js';
+import { classifyTaskChangeLevel, resolveTaskChangeLevel } from '../../../packages/engine/dist/execution/changeLevel.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const contractsDir = path.join(repoRoot, 'docs/contracts/security');
@@ -30,7 +31,8 @@ test('security contracts are machine-readable and include required fields', () =
     'apply-scope.json',
     'plan-determinism.json',
     'secret-redaction.json',
-    'policy-gate.json'
+    'policy-gate.json',
+    'change-level.json'
   ];
 
   for (const file of expectedFiles) {
@@ -101,6 +103,49 @@ test('plan.determinism returns stable tasks for equivalent findings', () => {
   const second = generator.generate([...findings].reverse());
 
   assert.deepEqual(first, second);
+});
+
+test('change.level rejects Level 3 auto-fix tasks before any handler (including plugin handlers) runs', async () => {
+  const tempRepo = makeTempDir('playbook-change-level-');
+  fs.mkdirSync(path.join(tempRepo, '.github', 'workflows'), { recursive: true });
+
+  let handlerRan = false;
+  const resolver = new HandlerResolver({
+    builtIn: {},
+    plugin: {
+      'plugin.workflow': async () => {
+        handlerRan = true;
+        return { status: 'applied', summary: 'edited workflow', filesChanged: ['.github/workflows/ci.yml'] };
+      }
+    }
+  });
+
+  const executor = new FixExecutor(resolver);
+  await assert.rejects(
+    executor.apply(
+      [
+        {
+          id: 'task-level-3',
+          ruleId: 'plugin.workflow',
+          file: '.github/workflows/ci.yml',
+          action: 'edit workflow',
+          autoFix: true
+        }
+      ],
+      { repoRoot: tempRepo, dryRun: false }
+    ),
+    /change level exceeds the apply ceiling \(level 2\) for task-level-3 \(level 3\)/
+  );
+  assert.equal(handlerRan, false);
+});
+
+test('change.level classification is deterministic and a declared level can only raise it', () => {
+  const task = { ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml' };
+  assert.equal(classifyTaskChangeLevel(task).level, 3);
+  assert.deepEqual(classifyTaskChangeLevel(task), classifyTaskChangeLevel({ ...task }));
+  assert.equal(resolveTaskChangeLevel({ ...task, changeLevel: 1 }), 3);
+  assert.equal(resolveTaskChangeLevel({ ruleId: 'notes.missing', file: null, changeLevel: 3 }), 3);
+  assert.equal(resolveTaskChangeLevel({ ruleId: 'notes.missing', file: null }), 1);
 });
 
 test('secret.redaction removes sensitive values from log output (scanner-safe fixtures)', () => {

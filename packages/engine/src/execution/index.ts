@@ -10,6 +10,7 @@ import { RuleRunner } from './ruleRunner.js';
 import type { VerifyReport } from '../report/types.js';
 import { verifyRepo } from '../verify/index.js';
 import { generateRepositoryHealth } from '../doctor/index.js';
+import { resolveTaskChangeLevel, isChangeLevel } from './changeLevel.js';
 import { buildApplyMemoryEvent, buildPlanMemoryEvent, captureMemoryRuntimeEventSafe } from '../memory/runtimeEvents.js';
 export { renderLanePrompt, writeLanePrompts, buildLanePromptFilename } from './lanePrompts.js';
 export type { LanePromptSpec, RenderLanePromptInput, WriteLanePromptsInput } from './lanePrompts.js';
@@ -108,7 +109,8 @@ export const generatePlanContract = (repoRoot: string): PlanContract => {
       failures: verify.failures,
       warnings: verify.warnings
     },
-    tasks
+    // Change-level labels are attached after the memory event so event fingerprints stay unchanged.
+    tasks: tasks.map((task) => ({ ...task, changeLevel: resolveTaskChangeLevel(task, { repoRoot }) }))
   };
 };
 
@@ -210,12 +212,17 @@ export const parsePlanArtifact = (payload: unknown): { tasks: PlanTask[] } => {
       throw new Error('Invalid plan payload: task.file must be a string or null.');
     }
 
+    if (typedTask.changeLevel !== undefined && !isChangeLevel(typedTask.changeLevel)) {
+      throw new Error('Invalid plan payload: task.changeLevel must be 1, 2, or 3 when present.');
+    }
+
     return {
       id: typedTask.id,
       ruleId: typedTask.ruleId,
       file: typedTask.file ?? null,
       action: typedTask.action,
       autoFix: typedTask.autoFix,
+      ...(isChangeLevel(typedTask.changeLevel) ? { changeLevel: typedTask.changeLevel } : {}),
       ...(typeof typedTask.task_kind === 'string' ? { task_kind: typedTask.task_kind } : {}),
       ...(typedTask.write && typeof typedTask.write === 'object' ? { write: typedTask.write as PlanTask['write'] } : {}),
       ...(typedTask.provenance && typeof typedTask.provenance === 'object' ? { provenance: typedTask.provenance as PlanTask['provenance'] } : {}),
@@ -233,7 +240,16 @@ export { RuleRunner } from './ruleRunner.js';
 export { PlanGenerator } from './planGenerator.js';
 export { FixExecutor, HandlerResolver } from './fixExecutor.js';
 export { defaultFixHandlers } from './defaultFixHandlers.js';
-export type { PlanTask, RuleFailure, Rule, FixHandler } from './types.js';
+export type { PlanTask, RuleFailure, Rule, FixHandler, ChangeLevel } from './types.js';
+export {
+  CHANGE_LEVELS,
+  DEFAULT_MAX_APPLY_CHANGE_LEVEL,
+  classifyTaskChangeLevel,
+  resolveTaskChangeLevel,
+  enforceChangeLevelCeiling,
+  isChangeLevel
+} from './changeLevel.js';
+export type { ChangeLevelClassification } from './changeLevel.js';
 export { readApplyChangeScope, enforceApplyChangeScope } from './changeScopeEnforcement.js';
 export type { ApplyChangeScope } from './changeScopeEnforcement.js';
 

@@ -24,6 +24,15 @@ export * from './sessions/index.js';
 
 export { runRuleExecution, generateExecutionPlan, generatePlanContract, applyExecutionPlan, parsePlanArtifact, selectPlanTasks, RuleRunner, PlanGenerator, FixExecutor } from './execution/index.js';
 export { readApplyChangeScope, enforceApplyChangeScope } from './execution/index.js';
+export {
+  CHANGE_LEVELS,
+  DEFAULT_MAX_APPLY_CHANGE_LEVEL,
+  classifyTaskChangeLevel,
+  resolveTaskChangeLevel,
+  enforceChangeLevelCeiling,
+  isChangeLevel
+} from './execution/index.js';
+export type { ChangeLevel, ChangeLevelClassification } from './execution/index.js';
 export type { ApplyChangeScope } from './execution/index.js';
 export { renderLanePrompt, writeLanePrompts, buildLanePromptFilename } from './execution/lanePrompts.js';
 export { evaluateExecutionMergeGuards, evaluateExecutionMergeGuardForRun, readExecutionMergeGuards, EXECUTION_MERGE_GUARDS_RELATIVE_PATH } from './execution/mergeGuards.js';
