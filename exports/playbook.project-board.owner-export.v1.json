@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_7f13c4afcfbe",
+  "export_id": "pbe_playbook_roadmap_10a40c432c9b",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:7f13c4afcfbe8141caa3b6deda5e8a5285b83eb63666acbaab4bff4190da851d",
+  "source_revision": "sha256:10a40c432c9b0810cbc88aa7b31750b3721a9d83ae9e5c0fe8b091a81de5cda0",
   "generated_at": "2026-11-13T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:7f13c4afcfbe8141caa3b6deda5e8a5285b83eb63666acbaab4bff4190da851d",
+      "revision": "sha256:10a40c432c9b0810cbc88aa7b31750b3721a9d83ae9e5c0fe8b091a81de5cda0",
       "observed_at": "2026-11-13T00:00:00.000Z"
     }
   ],
@@ -67,8 +67,10 @@
           "repos/playbook/docs/architecture/REMEDIATION_TRUST_MODEL.md",
           "repos/playbook/docs/commands/apply.md",
           "repos/playbook/docs/commands/plan.md",
+          "repos/playbook/docs/contracts/security/change-level.json",
           "repos/playbook/docs/contracts/verify-output.md",
           "repos/playbook/packages/cli/src/commands/apply.test.ts",
+          "repos/playbook/packages/engine/src/execution/changeLevel.test.ts",
           "repos/playbook/packages/engine/test/verify.plan.apply.workflow.test.ts",
           "repos/playbook/test/contracts/security/security-contracts.test.mjs",
           "repos/playbook/test/security/security-regression.test.mjs"
@@ -142,6 +144,7 @@
           "repos/playbook/docs/architecture/V1_BOUNDARY_REFACTOR_PLAN.md",
           "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
           "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
+          "repos/playbook/packages/engine/test/pluginLoadingPath.test.ts",
           "repos/playbook/packages/engine/test/plugins.test.ts"
         ]
       },
@@ -163,27 +166,26 @@
       }
     },
     {
-      "idempotency_key": "pbk_playbook_pb-v06-failure-intelligence-001_v1",
+      "idempotency_key": "pbk_playbook_pb-v06-failure-taxonomy-001_v1",
       "record_kind": "project-work",
       "record_status": "active",
       "record": {
         "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V06-FAILURE-INTELLIGENCE-001",
+        "card_id": "PB-V06-FAILURE-TAXONOMY-001",
         "project_id": "playbook",
         "board_id": "discordos:project-feedback:playbook",
-        "title": "Failure intelligence loop and prevention codification",
-        "description": "Capture failures as structured intelligence and deterministically map them into rules, tests, docs, and remediation scaffolds.",
+        "title": "General failure taxonomy, ingest and prevention mapping",
+        "description": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
         "card_type": "feature",
         "lifecycle": "planning",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
-          "PB-V05-PACKAGE-BOUNDARIES-001",
-          "PB-V1-DELIVERY-SYSTEM-001"
+          "PB-V06-FAILURE-INTELLIGENCE-001"
         ],
         "board_version": 1,
         "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-INTELLIGENCE-001",
+        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-TAXONOMY-001",
         "extensions": {
           "roadmap_status": "planned",
           "roadmap_version": "v0.6"
@@ -191,13 +193,13 @@
       },
       "source": {
         "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-INTELLIGENCE-001",
+        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-TAXONOMY-001",
         "source_status": "current",
         "source_updated_at": "2026-11-13T00:00:00.000Z"
       },
       "content": {
-        "summary": "Capture failures as structured intelligence and deterministically map them into rules, tests, docs, and remediation scaffolds.",
-        "objective": "Capture failures as structured intelligence and deterministically map them into rules, tests, docs, and remediation scaffolds.",
+        "summary": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
+        "objective": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
         "acceptance_criteria": [
           "Run: pnpm playbook failure ingest --json --input .playbook/failures/sample.json",
           "Run: pnpm playbook failure suggest --json",
@@ -1331,181 +1333,12 @@
           "@fawxzzy/playbook"
         ]
       }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v1-product-truth-packaging-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V1-PRODUCT-TRUTH-PACKAGING-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Product truth packaging and narrative sync",
-        "description": "Package canonical Playbook workflow truth into deterministic metadata and audit surfaces so humans and AI agents can reliably discover what is canonical, live, compatibility-only, utility, planned, and question-bounded.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V1-DELIVERY-SYSTEM-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V1-PRODUCT-TRUTH-PACKAGING-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v1.0"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V1-PRODUCT-TRUTH-PACKAGING-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Package canonical Playbook workflow truth into deterministic metadata and audit surfaces so humans and AI agents can reliably discover what is canonical, live, compatibility-only, utility, planned, and question-bounded.",
-        "objective": "Package canonical Playbook workflow truth into deterministic metadata and audit surfaces so humans and AI agents can reliably discover what is canonical, live, compatibility-only, utility, planned, and question-bounded.",
-        "acceptance_criteria": [
-          "Run: pnpm agents:update",
-          "Run: pnpm agents:check",
-          "Run: pnpm playbook docs audit --json",
-          "Run: node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm agents:update",
-          "pnpm agents:check",
-          "pnpm playbook docs audit --json",
-          "node scripts/validate-roadmap-contract.mjs --ci"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/AGENTS.md",
-          "repos/playbook/docs/commands/README.md",
-          "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
-          "repos/playbook/docs/ONBOARDING_DEMO.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/docs/roadmap/README.md",
-          "repos/playbook/README.md",
-          "repos/playbook/scripts/update-managed-docs.mjs",
-          "repos/playbook/scripts/validate-roadmap-contract.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "ai-context",
-          "ai-contract",
-          "ask",
-          "context",
-          "docs"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
-    {
-      "idempotency_key": "pbk_playbook_pb-v10-engine-package-load-timeout-hardening-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V10-ENGINE-PACKAGE-LOAD-TIMEOUT-HARDENING-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Engine package load timeout hardening",
-        "description": "Restore engine package stability under full workspace and package-load execution by fixing timeout pressure, fixture isolation, and heavy git or temp test behavior without changing workflow-pack bridge contracts, research contracts, scorecard contracts, golden-path registry contracts, or command surfaces unless a direct interaction is proven.",
-        "card_type": "feature",
-        "lifecycle": "planning",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V10-CLI-TEST-BASELINE-HARDENING-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-13T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V10-ENGINE-PACKAGE-LOAD-TIMEOUT-HARDENING-001",
-        "extensions": {
-          "roadmap_status": "planned",
-          "roadmap_version": "v1.0"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V10-ENGINE-PACKAGE-LOAD-TIMEOUT-HARDENING-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-13T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Restore engine package stability under full workspace and package-load execution by fixing timeout pressure, fixture isolation, and heavy git or temp test behavior without changing workflow-pack bridge contracts, research contracts, scorecard contracts, golden-path registry contracts, or command surfaces unless a direct interaction is proven.",
-        "objective": "Restore engine package stability under full workspace and package-load execution by fixing timeout pressure, fixture isolation, and heavy git or temp test behavior without changing workflow-pack bridge contracts, research contracts, scorecard contracts, golden-path registry contracts, or command surfaces unless a direct interaction is proven.",
-        "acceptance_criteria": [
-          "Run: pnpm -C packages/engine test -- askEngine",
-          "Run: pnpm -C packages/engine test -- diffContext",
-          "Run: pnpm -C packages/engine test -- doctorMemoryDiagnostics",
-          "Run: pnpm -C packages/engine test -- releaseVersionGovernance",
-          "Run: pnpm -C packages/engine test -- pipeline",
-          "Run: pnpm -C packages/engine test",
-          "Run: pnpm -C packages/cli test",
-          "Run: node scripts/validate-workflow-pack-environment-bridge.mjs",
-          "Run: node --test test/scripts/validate-workflow-pack-environment-bridge.test.mjs",
-          "Run: node scripts/validate-roadmap-contract.mjs --ci",
-          "Run: pnpm playbook docs audit --json",
-          "Run: pnpm docs:check",
-          "Run: pnpm test"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm -C packages/engine test -- askEngine",
-          "pnpm -C packages/engine test -- diffContext",
-          "pnpm -C packages/engine test -- doctorMemoryDiagnostics",
-          "pnpm -C packages/engine test -- releaseVersionGovernance",
-          "pnpm -C packages/engine test -- pipeline",
-          "pnpm -C packages/engine test",
-          "pnpm -C packages/cli test",
-          "node scripts/validate-workflow-pack-environment-bridge.mjs",
-          "node --test test/scripts/validate-workflow-pack-environment-bridge.test.mjs",
-          "node scripts/validate-roadmap-contract.mjs --ci",
-          "pnpm playbook docs audit --json",
-          "pnpm docs:check",
-          "pnpm test"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/roadmap/ROADMAP.json",
-          "repos/playbook/packages/engine/src/release/changelog/pipeline.test.ts",
-          "repos/playbook/packages/engine/test/askEngine.test.ts",
-          "repos/playbook/packages/engine/test/diffContext.test.ts",
-          "repos/playbook/packages/engine/test/doctorMemoryDiagnostics.test.ts",
-          "repos/playbook/packages/engine/test/releaseVersionGovernance.test.ts"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
     }
   ],
   "extensions": {
-    "source_digest": "sha256:7f13c4afcfbe8141caa3b6deda5e8a5285b83eb63666acbaab4bff4190da851d",
-    "source_feature_count": 63,
-    "exported_card_count": 20,
+    "source_digest": "sha256:10a40c432c9b0810cbc88aa7b31750b3721a9d83ae9e5c0fe8b091a81de5cda0",
+    "source_feature_count": 64,
+    "exported_card_count": 18,
     "excluded_completed_statuses": [
       "complete",
       "completed",
