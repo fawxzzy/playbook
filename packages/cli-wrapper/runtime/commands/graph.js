@@ -97,7 +97,8 @@ const runGraphImpact = async (cwd, args, options) => {
             limit: parsed.limit
         });
         if (options.format === 'json') {
-            console.log(JSON.stringify({ command: 'graph', subcommand: 'impact', ...report }, null, 2));
+            const { schemaVersion, ...rest } = report;
+            console.log(JSON.stringify({ schemaVersion, command: 'graph', subcommand: 'impact', ...rest }, null, 2));
             return ExitCode.Success;
         }
         if (!options.quiet) {

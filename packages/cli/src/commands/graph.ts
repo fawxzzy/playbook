@@ -134,7 +134,8 @@ const runGraphImpact = async (cwd: string, args: string[], options: GraphOptions
     }) as GraphImpactReport;
 
     if (options.format === 'json') {
-      console.log(JSON.stringify({ command: 'graph', subcommand: 'impact', ...report }, null, 2));
+      const { schemaVersion, ...rest } = report;
+      console.log(JSON.stringify({ schemaVersion, command: 'graph', subcommand: 'impact', ...rest }, null, 2));
       return ExitCode.Success;
     }
 
