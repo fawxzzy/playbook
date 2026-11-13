@@ -89,7 +89,7 @@ The current deterministic implementation is intentionally narrow and additive:
 
 - `.playbook/session.json` now carries `evidenceEnvelope` as a canonical, inspectable session/evidence envelope.
 - The envelope references existing artifacts instead of replacing contracts.
-- Current lineage stages are deterministic and ordered: `session -> proposal_generation -> policy_evaluation -> execution_result`.
+- Current lineage stages are deterministic and ordered: `session -> proposal_generation -> policy_evaluation -> execution_result` (a `pr_review` stage sits between `policy_evaluation` and `execution_result`; every stage is always listed with a `present` flag).
 - Proposal/policy/apply linkage is represented through proposal IDs, policy decisions, and execution-result references when artifacts are present.
 - Missing optional artifacts are represented as `present: false` references instead of hard-failing session persistence.
 
@@ -133,7 +133,7 @@ This ordering is architecture direction and backlog sequencing guidance, not a c
 - Not a cloud-only or telemetry-dependent architecture.
 - Not a bypass of CLI-first deterministic command contracts.
 - Not a bypass of `verify` trust boundaries.
-- Not an implication that session runtime is fully shipped today.
+- Not a claim that the full dependency chain below is complete: the session slice is shipped (`playbook session`, `.playbook/session.json` with `evidenceEnvelope`, `.playbook/session-evidence.json`; see `docs/commands/session.md`), and broader hardening of downstream policy, learning, and automation layers continues.
 
 ## Cross-links
 - Repo longitudinal state + knowledge promotion: `docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md`
@@ -144,6 +144,7 @@ This ordering is architecture direction and backlog sequencing guidance, not a c
 - Backlog staging: `docs/roadmap/IMPROVEMENTS_BACKLOG.md`
 - Automation synthesis direction: `docs/AUTOMATION_SYNTHESIS_VISION.md`
 - Consumer promotion/privacy constraints: `docs/CONSUMER_INTEGRATION_CONTRACT.md`
+- Session command reference: `docs/commands/session.md`
 
 - `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`
 - `docs/architecture/PLAYBOOK_OUTCOME_FEEDBACK_AND_AUTOMATION_RUNTIME_LEARNING.md`

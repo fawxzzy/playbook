@@ -98,6 +98,34 @@ Contract rules:
 - Artifact contents vary by repository and over time.
 - Consumer repositories own lifecycle decisions for these artifacts (e.g., keep local, commit selected outputs, or regenerate in CI).
 
+### Managed-vs-local upgrade boundary
+
+External consumer repositories split into a Playbook-managed layer and a repo-local layer. The boundary is recorded in `.playbook/managed-surfaces.json`, a manifest seeded by `playbook init` and by the `contract.managed-surface-manifest.installable` migration (`packages/cli/src/lib/migrations.ts`). Its schema is `packages/contracts/src/managed-surface-manifest.schema.json`.
+
+Manifest shape: `schemaVersion: "1.0"`, `kind: "playbook-managed-surface-manifest"`, and `entries[]`, each with `path` (exact path or a `dir/**` prefix), `category`, `mutationScope` (`file` or `managed_block`), `owner` (`playbook` or `repository`), and optional `managedMarkers`.
+
+Categories (the first matching entry wins):
+
+| Category | Meaning for `playbook upgrade --apply` |
+| --- | --- |
+| `managed_by_playbook` | Playbook may create or update the path. A `managed_block` entry is editable only when every `managedMarkers` string is present in the existing file. |
+| `repo_local_protected` | Immutable during apply. Repo-owned product truth. |
+| `explicit_migration_required` | Immutable during apply; needs a manual, reviewed migration. |
+
+A path that matches no manifest entry is treated as `unclassified` and is also not auto-applied. A `managed_block` target that exists without its markers is downgraded to `explicit_migration_required`.
+
+Default seeded entries (`packages/cli/templates/repo/.playbook/managed-surfaces.json`):
+
+- `managed_by_playbook`: `.playbook/**`, `.github/workflows/release-prep.yml`, and `docs/CHANGELOG.md` (managed block between the `PLAYBOOK:CHANGELOG_RELEASE_NOTES_START/END` markers).
+- `repo_local_protected`: `AGENTS.md`, `app/**`, `src/**`, `docs/**` (including the named `docs/ARCHITECTURE.md`, `docs/PROJECT_GOVERNANCE.md`, `docs/PLAYBOOK_NOTES.md`, `docs/PLAYBOOK_CHECKLIST.md`). The more specific `docs/CHANGELOG.md` entry is listed first, so it stays managed.
+- `explicit_migration_required`: `Playbook/**`, `playbook.config.json`.
+
+Behavior when a needed migration resolves to a protected, migration-required, or unclassified path: `upgrade --apply` returns `upgrade_blocked` with review-required output instead of mutating the file. Dependency-version bumps are separate and touch only the `@fawxzzy/playbook` dependency spec. The seeding migration only creates the manifest when it is missing, so an existing manifest (including consumer reclassifications) is not overwritten.
+
+Evidence: `packages/cli/src/lib/migrations.versionPolicy.test.ts`, `packages/cli/src/commands/upgrade.test.ts`, and `docs/commands/upgrade.md`.
+
+Not guaranteed: the manifest is data that the upgrade command honors; it does not prevent a human or another tool from editing protected files, and it does not cover mutations made by commands other than `init` and `upgrade`.
+
 ## 3) Privacy Model
 
 Playbook operates with a private-first default model.
