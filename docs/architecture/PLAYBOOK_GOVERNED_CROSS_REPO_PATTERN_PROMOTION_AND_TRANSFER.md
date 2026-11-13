@@ -204,3 +204,12 @@ Recommended architecture ordering:
 - Pattern: Transfer should preserve provenance and local review boundaries.
 - Failure Mode: Importing foreign doctrine directly into execution context breaks private-first governance.
 - Compatibility mismatch must fail closed. Recalled or demoted transferred patterns remain inspectable through the same lifecycle record.
+
+## Transfer readiness vs export/import (current behavior)
+
+This section records what the code does today (`packages/engine/src/patternTransfer.ts`, `packages/engine/src/learning/transferReadiness.ts`, `packages/cli/src/commands/patterns.ts`, `packages/cli/src/commands/knowledge/portability.ts`).
+
+- Export (`playbook patterns transfer export --pattern <id> --target-repo <repo-id>`) requires only that the pattern exists and is `active`. It computes package compatibility from the pattern's `required_tags` versus the supplied `--target-tag` values (`compatible` or `review-required`) and always stamps `review_required: true` and `fail_closed: true`. It does not read `.playbook/transfer-readiness.json`, and a `blocked` or low readiness score does not stop an export.
+- Import (`playbook patterns transfer import --file <path> --repo <repo-id>`) is candidate-only. It writes an `observed` candidate with `imported_from.review_status: pending-local-review` into `.playbook/pattern-candidates.json`; it never writes `.playbook/patterns.json` and the package's `execution_planning_effect` is `none`. It fails closed (throws) when the package kind is wrong, compatibility status is not `compatible`, the package's target repo differs from `--repo`, or a required target tag is missing from `--repo-tag`. It does not consult transfer readiness either.
+- `transfer-readiness` (`.playbook/transfer-readiness.json`, kind `transfer-readiness`) is advisory review input. Each assessment carries a `readiness_score`, `blockers`, `missing_prerequisites`, `open_questions`, and a `recommendation` of `ready`, `partial`, or `blocked`. It is inspectable through `playbook knowledge portability --view readiness` and `--view blocked-transfers`, which read the artifact and fail if it is missing.
+- The engine exposes `generateTransferReadinessArtifact` and `writeTransferReadinessArtifact`, but no CLI command calls them yet, so the artifact is not produced by a shipped command path. Nothing enforces readiness at export or import; any gating on readiness is a reviewer or operator decision, and enforcement remains future work.

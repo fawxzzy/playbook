@@ -14,12 +14,17 @@ This slice is additive and does not alter engine authority boundaries.
 
 ## Scope for this first slice (read-only)
 
-The first governed interface slice is limited to read surfaces:
+The first governed interface slice is limited to read surfaces. The Observer API serves exactly these five `slice` values (the `request.slice` enum in the schema lists the same five):
 
-1. readiness / proof
-2. run-state inspection
-3. longitudinal state summary
-4. cross-repo pattern comparison / portability / proposals
+1. `readiness-proof` - readiness / proof
+2. `run-state-inspection` - run-state inspection
+3. `longitudinal-state-summary` - longitudinal state summary
+4. `cross-repo-pattern-comparison` - cross-repo pattern comparison / portability / proposals
+5. `workspace-tenant-governance` - read-only workspace/tenant governance summary (added after the original four; see `docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE.md`)
+
+Slices 1-4 were the original first slice; slice 5 was added later and is part of the same read-only interface. No other slice name is served.
+
+Declared but not served: the `MultiRepoReadInterfaceSlice` type in `packages/engine/src/controlPlane/multiRepoControlPlaneReadInterface.ts` additionally lists `maintenance-plan-summary`. No endpoint, schema enum entry, or other code references it, so requesting it falls back to `readiness-proof`. Treat it as an unimplemented placeholder; it is left in the type only because editing engine source forces a release version bump, so it should be removed or implemented in a change that already ships a release.
 
 No mutation endpoint is introduced in this slice.
 
@@ -28,8 +33,9 @@ No mutation endpoint is introduced in this slice.
 The canonical operator-facing surface is the existing Observer API.
 
 - Endpoint: `/api/control-plane/interfaces/read`
-- Query: `slice=<readiness-proof|run-state-inspection|longitudinal-state-summary|cross-repo-pattern-comparison>`
-- Output contract kind: `playbook-multi-repo-control-plane-read-interface`
+- Method: `GET` (served by `pnpm playbook observer serve`; see `docs/commands/observer.md`)
+- Query: `slice=<readiness-proof|run-state-inspection|longitudinal-state-summary|cross-repo-pattern-comparison|workspace-tenant-governance>`; a missing or unrecognized `slice` value falls back to `readiness-proof` (it does not return an error)
+- Output contract kind: `playbook-multi-repo-control-plane-read-interface` (the Observer wraps it as `interface` inside a payload whose own `kind` is `observer-multi-repo-control-plane-read-interface`)
 - Mode: `read-only`
 
 ## Contract envelope
@@ -62,6 +68,7 @@ This interface only re-exposes canonical deterministic artifacts:
 - run-state inspection: control-plane state + execution run-state + evidence envelope
 - longitudinal summary: longitudinal-state + remediation/runtime history artifacts
 - cross-repo pattern comparison: cross-repo pattern artifact + proposals/candidates
+- workspace/tenant governance: workspace-governance contract payload built from the connected repo scope; provenance lists `.playbook/workspace-governance.json` plus the per-repo session and policy artifacts
 
 The interface does not add alternate truth stores.
 
