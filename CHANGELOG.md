@@ -5,6 +5,7 @@
 ### WHAT
 
 - Widened `scripts/validate-roadmap-contract.mjs` so shipped features (`implemented`, `implemented-hardening`, `in-progress`) of any roadmap version must declare live commands and existing contract, docs and test paths (previously only v0.9, and not tests); ignored `docs/commands/README.md` as a command family; corrected `PB-V03-INDEX-001`, `PB-V03-QUERY-001` and `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001` to real artifacts; moved `PB-V06-FAILURE-INTELLIGENCE-001` from `in-progress` to `planned` because none of its declared artifacts or its `failure` command exist; bumped roadmap `updatedAt`; regenerated the project-board owner export; added validator regression tests; and used `fileURLToPath` instead of `URL.pathname` in two contract tests so they run on Windows.
+- Refreshed the committed `packages/cli-wrapper/runtime` snapshot (`commands/analyze.js` and `commands/patterns.js` plus source maps) from the current build: it lagged the `analyze` engine routing and the `patterns verta` subcommand.
 - Made the release fallback asset validation, `pack-smoke` extraction and the release-fallback proof run `tar` from the tarball folder with a bare file name (GNU tar under Git Bash on Windows read `C:...` as a remote host), and made the Windows launcher tests expect `%ComSpec%` (a full path on real Windows hosts) instead of the literal `cmd.exe`.
 - Reworded the `PB-V1-DELIVERY-SYSTEM-001` roadmap goal ("docs and contract checks" instead of a path-like phrase), bumped `docs/roadmap/ROADMAP.json` `updatedAt`, and regenerated the project-board owner export.
 - Made the project-board owner export check (`pnpm board:export:check`), its canonical-export test, and the managed-docs generator (`pnpm docs:check`) compare the LF form of committed files, so Windows checkouts that materialize them with CRLF no longer report false stale exports or managed docs; added a regression test that a CRLF-materialized export passes while real drift still fails.
@@ -17,6 +18,7 @@
 ### WHY
 
 - Keeps the roadmap an honest source for the public project board: shipped features can no longer declare commands, contracts, docs or tests that do not exist, and the Windows test runs no longer fail on a path idiom.
+- Keeps the committed fallback runtime in step with the source the CLI is built from, so a fresh clone and a built tree agree.
 - Keeps the release-asset and pack-smoke gates runnable from any Windows shell and keeps the Windows launcher tests honest about `%ComSpec%`.
 - Lets the Playbook roadmap goals pass the public project-board text screen so the delivery-system card can be published, and records the roadmap as current as of this change.
 - Keeps the owner export and managed-docs gates portable across Git line-ending settings, matching the roadmap source-revision hash that already normalizes to LF.
