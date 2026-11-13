@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  assertCeilingAuthorized,
   assertReportedWritesWithinCeiling,
+  normalizeOverrideReason,
   ChangeLevelWriteViolationError,
   classifyPathChangeLevel,
   canonicalizeTaskPath,
@@ -204,5 +206,39 @@ describe('handler-reported writes (TM-GAP-11)', () => {
     expect(classifyTaskChangeLevel({ ruleId: 'maintenance.execution', file: null }).level).toBe(2);
     expect(() => enforceChangeLevelCeiling([{ id: 'm', ruleId: 'maintenance.execution', file: null, autoFix: true }])).not.toThrow();
     expect(() => enforceChangeLevelCeiling([{ id: 'm', ruleId: 'maintenance.execution', file: null, autoFix: true, changeLevel: 3 }])).toThrow(/m \(level 3\)/);
+  });
+});
+
+describe('override reason (library entry points)', () => {
+  it('accepts and trims a normal one-line reason', () => {
+    expect(normalizeOverrideReason('  Release owner approved (ticket 42)  ')).toBe('Release owner approved (ticket 42)');
+  });
+
+  it.each([
+    ['empty', ''],
+    ['whitespace only', '   \t '],
+    ['ideographic space only', '\u3000\u3000'],
+    ['zero-width only', '\u200B\u200B'],
+    ['newline', 'line one\nline two'],
+    ['carriage return', 'a\rb'],
+    ['C1 control (NEL)', 'next\u0085line'],
+    ['bidi override', 'looks fine\u202Egnp.exe'],
+    ['bidi isolate', 'a\u2066b'],
+    ['zero-width space', 'zero\u200Bwidth'],
+    ['zero-width joiner', 'zero\u200Dwidth'],
+    ['embedded byte order mark', 'rea\uFEFFson'],
+    ['line separator', 'a\u2028b'],
+    ['paragraph separator', 'a\u2029b'],
+    ['over the length limit', 'x'.repeat(401)],
+    ['not a string', 42 as unknown as string]
+  ])('rejects %s', (_label, reason) => {
+    expect(() => normalizeOverrideReason(reason)).toThrow();
+  });
+
+  it('requires a valid reason whenever the ceiling is above Level 2, and nothing at or below it', () => {
+    expect(() => assertCeilingAuthorized(2, undefined)).not.toThrow();
+    expect(() => assertCeilingAuthorized(3, undefined)).toThrow(/requires a recorded reason/);
+    expect(() => assertCeilingAuthorized(3, '   ')).toThrow(/visible non-space/);
+    expect(() => assertCeilingAuthorized(3, 'approved')).not.toThrow();
   });
 });

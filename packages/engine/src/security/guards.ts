@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { DEFAULT_MAX_APPLY_CHANGE_LEVEL, enforceChangeLevelCeiling } from '../execution/changeLevel.js';
+import { assertCeilingAuthorized, DEFAULT_MAX_APPLY_CHANGE_LEVEL, enforceChangeLevelCeiling } from '../execution/changeLevel.js';
 import type { ChangeLevel, PlanTask } from '../execution/types.js';
 
 const DISALLOWED_PREFIXES = ['/etc', '/proc', '/sys', '/dev', '/var/run'];
@@ -68,7 +68,7 @@ const validateTaskShape = (task: PlanTask, repoRoot: string): void => {
 export const validateRemediationPlan = (
   repoRoot: string,
   tasks: PlanTask[],
-  options: { maxChangeLevel?: ChangeLevel; pluginRuleIds?: ReadonlySet<string> } = {}
+  options: { maxChangeLevel?: ChangeLevel; pluginRuleIds?: ReadonlySet<string>; changeLevelReason?: string } = {}
 ): void => {
   if (tasks.length > MAX_PLAN_TASKS) {
     throw new Error(`Invalid remediation plan: task count ${tasks.length} exceeds policy limit ${MAX_PLAN_TASKS}.`);
@@ -82,6 +82,8 @@ export const validateRemediationPlan = (
     seenTaskIds.add(task.id);
     validateTaskShape(task, repoRoot);
   }
+
+  assertCeilingAuthorized(options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL, options.changeLevelReason);
 
   // Classify the repo-relative resolved path (not the raw task string) so `..`, `.//`, absolute and trailing-dot forms cannot dodge Level 3.
   enforceChangeLevelCeiling(tasks, options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL, {

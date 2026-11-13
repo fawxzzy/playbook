@@ -138,3 +138,55 @@ describe('assertApplyChangeScopeBinding (change-scope is bound to the plan being
     expect(() => assertApplyChangeScopeBinding(scope, computePlanArtifactDigest(planTasks))).toThrow(/no plan digest/);
   });
 });
+
+describe('computePlanArtifactDigest covers what a task writes', () => {
+  const base = {
+    id: 'task-w',
+    ruleId: 'docs-consolidation.managed-write',
+    file: 'docs/a.md',
+    action: 'write block',
+    autoFix: true,
+    task_kind: 'docs-managed-write',
+    write: { operation: 'replace-managed-block', blockId: 'b', startMarker: '<!-- S -->', endMarker: '<!-- E -->', content: 'approved content' },
+    preconditions: { target_path: 'docs/a.md', target_file_fingerprint: 'abc', approved_fragment_ids: ['f1'], planned_operation: 'replace-managed-block' }
+  };
+  const digest = (task: Record<string, unknown>) => computePlanArtifactDigest([task as never]);
+
+  it('changes when a hand-edited plan changes write content, operation, markers or preconditions under the same task id', () => {
+    const original = digest(base);
+    expect(digest({ ...base, write: { ...base.write, content: 'attacker content' } })).not.toBe(original);
+    expect(digest({ ...base, write: { ...base.write, operation: 'append-managed-block' } })).not.toBe(original);
+    expect(digest({ ...base, write: { ...base.write, startMarker: '<!-- X -->' } })).not.toBe(original);
+    expect(digest({ ...base, preconditions: { ...base.preconditions, target_file_fingerprint: 'zzz' } })).not.toBe(original);
+    expect(digest({ ...base, task_kind: 'release-package-version' })).not.toBe(original);
+  });
+
+  it('is independent of key order and of the additive changeLevel label', () => {
+    const reordered = {
+      preconditions: { planned_operation: 'replace-managed-block', approved_fragment_ids: ['f1'], target_file_fingerprint: 'abc', target_path: 'docs/a.md' },
+      write: { content: 'approved content', endMarker: '<!-- E -->', startMarker: '<!-- S -->', blockId: 'b', operation: 'replace-managed-block' },
+      task_kind: 'docs-managed-write',
+      autoFix: true,
+      action: 'write block',
+      file: 'docs/a.md',
+      ruleId: 'docs-consolidation.managed-write',
+      id: 'task-w',
+      changeLevel: 1
+    };
+    expect(digest(reordered)).toBe(digest(base));
+  });
+
+  it('treats null and undefined consistently for every optional field', () => {
+    const plain = { id: 't', ruleId: 'r', action: 'a', autoFix: true };
+    expect(digest({ ...plain, file: null, task_kind: null, write: null, preconditions: null })).toBe(digest({ ...plain }));
+    expect(digest({ ...plain, file: undefined, task_kind: undefined, write: undefined, preconditions: undefined })).toBe(digest({ ...plain, file: null }));
+    expect(digest({ ...plain, write: { operation: 'x', content: 'y' } })).not.toBe(digest({ ...plain, write: null }));
+  });
+
+  it('still depends on task order and membership', () => {
+    const a = { id: 'a', ruleId: 'r', file: null, action: 'a', autoFix: true };
+    const b = { id: 'b', ruleId: 'r', file: null, action: 'b', autoFix: true };
+    expect(computePlanArtifactDigest([a, b])).not.toBe(computePlanArtifactDigest([b, a]));
+    expect(computePlanArtifactDigest([a])).not.toBe(computePlanArtifactDigest([a, b]));
+  });
+});

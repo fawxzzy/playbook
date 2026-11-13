@@ -53,7 +53,7 @@ type ApplyJsonResult = {
   exitCode: number;
   remediation: PlanRemediation;
   message?: string;
-  /** Present only when `--allow-level 3 --reason` was used: the recorded authorization and the tasks that needed it. */
+  /** Present only when `--allow-level 3 --reason` was used: the recorded authorization and the tasks that passed only because of it (declared above Level 2, or caught by the reported-write check). */
   changeLevelOverride?: ChangeLevelOverride & { overriddenTaskIds: string[] };
   results: ApplyResult[];
   summary: {
@@ -86,6 +86,8 @@ type PlanTask = {
 type PlanSelection = {
   tasks: PlanTask[];
   remediation: PlanRemediation;
+  /** True only when the artifact is a `plan` artifact (`plan --json` output); only then is change-scope binding applied. */
+  isPlanArtifact?: boolean;
   releaseLockstepGroups?: Array<{ name: string; taskIds: string[] }>;
   maintenanceExecution?: {
     sourcePlan: string;
@@ -372,7 +374,8 @@ const normalizeApplyPlanArtifact = (payload: unknown): NormalizedPlanArtifact =>
   if (normalizedPayload.command === 'plan') {
     return {
       tasks: engine.parsePlanArtifact(payload).tasks,
-      remediation: parsePlanRemediation(normalizedPayload.remediation)
+      remediation: parsePlanRemediation(normalizedPayload.remediation),
+      isPlanArtifact: true
     };
   }
 
@@ -1146,7 +1149,7 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   }
 
   const selectedTasks = selectPlanTasks(plan.tasks, options.tasks);
-  const validationOptions = changeLevelOverride ? { maxChangeLevel: changeLevelOverride.allowLevel } : undefined;
+  const validationOptions = changeLevelOverride ? { maxChangeLevel: changeLevelOverride.allowLevel, changeLevelReason: changeLevelOverride.reason } : undefined;
   const validateSelectedTasks = (tasks: PlanTask[]): void => {
     if (validationOptions) {
       engine.validateRemediationPlan(cwd, tasks, validationOptions);
@@ -1156,6 +1159,11 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   };
 
   if (plan.maintenanceExecution) {
+    if (changeLevelOverride) {
+      throw new Error(
+        'The --allow-level/--reason override cannot be used with maintenance-plan execution: maintenance tasks are a fixed reviewed command set at Level 2 and never need a Level 3 override.'
+      );
+    }
     // Maintenance tasks are marked autoFix:false in the artifact (apply's handler pipeline never runs them) but this
     // branch executes their commands, so they are validated as executable tasks before any command runs.
     validateSelectedTasks(selectedTasks.map((task: PlanTask) => ({ ...task, autoFix: true })));
@@ -1243,10 +1251,15 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   }
 
   validateReleaseTaskSelection(plan, selectedTasks);
-  const declaredScope = engine.readApplyChangeScope(cwd);
+  // change-scope.json describes a `plan` artifact. Applying a `plan` artifact binds it by digest (a stale or foreign scope
+  // is refused); applying regenerated tasks (no --from-plan) enforces the file/budget limits as before without a digest
+  // check; release, fix and maintenance plans never use the file, so a leftover plan-sourced scope cannot block them.
+  const scopeApplies = options.fromPlan ? plan.isPlanArtifact === true : true;
+  const declaredScope = scopeApplies ? engine.readApplyChangeScope(cwd) : null;
   if (declaredScope) {
-    // The scope file is last-writer-wins; only enforce it for the exact plan that produced it, otherwise refuse.
-    engine.assertApplyChangeScopeBinding(declaredScope, engine.computePlanArtifactDigest(plan.tasks));
+    if (options.fromPlan) {
+      engine.assertApplyChangeScopeBinding(declaredScope, engine.computePlanArtifactDigest(plan.tasks));
+    }
     engine.enforceApplyChangeScope(selectedTasks, declaredScope);
   }
   validateSelectedTasks(selectedTasks);
@@ -1278,9 +1291,7 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
       ? {
           changeLevelOverride: {
             ...changeLevelOverride,
-            overriddenTaskIds: selectedTasks
-              .filter((task: PlanTask) => task.autoFix && engine.resolveTaskChangeLevel(task, { repoRoot: cwd }) > engine.DEFAULT_MAX_APPLY_CHANGE_LEVEL)
-              .map((task: PlanTask) => task.id)
+            overriddenTaskIds: execution.overriddenTaskIds ?? []
           }
         }
       : {}),

@@ -158,6 +158,38 @@ export const assertReportedWritesWithinCeiling = (
   }
 };
 
+export const MAX_OVERRIDE_REASON_LENGTH = 400;
+
+/**
+ * Validate the human-supplied reason recorded with a change-level override. The CLI parser applies the same rules
+ * (packages/cli/src/lib/changeLevelOverride.ts); library entry points re-check so a caller cannot raise the
+ * ceiling without a recorded reason. Rejects control, format (bidi overrides, zero-width), and line/paragraph
+ * separator characters, and requires at least one visible non-space character.
+ */
+export const normalizeOverrideReason = (reason: unknown): string => {
+  if (typeof reason !== 'string') {
+    throw new Error('Raising the change-level ceiling above Level 2 requires a recorded reason string.');
+  }
+  const trimmed = reason.trim();
+  if (!/[^\p{Z}\p{C}]/u.test(trimmed)) {
+    throw new Error('The change-level override reason must contain at least one visible non-space character.');
+  }
+  if (trimmed.length > MAX_OVERRIDE_REASON_LENGTH) {
+    throw new Error(`The change-level override reason must be at most ${MAX_OVERRIDE_REASON_LENGTH} characters.`);
+  }
+  if (/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(trimmed)) {
+    throw new Error('The change-level override reason must be a single line without control, format, or separator characters.');
+  }
+  return trimmed;
+};
+
+/** A ceiling above the default is only accepted together with a valid recorded reason. */
+export const assertCeilingAuthorized = (maxLevel: ChangeLevel, reason: unknown): void => {
+  if (maxLevel > DEFAULT_MAX_APPLY_CHANGE_LEVEL) {
+    normalizeOverrideReason(reason);
+  }
+};
+
 /** Explicit, recorded authorization to apply tasks above the default ceiling. Only Level 3 can be allowed. */
 export type ChangeLevelOverride = {
   allowLevel: 3;

@@ -10,10 +10,12 @@
     "A rule id outside the reviewed built-in table, and any rule id served by a plugin-registered handler, is never below Level 2.",
     "validateRemediationPlan and FixExecutor.apply reject any auto-fix task above Level 2 before any handler runs.",
     "Non-auto-fix tasks are skipped by apply and are not gated by the ceiling.",
-    "apply --allow-level 3 --reason \"<text>\" (both required, only 3, single-line reason up to 400 chars) raises the ceiling to Level 3 for that run and records changeLevelOverride in the apply result and an apply.change-level-override.v1 memory event; without both flags Level 3 stays rejected.",
     "After a handler reports applied, each filesChanged path is canonicalized and level-checked; a Level 3 write without the override fails the task and halts the run (remaining tasks are skipped).",
     "The maintenance-plan branch of apply validates its tasks (validateRemediationPlan) before any maintenance command runs.",
-    "plan --json stamps its change-scope bundle with source.artifactDigest; apply refuses a change-scope written by another command, without a digest, or with a different digest than the plan being applied."
+    "apply --allow-level 3 --reason \"<text>\" (both required once each with a value; only 3; reason trimmed, at most 400 chars, a visible non-space character, no control/format/separator characters) raises the ceiling to Level 3 for that run. Library entry points (applyExecutionPlan changeLevelOverride, FixExecutor.apply and validateRemediationPlan maxChangeLevel above 2) require a valid reason and throw without one. The override is rejected with --policy, --policy-check and maintenance-plan execution.",
+    "The override is recorded as an apply.change-level-override.v1 memory event written before the executor runs (best-effort, reason secret-redacted) and as changeLevelOverride in the apply result, whose overriddenTaskIds lists every task that passed only because of the override, including tasks caught by the reported-write check.",
+    "plan --json stamps its change-scope bundle with source.artifactDigest (sha256 over each task's id, rule, file, action, autoFix, task_kind and hashes of write and preconditions; changeLevel excluded; null and undefined hash alike).",
+    "When --from-plan is a plan artifact, apply refuses a change-scope written by another command, without a digest, or with a different digest than the plan being applied. Release, test-fix, docs-consolidation and maintenance plans do not read the change-scope file; without --from-plan the scope limits are enforced with no digest check."
   ],
   "failureModes": [
     "levelThreeAutoApplied",
@@ -22,7 +24,10 @@
     "pluginHandlerWritesOutsideDeclaredFile",
     "overrideUsedWithoutReason",
     "maintenanceCommandRunsUnvalidated",
-    "staleOrForeignChangeScopeEnforced",
-    "levelThreeWriteReportedByHandler"
+    "levelThreeWriteReportedByHandler",
+    "staleOrForeignChangeScopeEnforcedOnPlanApply",
+    "firstPartyApplyBlockedByLeftoverScope",
+    "handEditedPlanWriteUnderSameDigest",
+    "overrideReasonSpoofedWithInvisibleCharacters"
   ]
 }

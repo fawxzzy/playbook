@@ -1,3 +1,4 @@
+import { parseOverrideArgs } from "../lib/changeLevelOverride.js";
 import { commandMetadata } from "../lib/commandMetadata.js";
 import { ExitCode } from "../lib/cliContract.js";
 
@@ -353,8 +354,7 @@ const commandRunners: Record<
       maintenanceApprovalsPath: parseOptionValue(commandArgs, "--maintenance-approvals"),
       tasks: parseOptionValues(commandArgs, "--task"),
       runId: parseOptionValue(commandArgs, "--run-id"),
-      allowLevel: parseOptionValue(commandArgs, "--allow-level") ?? (parseFlag(commandArgs, "--allow-level") ? "" : undefined),
-      reason: parseOptionValue(commandArgs, "--reason") ?? (parseFlag(commandArgs, "--reason") ? "" : undefined),
+      ...parseOverrideArgs(commandArgs),
     });
   },
   fix: async ({ cwd, commandArgs, ci, explain, format, quiet }) => {

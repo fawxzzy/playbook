@@ -174,7 +174,11 @@ test('change.level fails the run when a handler reports a Level 3 write for a ta
   assert.equal(secondRan, false);
 
   // The explicit Level 3 override raises the ceiling for both the declared and the reported paths.
-  const allowed = await new FixExecutor(resolver).apply([tasks[0]], { repoRoot: tempRepo, dryRun: false, maxChangeLevel: 3 });
+  await assert.rejects(
+    new FixExecutor(resolver).apply([tasks[0]], { repoRoot: tempRepo, dryRun: false, maxChangeLevel: 3 }),
+    /requires a recorded reason/
+  );
+  const allowed = await new FixExecutor(resolver).apply([tasks[0]], { repoRoot: tempRepo, dryRun: false, maxChangeLevel: 3, changeLevelReason: 'owner approved the workflow edit' });
   assert.equal(allowed.summary.failed, 0);
   assert.equal(allowed.summary.applied, 1);
 });

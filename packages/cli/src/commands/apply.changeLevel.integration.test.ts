@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -6,6 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as engine from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 import { runApply } from './apply.js';
+import { runPlan } from './plan.js';
+
+vi.setConfig({ testTimeout: 60_000 });
 
 // Real engine, real filesystem: no engine mocks. These tests exercise the whole `apply --from-plan` path.
 
@@ -216,5 +220,166 @@ describe('apply maintenance branch validation (real engine)', () => {
 
     expect(fs.existsSync(path.join(repoDir, '.playbook', 'maintenance-execution-receipt.json'))).toBe(false);
     expect(fs.existsSync(path.join(repoDir, '.playbook', 'maintenance-execution-state.json'))).toBe(false);
+  });
+});
+
+const git = (...args: string[]): void => {
+  const result = spawnSync('git', args, { cwd: repoDir, encoding: 'utf8' });
+  if (result.status !== 0) throw new Error(`git ${args.join(' ')} failed: ${result.stderr}`);
+};
+
+/** Real `plan --json`: writes .playbook/plan.json and .playbook/change-scope.json; returns the emitted plan payload. */
+const runRealPlan = async (): Promise<{ tasks: Array<{ id: string; ruleId: string; file: string | null; action: string }> }> => {
+  const before = logSpy.mock.calls.length;
+  await runPlan(repoDir, { format: 'json', ci: false, quiet: true });
+  return JSON.parse(String(logSpy.mock.calls[before]?.[0]));
+};
+
+describe('plan --json -> apply --from-plan roundtrip (real engine)', () => {
+  // A committed runtime artifact makes verify/plan emit a file-bearing task (PB013 -> .gitignore) next to notes.missing.
+  const setupRepoWithFileBearingPlan = async () => {
+    fs.mkdirSync(path.join(repoDir, 'docs'), { recursive: true });
+    fs.mkdirSync(path.join(repoDir, '.playbook'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'docs', 'PROJECT_GOVERNANCE.md'), '# Governance\n');
+    fs.writeFileSync(path.join(repoDir, '.playbook', 'repo-index.json'), '{}\n');
+    git('init', '-b', 'main');
+    git('config', 'user.email', 'playbook@example.com');
+    git('config', 'user.name', 'Playbook Test');
+    git('add', '-f', '.');
+    git('commit', '-m', 'initial');
+    const plan = await runRealPlan();
+    expect(plan.tasks.some((task) => task.ruleId === 'PB013' && task.file === '.gitignore')).toBe(true);
+    return plan;
+  };
+
+  it('applies the plan it just wrote: scope digest binds and the tasks run', async () => {
+    await setupRepoWithFileBearingPlan();
+
+    const scope = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'change-scope.json'), 'utf8')).bundles[0];
+    expect(scope.source.command).toBe('plan');
+    expect(scope.source.artifactDigest).toMatch(/^sha256:[0-9a-f]{64}$/);
+
+    const exitCode = await runFromPlan({ fromPlan: '.playbook/plan.json' });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(lastJson().summary.applied).toBeGreaterThanOrEqual(1);
+    expect(fs.readFileSync(path.join(repoDir, '.gitignore'), 'utf8')).toContain('.playbook/repo-index.json');
+  });
+
+  it('refuses a hand-edited plan.json under the scope the real plan wrote, and mutates nothing', async () => {
+    await setupRepoWithFileBearingPlan();
+    const planPath = path.join(repoDir, '.playbook', 'plan.json');
+    const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+    plan.tasks = plan.tasks.map((task: { ruleId: string; action: string }) => (task.ruleId === 'PB013' ? { ...task, action: 'edited after review' } : task));
+    fs.writeFileSync(planPath, JSON.stringify(plan));
+
+    await expect(runFromPlan({ fromPlan: '.playbook/plan.json' })).rejects.toThrow(/Change-scope binding failed.*different plan.*or remove \.playbook\/change-scope\.json/s);
+
+    expect(fs.existsSync(path.join(repoDir, '.gitignore'))).toBe(false);
+  });
+
+  it('with no --from-plan, enforces scope limits but does not block on a digest mismatch', async () => {
+    await setupRepoWithFileBearingPlan();
+    // Change the repo after planning so the regenerated tasks no longer match the written plan digest.
+    fs.writeFileSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'), '# Notes\n\n- reviewed\n');
+    const scopePath = path.join(repoDir, '.playbook', 'change-scope.json');
+    const scope = JSON.parse(fs.readFileSync(scopePath, 'utf8'));
+    expect(scope.bundles[0].source.artifactDigest).toBeDefined();
+
+    const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: true, skipReleaseGovernanceBoundary: true });
+
+    expect(exitCode).toBe(ExitCode.Success);
+  });
+});
+
+describe('a leftover plan-sourced change-scope does not block first-party non-plan applies (real engine)', () => {
+  const leaveBehindPlanSourcedScope = async () => {
+    fs.mkdirSync(path.join(repoDir, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'docs', 'PROJECT_GOVERNANCE.md'), '# Governance\n');
+    await runRealPlan();
+    const scope = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'change-scope.json'), 'utf8')).bundles[0];
+    expect(scope.source.command).toBe('plan');
+    // The file-less notes plan makes the scope "proposal-only", which would reject every later apply that read it.
+    expect(scope.mutationScope.boundaryChecks).not.toContain('writes-must-stay-inside-allowedFiles');
+  };
+
+  it('release sync path: applies a release-plan artifact that bumps a real package.json', async () => {
+    await leaveBehindPlanSourcedScope();
+    fs.mkdirSync(path.join(repoDir, 'packages', 'alpha'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'packages', 'alpha', 'package.json'), JSON.stringify({ name: '@scope/alpha', version: '1.2.3' }, null, 2) + '\n');
+    const releasePlan = {
+      schemaVersion: '1.0',
+      kind: 'playbook-release-plan',
+      generatedAt: '2026-03-22T00:00:00.000Z',
+      summary: { recommendedBump: 'patch', reasons: ['shipped internal code changed'] },
+      packages: [{ name: '@scope/alpha', path: 'packages/alpha', currentVersion: '1.2.3', recommendedBump: 'patch', versionGroup: 'lockstep', reasons: ['changed'], evidence: [] }],
+      versionGroups: [{ name: 'lockstep', packages: ['@scope/alpha'], recommendedBump: 'patch', reasons: ['changed'] }],
+      tasks: [
+        {
+          id: 'task-release-alpha',
+          ruleId: 'release.package-json.version',
+          file: 'packages/alpha/package.json',
+          action: 'Update @scope/alpha package.json to 1.2.4',
+          autoFix: true,
+          task_kind: 'release-package-version',
+          provenance: {
+            package_name: '@scope/alpha',
+            package_path: 'packages/alpha',
+            current_version: '1.2.3',
+            next_version: '1.2.4',
+            version_group: 'lockstep',
+            linked_workspace_versions: [{ name: '@scope/alpha', currentVersion: '1.2.3', nextVersion: '1.2.4' }]
+          }
+        }
+      ]
+    };
+    fs.writeFileSync(path.join(repoDir, '.playbook', 'release-plan.json'), JSON.stringify(releasePlan));
+
+    const exitCode = await runFromPlan({ fromPlan: '.playbook/release-plan.json' });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(JSON.parse(fs.readFileSync(path.join(repoDir, 'packages', 'alpha', 'package.json'), 'utf8')).version).toBe('1.2.4');
+  });
+
+  it('test-autofix path: applies a test-fix-plan artifact without consulting the scope', async () => {
+    await leaveBehindPlanSourcedScope();
+    const fixPlan = {
+      schemaVersion: '1.0',
+      kind: 'test-fix-plan',
+      command: 'test-fix-plan',
+      generatedAt: '1970-01-01T00:00:00.000Z',
+      tasks: [{ id: 'task-test-fix', ruleId: 'test-triage.snapshot-refresh', file: 'packages/cli/src/commands/schema.test.ts', action: 'refresh snapshot', autoFix: true }],
+      excluded: [],
+      summary: { total_findings: 1, eligible_findings: 1, excluded_findings: 0, auto_fix_tasks: 1 }
+    };
+    fs.writeFileSync(path.join(repoDir, '.playbook', 'test-fix-plan.json'), JSON.stringify(fixPlan));
+
+    const exitCode = await runFromPlan({ fromPlan: '.playbook/test-fix-plan.json' });
+
+    // No built-in handler exists for this rule, so the task is reported unsupported; the point is it was not blocked by the scope.
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(lastJson().summary).toMatchObject({ applied: 0, failed: 0, unsupported: 1 });
+  });
+});
+
+describe('apply override on maintenance plans (real engine)', () => {
+  it('rejects --allow-level/--reason on a maintenance plan with a clear error instead of silently ignoring it', async () => {
+    const row = { maintenanceId: 'm1', maintenanceType: 'docs-audit-maintenance', boundedTargetSurface: 'docs/', sourceEvidenceRefs: [] };
+    fs.mkdirSync(path.join(repoDir, '.playbook'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'plan.json'), JSON.stringify({ schemaVersion: '1.0', kind: 'playbook-maintenance-plan', maintenanceRows: [row] }));
+    fs.writeFileSync(
+      path.join(repoDir, '.playbook', 'maintenance-approvals.json'),
+      JSON.stringify({
+        schemaVersion: '1.0',
+        kind: 'playbook-maintenance-approvals',
+        generatedAt: new Date(0).toISOString(),
+        approvals: [{ maintenanceId: 'm1', approved: true, approvalRef: 'approval:1', approvedBy: 'owner', boundedTargetSurface: 'docs/' }]
+      })
+    );
+    fs.writeFileSync(path.join(repoDir, '.playbook', 'policy-evaluation.json'), JSON.stringify({ evaluations: [{ proposal_id: 'maintenance:m1', decision: 'safe', reason: 'approved' }] }));
+
+    await expect(runFromPlan({ allowLevel: '3', reason: 'owner approved' })).rejects.toThrow(/cannot be used with maintenance-plan execution/);
+
+    expect(fs.existsSync(path.join(repoDir, '.playbook', 'maintenance-execution-receipt.json'))).toBe(false);
   });
 });

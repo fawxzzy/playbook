@@ -10,6 +10,7 @@ import {
 import type { VerifyReport } from '../report/types.js';
 import type { PlanTask } from '../execution/types.js';
 import type { FixExecutionResult } from '../execution/fixExecutor.js';
+import { redactSecretsForLogs } from '../security/guards.js';
 import { decideAdmission, readCurrentMemoryPressureBand, toAdmissionKey, writeAdmissionRollup } from './admission.js';
 
 const canonicalize = (value: unknown): unknown => {
@@ -134,19 +135,20 @@ export const buildChangeLevelOverrideMemoryEvent = (input: {
   repoId: string;
   allowLevel: number;
   reason: string;
-  /** Task ids that exceeded the default ceiling and ran only because of the override. */
+  /** Task ids declared above the default ceiling, recorded as intent before the executor runs. */
   overriddenTaskIds: string[];
   occurredAt?: number;
 }): MemoryEvent => {
   const occurredAt = input.occurredAt ?? Date.now();
   const taskIds = uniqueSorted(input.overriddenTaskIds);
-  const canonicalKey = `apply-change-level-override|allow:${input.allowLevel}|reason:${input.reason}|tasks:${taskIds.join(',')}`;
+  const reason = redactSecretsForLogs(input.reason);
+  const canonicalKey = `apply-change-level-override|allow:${input.allowLevel}|reason:${reason}|tasks:${taskIds.join(',')}`;
 
   return createMemoryEvent({
     repoId: input.repoId,
     eventType: 'apply.change-level-override.v1',
     occurredAt,
-    summary: `apply ran with change-level override (allow level ${input.allowLevel}): ${input.reason}`,
+    summary: `apply started with change-level override (allow level ${input.allowLevel}): ${reason}`,
     canonicalKey,
     fingerprintDimensions: ['command:apply', `change-level-override:${input.allowLevel}`, ...taskIds.map((id) => `overridden-task:${id}`)],
     evidence: buildEvidence(['.playbook/plan.json'], occurredAt, 'apply-change-level-override'),

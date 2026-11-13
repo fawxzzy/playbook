@@ -325,7 +325,7 @@ describe('runApply', () => {
   describe('change-level override (--allow-level 3 --reason)', () => {
     const level3Task = { id: 'task-l3', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', action: 'edit workflow', autoFix: true };
 
-    const arrangeSinglePluginTask = () => {
+    const arrangeSinglePluginTask = (overriddenTaskIds?: string[]) => {
       generatePlanContract.mockReturnValue({
         verify: { ok: false, summary: { failures: 1, warnings: 0 } },
         tasks: [level3Task]
@@ -333,47 +333,58 @@ describe('runApply', () => {
       loadVerifyRules.mockResolvedValue([]);
       applyExecutionPlan.mockResolvedValue({
         results: [{ ...level3Task, status: 'applied' }],
-        summary: { applied: 1, skipped: 0, unsupported: 0, failed: 0 }
+        summary: { applied: 1, skipped: 0, unsupported: 0, failed: 0 },
+        ...(overriddenTaskIds ? { overriddenTaskIds } : {})
       });
     };
 
-    it('raises the ceiling, hands the override to the engine, and records it in the apply result', async () => {
+    it('raises the ceiling, hands the override to the engine, and records the engine-reported tasks in the apply result', async () => {
       const { runApply } = await import('./apply.js');
       const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-override-'));
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-      arrangeSinglePluginTask();
-      resolveTaskChangeLevel.mockReturnValue(3);
+      try {
+        arrangeSinglePluginTask(['task-l3', 'task-caught-by-reported-write']);
 
-      const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false, allowLevel: '3', reason: '  Release owner approved (ticket 42)  ' });
+        const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false, allowLevel: '3', reason: '  Release owner approved (ticket 42)  ' });
 
-      expect(exitCode).toBe(ExitCode.Success);
-      expect(validateRemediationPlan).toHaveBeenCalledWith(repoDir, [level3Task], { maxChangeLevel: 3 });
-      expect(applyExecutionPlan).toHaveBeenCalledWith(
-        repoDir,
-        [level3Task],
-        expect.objectContaining({ changeLevelOverride: { allowLevel: 3, reason: 'Release owner approved (ticket 42)' } })
-      );
-      const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
-      expect(payload.changeLevelOverride).toEqual({ allowLevel: 3, reason: 'Release owner approved (ticket 42)', overriddenTaskIds: ['task-l3'] });
-
-      logSpy.mockRestore();
-      fs.rmSync(repoDir, { recursive: true, force: true });
+        expect(exitCode).toBe(ExitCode.Success);
+        expect(validateRemediationPlan).toHaveBeenCalledWith(repoDir, [level3Task], {
+          maxChangeLevel: 3,
+          changeLevelReason: 'Release owner approved (ticket 42)'
+        });
+        expect(applyExecutionPlan).toHaveBeenCalledWith(
+          repoDir,
+          [level3Task],
+          expect.objectContaining({ changeLevelOverride: { allowLevel: 3, reason: 'Release owner approved (ticket 42)' } })
+        );
+        const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+        expect(payload.changeLevelOverride).toEqual({
+          allowLevel: 3,
+          reason: 'Release owner approved (ticket 42)',
+          overriddenTaskIds: ['task-l3', 'task-caught-by-reported-write']
+        });
+      } finally {
+        logSpy.mockRestore();
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
     });
 
     it('applies the default ceiling and omits override fields when the flags are absent', async () => {
       const { runApply } = await import('./apply.js');
       const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-no-override-'));
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-      arrangeSinglePluginTask();
+      try {
+        arrangeSinglePluginTask();
 
-      await runApply(repoDir, { format: 'json', ci: false, quiet: false });
+        await runApply(repoDir, { format: 'json', ci: false, quiet: false });
 
-      expect(validateRemediationPlan).toHaveBeenCalledWith(repoDir, [level3Task]);
-      expect(applyExecutionPlan.mock.calls[0]?.[2]).not.toHaveProperty('changeLevelOverride');
-      expect(JSON.parse(String(logSpy.mock.calls[0]?.[0]))).not.toHaveProperty('changeLevelOverride');
-
-      logSpy.mockRestore();
-      fs.rmSync(repoDir, { recursive: true, force: true });
+        expect(validateRemediationPlan).toHaveBeenCalledWith(repoDir, [level3Task]);
+        expect(applyExecutionPlan.mock.calls[0]?.[2]).not.toHaveProperty('changeLevelOverride');
+        expect(JSON.parse(String(logSpy.mock.calls[0]?.[0]))).not.toHaveProperty('changeLevelOverride');
+      } finally {
+        logSpy.mockRestore();
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
     });
 
     it.each([
@@ -381,28 +392,36 @@ describe('runApply', () => {
       [{ reason: 'because' }, /must be provided together/],
       [{ allowLevel: '2', reason: 'because' }, /only accepts 3/],
       [{ allowLevel: 'three', reason: 'because' }, /only accepts 3/],
-      [{ allowLevel: '3', reason: '   ' }, /non-empty/],
+      [{ allowLevel: '3', reason: '   ' }, /visible non-space/],
       [{ allowLevel: '3', reason: 'x'.repeat(401) }, /at most 400/],
-      [{ allowLevel: '3', reason: 'line one\nline two' }, /single line/]
+      [{ allowLevel: '3', reason: 'line one\nline two' }, /single line/],
+      [{ allowLevel: '3', reason: 'looks fine\u202Egnp.exe' }, /single line/],
+      [{ allowLevel: '3', reason: 'zero\u200Bwidth' }, /single line/],
+      [{ allowLevel: '3', reason: 'next\u0085line' }, /single line/]
     ])('rejects an incomplete or invalid override %j before touching the plan', async (flags, message) => {
       const { runApply } = await import('./apply.js');
       const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-bad-override-'));
-      arrangeSinglePluginTask();
+      try {
+        arrangeSinglePluginTask();
 
-      await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false, ...flags })).rejects.toThrow(message);
-      expect(applyExecutionPlan).not.toHaveBeenCalled();
-      expect(generatePlanContract).not.toHaveBeenCalled();
-
-      fs.rmSync(repoDir, { recursive: true, force: true });
+        await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false, ...flags })).rejects.toThrow(message);
+        expect(applyExecutionPlan).not.toHaveBeenCalled();
+        expect(generatePlanContract).not.toHaveBeenCalled();
+      } finally {
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
     });
 
     it('rejects the override in policy modes', async () => {
       const { runApply } = await import('./apply.js');
       const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-override-policy-'));
-      await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false, policy: true, allowLevel: '3', reason: 'because' })).rejects.toThrow(
-        /applies only to standard apply/
-      );
-      fs.rmSync(repoDir, { recursive: true, force: true });
+      try {
+        await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false, policy: true, allowLevel: '3', reason: 'because' })).rejects.toThrow(
+          /applies only to standard apply/
+        );
+      } finally {
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
     });
   });
 
@@ -416,44 +435,102 @@ describe('runApply', () => {
       boundaryChecks: ['no-mutation-authority-escalation', 'writes-must-stay-inside-allowedFiles']
     };
 
-    it('binds the scope to the digest of the plan being applied before enforcing it', async () => {
+    const writePlanFile = (dir: string, payload: unknown, name = 'plan.json'): void => {
+      fs.writeFileSync(path.join(dir, name), JSON.stringify(payload));
+    };
+
+    const appliedResult = { results: [{ ...scopeTask, status: 'applied' }], summary: { applied: 1, skipped: 0, unsupported: 0, failed: 0 } };
+
+    it('binds the scope to the digest of a `plan` artifact before enforcing it', async () => {
       const { runApply } = await import('./apply.js');
       const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-scope-bound-'));
-      generatePlanContract.mockReturnValue({ verify: { ok: false, summary: { failures: 1, warnings: 0 } }, tasks: [scopeTask] });
-      loadVerifyRules.mockResolvedValue([]);
-      readApplyChangeScope.mockReturnValue(scope);
-      computePlanArtifactDigest.mockReturnValue('sha256:abc');
-      applyExecutionPlan.mockResolvedValue({
-        results: [{ ...scopeTask, status: 'applied' }],
-        summary: { applied: 1, skipped: 0, unsupported: 0, failed: 0 }
-      });
+      try {
+        writePlanFile(repoDir, { schemaVersion: '1.0', command: 'plan', remediation: { status: 'ready', totalSteps: 1, unresolvedFailures: 0 }, tasks: [scopeTask] });
+        parsePlanArtifact.mockReturnValue({ tasks: [scopeTask] });
+        loadVerifyRules.mockResolvedValue([]);
+        readApplyChangeScope.mockReturnValue(scope);
+        computePlanArtifactDigest.mockReturnValue('sha256:abc');
+        applyExecutionPlan.mockResolvedValue(appliedResult);
 
-      const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
+        const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' });
 
-      expect(exitCode).toBe(ExitCode.Success);
-      expect(computePlanArtifactDigest).toHaveBeenCalledWith([scopeTask]);
-      expect(assertApplyChangeScopeBinding).toHaveBeenCalledWith(scope, 'sha256:abc');
-      expect(assertApplyChangeScopeBinding.mock.invocationCallOrder[0]).toBeLessThan(enforceApplyChangeScope.mock.invocationCallOrder[0] ?? Infinity);
-
-      fs.rmSync(repoDir, { recursive: true, force: true });
+        expect(exitCode).toBe(ExitCode.Success);
+        expect(computePlanArtifactDigest).toHaveBeenCalledWith([scopeTask]);
+        expect(assertApplyChangeScopeBinding).toHaveBeenCalledWith(scope, 'sha256:abc');
+        expect(assertApplyChangeScopeBinding.mock.invocationCallOrder[0]).toBeLessThan(enforceApplyChangeScope.mock.invocationCallOrder[0] ?? Infinity);
+      } finally {
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
     });
 
-    it('refuses to apply, enforce or mutate when the scope belongs to a different plan', async () => {
+    it('refuses to enforce or mutate when the scope belongs to a different `plan` artifact', async () => {
       const { runApply } = await import('./apply.js');
       const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-scope-mismatch-'));
-      generatePlanContract.mockReturnValue({ verify: { ok: false, summary: { failures: 1, warnings: 0 } }, tasks: [scopeTask] });
-      loadVerifyRules.mockResolvedValue([]);
-      readApplyChangeScope.mockReturnValue(scope);
-      computePlanArtifactDigest.mockReturnValue('sha256:different');
-      assertApplyChangeScopeBinding.mockImplementation(() => {
-        throw new Error('Change-scope binding failed for scope-123: derived from a different plan');
-      });
+      try {
+        writePlanFile(repoDir, { schemaVersion: '1.0', command: 'plan', remediation: { status: 'ready', totalSteps: 1, unresolvedFailures: 0 }, tasks: [scopeTask] });
+        parsePlanArtifact.mockReturnValue({ tasks: [scopeTask] });
+        loadVerifyRules.mockResolvedValue([]);
+        readApplyChangeScope.mockReturnValue(scope);
+        computePlanArtifactDigest.mockReturnValue('sha256:different');
+        assertApplyChangeScopeBinding.mockImplementation(() => {
+          throw new Error('Change-scope binding failed for scope-123: derived from a different plan');
+        });
 
-      await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false })).rejects.toThrow(/different plan/);
-      expect(enforceApplyChangeScope).not.toHaveBeenCalled();
-      expect(applyExecutionPlan).not.toHaveBeenCalled();
+        await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' })).rejects.toThrow(/different plan/);
+        expect(enforceApplyChangeScope).not.toHaveBeenCalled();
+        expect(applyExecutionPlan).not.toHaveBeenCalled();
+      } finally {
+        assertApplyChangeScopeBinding.mockReset();
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
+    });
 
-      fs.rmSync(repoDir, { recursive: true, force: true });
+    it('enforces scope limits without a digest check when tasks are regenerated (no --from-plan)', async () => {
+      const { runApply } = await import('./apply.js');
+      const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-scope-regenerated-'));
+      try {
+        generatePlanContract.mockReturnValue({ verify: { ok: false, summary: { failures: 1, warnings: 0 } }, tasks: [scopeTask] });
+        loadVerifyRules.mockResolvedValue([]);
+        readApplyChangeScope.mockReturnValue(scope);
+        applyExecutionPlan.mockResolvedValue(appliedResult);
+
+        const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
+
+        expect(exitCode).toBe(ExitCode.Success);
+        expect(assertApplyChangeScopeBinding).not.toHaveBeenCalled();
+        expect(enforceApplyChangeScope).toHaveBeenCalledWith([scopeTask], scope);
+      } finally {
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
+    });
+
+    it.each([
+      ['release plan', () => createReleasePlanPayload(), '.playbook/release-plan.json'],
+      ['test-fix plan', () => createTestFixPlanPayload(), '.playbook/test-fix-plan.json']
+    ])('does not read, bind or enforce the change-scope file for a %s artifact', async (_label, payloadFactory, relativePath) => {
+      const { runApply } = await import('./apply.js');
+      const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-scope-ignored-'));
+      try {
+        const payload = payloadFactory();
+        fs.mkdirSync(path.join(repoDir, '.playbook'), { recursive: true });
+        fs.writeFileSync(path.join(repoDir, relativePath), JSON.stringify(payload));
+        parsePlanArtifact.mockReturnValue({ tasks: payload.tasks });
+        loadVerifyRules.mockResolvedValue([]);
+        readApplyChangeScope.mockReturnValue(scope);
+        applyExecutionPlan.mockResolvedValue({
+          results: payload.tasks.map((task: { id: string }) => ({ ...task, status: 'applied' })),
+          summary: { applied: payload.tasks.length, skipped: 0, unsupported: 0, failed: 0 }
+        });
+
+        const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false, fromPlan: relativePath });
+
+        expect(exitCode).toBe(ExitCode.Success);
+        expect(readApplyChangeScope).not.toHaveBeenCalled();
+        expect(assertApplyChangeScopeBinding).not.toHaveBeenCalled();
+        expect(enforceApplyChangeScope).not.toHaveBeenCalled();
+      } finally {
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
     });
   });
 

@@ -1,6 +1,13 @@
 import type { ChangeLevel, FixHandler, FixHandlerResult, PlanTask } from './types.js';
 import { redactSecretsForLogs, validateRemediationPlan, validateRepoBoundary } from '../security/guards.js';
-import { assertReportedWritesWithinCeiling, ChangeLevelWriteViolationError, DEFAULT_MAX_APPLY_CHANGE_LEVEL } from './changeLevel.js';
+import {
+  assertCeilingAuthorized,
+  assertReportedWritesWithinCeiling,
+  ChangeLevelWriteViolationError,
+  classifyPathChangeLevel,
+  DEFAULT_MAX_APPLY_CHANGE_LEVEL,
+  resolveTaskChangeLevel
+} from './changeLevel.js';
 
 export type ApplyTaskStatus = 'applied' | 'skipped' | 'unsupported' | 'failed';
 
@@ -38,6 +45,11 @@ export type ApplySummary = {
 export type FixExecutionResult = {
   results: ApplyTaskResult[];
   summary: ApplySummary;
+  /**
+   * Present only when the ceiling was raised above the default: ids of tasks that ran only because of the override,
+   * either declared above Level 2 or caught by the reported-write check (a handler wrote to a Level 3 path).
+   */
+  overriddenTaskIds?: string[];
 };
 
 const toMessage = (error: unknown): string => {
@@ -148,10 +160,25 @@ export class HandlerResolver {
 export class FixExecutor {
   constructor(private readonly resolver: HandlerResolver) {}
 
-  async apply(tasks: PlanTask[], options: { repoRoot: string; dryRun: boolean; maxChangeLevel?: ChangeLevel }): Promise<FixExecutionResult> {
+  async apply(
+    tasks: PlanTask[],
+    options: { repoRoot: string; dryRun: boolean; maxChangeLevel?: ChangeLevel; changeLevelReason?: string }
+  ): Promise<FixExecutionResult> {
     const results: ApplyTaskResult[] = [];
     const maxChangeLevel = options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL;
-    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds: this.resolver.pluginRuleIds(), maxChangeLevel });
+    // Raising the ceiling above the default requires a recorded reason at every entry point, not just the CLI.
+    assertCeilingAuthorized(maxChangeLevel, options.changeLevelReason);
+    const pluginRuleIds = this.resolver.pluginRuleIds();
+    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds, maxChangeLevel, changeLevelReason: options.changeLevelReason });
+    const raised = maxChangeLevel > DEFAULT_MAX_APPLY_CHANGE_LEVEL;
+    const overriddenTaskIds = new Set<string>(
+      raised
+        ? tasks
+            .filter((task) => task.autoFix)
+            .filter((task) => resolveTaskChangeLevel(task, { repoRoot: options.repoRoot, pluginHandler: pluginRuleIds.has(task.ruleId) }) > DEFAULT_MAX_APPLY_CHANGE_LEVEL)
+            .map((task) => task.id)
+        : []
+    );
     let halted = false;
 
     for (const task of tasks) {
@@ -198,6 +225,9 @@ export class FixExecutor {
       try {
         const handlerResult = await resolved.handler({ repoRoot: options.repoRoot, dryRun: options.dryRun, task });
         validateHandlerResult(handlerResult, task, options.repoRoot, maxChangeLevel);
+        if (raised && handlerResult.status === 'applied' && (handlerResult.filesChanged ?? []).some((file) => classifyPathChangeLevel(file, { repoRoot: options.repoRoot }) > DEFAULT_MAX_APPLY_CHANGE_LEVEL)) {
+          overriddenTaskIds.add(task.id);
+        }
         results.push({
           id: task.id,
           ruleId: task.ruleId,
@@ -224,6 +254,10 @@ export class FixExecutor {
       }
     }
 
-    return { results, summary: summarize(results) };
+    return {
+      results,
+      summary: summarize(results),
+      ...(raised ? { overriddenTaskIds: [...overriddenTaskIds].sort((left, right) => left.localeCompare(right)) } : {})
+    };
   }
 }

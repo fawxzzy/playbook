@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyExecutionPlan, generateExecutionPlan, generatePlanContract, parsePlanArtifact, validateRemediationPlan, verifyRepo } from '../src/index.js';
+import { applyExecutionPlan, FixExecutor, generateExecutionPlan, generatePlanContract, parsePlanArtifact, validateRemediationPlan, verifyRepo } from '../src/index.js';
+import { HandlerResolver } from '../src/execution/index.js';
 
 describe('verify -> plan -> apply -> verify workflow', () => {
   it('returns verify findings and plan tasks as an engine-backed contract', () => {
@@ -198,6 +199,74 @@ describe('verify -> plan -> apply -> verify workflow', () => {
       const events = readOverrideEvents(root);
       expect(events).toHaveLength(1);
       expect(events[0]?.summary).toContain(OVERRIDE.reason);
+    });
+
+    it('requires a recorded reason at the library entry points before the ceiling can be raised', async () => {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-override-reason-required-'));
+      const options = { dryRun: false, handlers: { 'plugin.workflow': writeWorkflowHandler } };
+
+      await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 3, reason: '' } })).rejects.toThrow(/visible non-space/);
+      await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 3, reason: 'bidi\u202Eoverride' } })).rejects.toThrow(/single line/);
+      await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 2 as never, reason: 'ok' } })).rejects.toThrow(/only allowLevel 3/);
+      expect(() => validateRemediationPlan(root, [workflowTask], { maxChangeLevel: 3 })).toThrow(/requires a recorded reason/);
+      expect(validateRemediationPlan(root, [workflowTask], { maxChangeLevel: 3, changeLevelReason: 'approved' })).toBeUndefined();
+
+      const executor = new FixExecutor(new HandlerResolver({ builtIn: {}, plugin: { 'plugin.workflow': writeWorkflowHandler } }));
+      await expect(executor.apply([workflowTask], { repoRoot: root, dryRun: false, maxChangeLevel: 3 })).rejects.toThrow(/requires a recorded reason/);
+      expect(fs.existsSync(path.join(root, '.github', 'workflows', 'ci.yml'))).toBe(false);
+    });
+
+    it('records the override intent before any handler runs, with a secret-redacted reason', async () => {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-override-event-first-'));
+      let eventsSeenByHandler = -1;
+      let summaryBeforeHandler = '';
+
+      await applyExecutionPlan(root, [workflowTask], {
+        dryRun: false,
+        changeLevelOverride: { allowLevel: 3, reason: 'approved token=super-secret-value-123 by owner' },
+        handlers: {
+          'plugin.workflow': async (context) => {
+            const seen = readOverrideEvents(root);
+            eventsSeenByHandler = seen.length;
+            summaryBeforeHandler = seen[0]?.summary ?? '';
+            return writeWorkflowHandler(context);
+          }
+        }
+      });
+
+      expect(eventsSeenByHandler).toBe(1);
+      expect(summaryBeforeHandler).toContain('[REDACTED]');
+      expect(summaryBeforeHandler).not.toContain('super-secret-value-123');
+    });
+
+    it('reports tasks that passed only because of the override, including those caught by the reported-write check', async () => {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-override-ids-'));
+      const result = await applyExecutionPlan(
+        root,
+        [
+          workflowTask,
+          { id: 'task-docs-ok', ruleId: 'plugin.docs-ok', file: 'docs/ok.md', action: 'fix ok', autoFix: true },
+          { id: 'task-docs-smuggler', ruleId: 'plugin.docs-smuggler', file: 'docs/s.md', action: 'fix s', autoFix: true }
+        ],
+        {
+          dryRun: false,
+          changeLevelOverride: OVERRIDE,
+          handlers: {
+            'plugin.workflow': writeWorkflowHandler,
+            'plugin.docs-ok': async () => ({ status: 'applied', filesChanged: ['docs/ok.md'], summary: 'ok' }),
+            'plugin.docs-smuggler': async () => ({ status: 'applied', filesChanged: ['docs/s.md', '.npmrc'], summary: 'smuggled' })
+          }
+        }
+      );
+
+      expect(result.summary.failed).toBe(0);
+      expect(result.overriddenTaskIds).toEqual(['task-docs-smuggler', 'task-l3-plugin']);
+    });
+
+    it('omits overriddenTaskIds when the default ceiling is in force', async () => {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-override-ids-absent-'));
+      const result = await applyExecutionPlan(root, [{ id: 'task-notes', ruleId: 'notes.missing', file: null, action: 'create notes', autoFix: true }], { dryRun: false });
+      expect(result).not.toHaveProperty('overriddenTaskIds');
     });
 
     it('rejects the same Level 3 task with no override, writing nothing and recording no override event', async () => {
