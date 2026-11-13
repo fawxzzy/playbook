@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
   buildProjectBoardOwnerExport,
-  renderProjectBoardOwnerExport
+  renderProjectBoardOwnerExport,
+  runProjectBoardOwnerExport
 } from '../../scripts/export-project-board-owner.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -95,6 +97,26 @@ test('fails closed for an unsupported non-complete status', () => {
 test('canonical export matches the current roadmap and contains 35 non-complete cards', () => {
   const rendered = renderProjectBoardOwnerExport(repoRoot);
   const canonicalPath = path.join(repoRoot, 'exports', 'playbook.project-board.owner-export.v1.json');
-  assert.equal(fs.readFileSync(canonicalPath, 'utf8'), rendered);
+  // Windows checkouts may materialize the committed export with CRLF; compare the LF form.
+  assert.equal(fs.readFileSync(canonicalPath, 'utf8').replace(/\r\n?/g, '\n'), rendered);
   assert.equal(JSON.parse(rendered).cards.length, 35);
+});
+
+test('--check accepts a CRLF-materialized export and still rejects real drift', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-board-export-'));
+  try {
+    fs.mkdirSync(path.join(dir, 'docs', 'roadmap'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'docs', 'roadmap', 'ROADMAP.json'), `${JSON.stringify(roadmap, null, 2)}\n`);
+    const rendered = renderProjectBoardOwnerExport(dir);
+    const outputPath = path.join(dir, 'exports', 'playbook.project-board.owner-export.v1.json');
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
+    fs.writeFileSync(outputPath, rendered.replaceAll('\n', '\r\n'));
+    assert.doesNotThrow(() => runProjectBoardOwnerExport(['--check'], dir));
+
+    fs.writeFileSync(outputPath, rendered.replace('PB-V1-A-001', 'PB-V1-TAMPERED-001'));
+    assert.throws(() => runProjectBoardOwnerExport(['--check'], dir), /is stale/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
