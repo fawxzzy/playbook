@@ -84,3 +84,14 @@ Preferred warning phrasing for this case:
 ```text
 ⚠️ pnpm pack:smoke (failed in this environment due to network/registry restrictions causing npm 403 during dependency install and fallback tar extraction).
 ```
+
+## 7) Engine test timeouts and heavy fixtures
+
+Many `packages/engine` tests create real git repositories and temp-directory fixtures (`git init`/`commit`, release governance, changelog collection, memory/doctor diagnostics). Single tests in `releaseVersionGovernance`, `gitCollector` and `artifactHygiene` take roughly 3-20s when workers run in parallel or other packages are building, which is well past vitest's 5s default.
+
+Conventions:
+
+- `packages/engine/vitest.config.mjs` sets `testTimeout` and `hookTimeout` to 30s for the whole engine package. Do not add `it(..., 5000)`-style overrides or skip tests to hide a timeout; fix the fixture or raise the ceiling in that one config.
+- `packages/engine/scripts/run-tests.mjs` additionally runs files serially (`--fileParallelism=false --pool=threads`) on Windows. That is a Windows-specific worker-teardown mitigation; the config timeout is what protects parallel runs on every platform.
+- Heavy fixtures should create their own `fs.mkdtempSync(path.join(os.tmpdir(), ...))` repo, never share one across tests, and set `user.email`/`user.name` locally rather than relying on global git config.
+- A test that fails with `Test timed out in <N>ms` under `pnpm -C packages/engine test` is a regression in fixture cost (or a real hang), not a reason to weaken the assertion.
