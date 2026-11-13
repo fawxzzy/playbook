@@ -612,4 +612,151 @@ describe('docs audit', () => {
     expect(result.findings.find((finding) => finding.ruleId === 'docs.pattern-storage.scope-path-drift' && finding.path === 'docs/commands/patterns.md')).toBeDefined();
   });
 
+  describe('command truth packaging rules', () => {
+    const COMMAND_TRUTH_RULE_IDS = [
+      'docs.command-truth.bootstrap-ladder',
+      'docs.command-truth.classification-missing',
+      'docs.command-truth.roadmap-live-boundary',
+      'docs.ask-boundary.contract-missing'
+    ] as const;
+
+    const findingsFor = (result: ReturnType<typeof runDocsAudit>, ruleId: string) =>
+      result.findings.filter((finding) => finding.ruleId === ruleId);
+
+    it('passes all four command-truth packaging rules on a compliant repo', () => {
+      const root = createRepo();
+
+      const result = runDocsAudit(root);
+      for (const ruleId of COMMAND_TRUTH_RULE_IDS) {
+        expect(findingsFor(result, ruleId)).toEqual([]);
+      }
+      expect(result.ok).toBe(true);
+      expect(result.status).toBe('pass');
+    });
+
+    it('warns when README.md or ONBOARDING_DEMO omit a bootstrap ladder command from command truth', () => {
+      const root = createRepo();
+      write(root, 'README.md', '# README\nai-context context verify plan apply');
+      write(
+        root,
+        'docs/ONBOARDING_DEMO.md',
+        '# Onboarding\nai-context context verify plan apply\nSupported question classes\nUnsupported question classes\nDeterministic fallback'
+      );
+
+      const result = runDocsAudit(root);
+      const findings = findingsFor(result, 'docs.command-truth.bootstrap-ladder');
+      expect(findings.map((finding) => finding.path).sort()).toEqual(['README.md', 'docs/ONBOARDING_DEMO.md']);
+      for (const finding of findings) {
+        expect(finding.level).toBe('warning');
+        expect(finding.suggestedDestination).toBe('docs/contracts/command-truth.json');
+      }
+      expect(result.ok).toBe(true);
+      expect(result.status).toBe('warn');
+    });
+
+    it('follows the bootstrap ladder declared in command truth metadata rather than a hard-coded list', () => {
+      const root = createRepo();
+      write(
+        root,
+        'docs/contracts/command-truth.json',
+        JSON.stringify({
+          bootstrapLadder: ['ai-context', 'ai-contract', 'context', 'index'],
+          remediationLoop: ['verify', 'plan', 'apply', 'verify'],
+          canonicalCommands: ['ai-context'],
+          compatibilityCommands: [],
+          utilityCommands: []
+        })
+      );
+
+      const result = runDocsAudit(root);
+      expect(findingsFor(result, 'docs.command-truth.bootstrap-ladder').map((finding) => finding.path).sort()).toEqual([
+        'README.md',
+        'docs/ONBOARDING_DEMO.md'
+      ]);
+    });
+
+    it('warns when docs/commands/README.md does not expose lifecycle, role, or discoverability', () => {
+      const root = createRepo();
+      write(root, 'docs/commands/README.md', '# Commands\nA list of commands without classification metadata.');
+
+      const result = runDocsAudit(root);
+      const findings = findingsFor(result, 'docs.command-truth.classification-missing');
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({
+        level: 'warning',
+        path: 'docs/commands/README.md',
+        suggestedDestination: 'docs/contracts/command-truth.json'
+      });
+    });
+
+    it('accepts any one of lifecycle, role, or discoverability in docs/commands/README.md', () => {
+      for (const marker of ['lifecycle', 'ROLE', 'Discoverability']) {
+        const root = createRepo();
+        write(root, 'docs/commands/README.md', `# Commands\nEach command declares its ${marker}.`);
+
+        const result = runDocsAudit(root);
+        expect(findingsFor(result, 'docs.command-truth.classification-missing')).toEqual([]);
+      }
+    });
+
+    it('warns when ONBOARDING_DEMO omits the ask --repo-context question-class boundary', () => {
+      const root = createRepo();
+      write(root, 'docs/ONBOARDING_DEMO.md', '# Onboarding\nai-context ai-contract context verify plan apply');
+
+      const result = runDocsAudit(root);
+      const findings = findingsFor(result, 'docs.ask-boundary.contract-missing');
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({
+        level: 'warning',
+        path: 'docs/ONBOARDING_DEMO.md',
+        suggestedDestination: 'docs/commands/README.md'
+      });
+      expect(findingsFor(result, 'docs.command-truth.bootstrap-ladder')).toEqual([]);
+    });
+
+    it('accepts either supported, unsupported, or deterministic-fallback wording for the ask boundary', () => {
+      for (const phrase of ['Supported question classes', 'unsupported question classes', 'Deterministic fallback']) {
+        const root = createRepo();
+        write(root, 'docs/ONBOARDING_DEMO.md', `# Onboarding\nai-context ai-contract context verify plan apply\n${phrase}`);
+
+        const result = runDocsAudit(root);
+        expect(findingsFor(result, 'docs.ask-boundary.contract-missing')).toEqual([]);
+      }
+    });
+
+    it('warns when the product roadmap does not separate planned intent from live command availability', () => {
+      const root = createRepo();
+      write(
+        root,
+        'docs/PLAYBOOK_PRODUCT_ROADMAP.md',
+        '# Product roadmap\n## Fact\nObserved.\n## Interpretation\nImplications.\n## Narrative\nEverything listed here is available today.'
+      );
+
+      const result = runDocsAudit(root);
+      const findings = findingsFor(result, 'docs.command-truth.roadmap-live-boundary');
+      expect(findings).toHaveLength(1);
+      expect(findings[0]).toMatchObject({
+        level: 'warning',
+        path: 'docs/PLAYBOOK_PRODUCT_ROADMAP.md',
+        suggestedDestination: 'docs/commands/README.md'
+      });
+    });
+
+    it('skips all four packaging rules when command truth metadata is missing and reports the missing contract instead', () => {
+      const root = createRepo();
+      fs.rmSync(path.join(root, 'docs/contracts/command-truth.json'));
+      write(root, 'README.md', '# README');
+      write(root, 'docs/commands/README.md', '# Commands');
+      write(root, 'docs/ONBOARDING_DEMO.md', '# Onboarding');
+      write(root, 'docs/PLAYBOOK_PRODUCT_ROADMAP.md', '# Product roadmap\n## Fact\nx\n## Interpretation\nx\n## Narrative\nx');
+
+      const result = runDocsAudit(root);
+      for (const ruleId of COMMAND_TRUTH_RULE_IDS) {
+        expect(findingsFor(result, ruleId)).toEqual([]);
+      }
+      expect(findingsFor(result, 'docs.command-truth.missing')).toHaveLength(1);
+      expect(result.ok).toBe(false);
+      expect(result.status).toBe('fail');
+    });
+  });
 });
