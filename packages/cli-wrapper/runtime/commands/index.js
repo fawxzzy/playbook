@@ -1,3 +1,4 @@
+import { parseOverrideArgs } from "../lib/changeLevelOverride.js";
 import { commandMetadata } from "../lib/commandMetadata.js";
 import { ExitCode } from "../lib/cliContract.js";
 const parseFlag = (allArgs, flag) => allArgs.includes(flag);
@@ -276,6 +277,7 @@ const commandRunners = {
             maintenanceApprovalsPath: parseOptionValue(commandArgs, "--maintenance-approvals"),
             tasks: parseOptionValues(commandArgs, "--task"),
             runId: parseOptionValue(commandArgs, "--run-id"),
+            ...parseOverrideArgs(commandArgs),
         });
     },
     fix: async ({ cwd, commandArgs, ci, explain, format, quiet }) => {

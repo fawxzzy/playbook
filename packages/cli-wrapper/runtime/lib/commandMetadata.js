@@ -505,6 +505,7 @@ export const commandMetadata = [
         productFacing: true,
         exampleArgs: 'ask "where should a new feature live?" --repo-context --json',
         machineReadable: true,
+        questionBounded: true,
     },
     {
         name: "explain",
