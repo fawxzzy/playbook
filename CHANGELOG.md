@@ -16,6 +16,7 @@
 - Introduced Simple Rule Theory and Triadic System Pattern as first-class architectural doctrines.
 - Expanded Simple Rule Theory to include data refinement, invariant extraction, and minimal sufficient representation.
 - Integrated these doctrines into architecture documentation, checklist guidance, and command metadata descriptions for `verify`, `plan`, and `apply`.
+- Added `packages/engine/vitest.config.mjs` (30s `testTimeout` and `hookTimeout` for the engine package) and an "Engine test timeouts and heavy fixtures" section in `docs/TESTING.md`. No source, command, bridge, research, scorecard or golden-path contract changed.
 
 ### WHY
 
@@ -31,6 +32,7 @@
 - Establish consistent design primitives for deterministic automation and governance.
 - Encourage storing compact invariant state and deriving redundant views/behavior on demand.
 - Align Playbook workflow framing with triadic system structure.
+- Keeps the engine package test run stable under full workspace and package-load execution: the same suite that passes alone previously failed `diffContext` with "Test timed out in 5000ms" when workers ran in parallel, because git- and temp-fixture tests take 3-20s under load. Tests and assertions are unchanged.
 
 ### WHAT
 
