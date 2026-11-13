@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-11-13",
+  "updatedAt": "2026-11-14",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -84,7 +84,8 @@
         "packages/cli/src/commands/apply.test.ts",
         "test/security/security-regression.test.mjs",
         "test/contracts/security/security-contracts.test.mjs",
-        "packages/engine/src/execution/changeLevel.test.ts"
+        "packages/engine/src/execution/changeLevel.test.ts",
+        "packages/cli/src/commands/apply.changeLevel.integration.test.ts"
       ],
       "docs": [
         "docs/commands/plan.md",
@@ -147,11 +148,15 @@
       ],
       "contracts": [
         "docs/architecture/V1_BOUNDARY_REFACTOR_PLAN.md",
-        "docs/contracts/COMMAND_CONTRACTS_V1.md"
+        "docs/contracts/COMMAND_CONTRACTS_V1.md",
+        "docs/contracts/PLUGIN_CONTRACT_V1.md"
       ],
       "tests": [
         "packages/engine/test/plugins.test.ts",
-        "packages/engine/test/pluginLoadingPath.test.ts"
+        "packages/engine/test/pluginLoadingPath.test.ts",
+        "packages/engine/test/pluginContractV1.test.ts",
+        "packages/cli/src/lib/pluginContract.test.ts",
+        "packages/cli/src/commands/rules.test.ts"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md"
@@ -164,7 +169,7 @@
         "pnpm -r build",
         "pnpm test"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
