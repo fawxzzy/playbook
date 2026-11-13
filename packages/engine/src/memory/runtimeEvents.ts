@@ -130,6 +130,30 @@ export const buildApplyMemoryEvent = (input: {
   });
 };
 
+export const buildChangeLevelOverrideMemoryEvent = (input: {
+  repoId: string;
+  allowLevel: number;
+  reason: string;
+  /** Task ids that exceeded the default ceiling and ran only because of the override. */
+  overriddenTaskIds: string[];
+  occurredAt?: number;
+}): MemoryEvent => {
+  const occurredAt = input.occurredAt ?? Date.now();
+  const taskIds = uniqueSorted(input.overriddenTaskIds);
+  const canonicalKey = `apply-change-level-override|allow:${input.allowLevel}|reason:${input.reason}|tasks:${taskIds.join(',')}`;
+
+  return createMemoryEvent({
+    repoId: input.repoId,
+    eventType: 'apply.change-level-override.v1',
+    occurredAt,
+    summary: `apply ran with change-level override (allow level ${input.allowLevel}): ${input.reason}`,
+    canonicalKey,
+    fingerprintDimensions: ['command:apply', `change-level-override:${input.allowLevel}`, ...taskIds.map((id) => `overridden-task:${id}`)],
+    evidence: buildEvidence(['.playbook/plan.json'], occurredAt, 'apply-change-level-override'),
+    salience: { scoreVersion: '1', score: 0.9, reasonCodes: ['change-level-override', 'human-authorized'], scoredAt: occurredAt }
+  });
+};
+
 export const writeMemoryRuntimeEvent = (repoRoot: string, event: MemoryEvent): string => {
   const eventPath = memoryArtifactPaths.runtimeEvents;
   const existingCount = fs.existsSync(path.join(repoRoot, eventPath))

@@ -13,6 +13,8 @@ import {
 import { FixExecutor, HandlerResolver } from '../../../packages/engine/dist/execution/fixExecutor.js';
 import { PlanGenerator } from '../../../packages/engine/dist/execution/planGenerator.js';
 import { classifyTaskChangeLevel, resolveTaskChangeLevel } from '../../../packages/engine/dist/execution/changeLevel.js';
+import { assertApplyChangeScopeBinding } from '../../../packages/engine/dist/execution/changeScopeEnforcement.js';
+import { buildChangeScopeBundleFromPlan, computePlanArtifactDigest } from '../../../packages/engine/dist/changeScope.js';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const contractsDir = path.join(repoRoot, 'docs/contracts/security');
@@ -137,6 +139,63 @@ test('change.level rejects Level 3 auto-fix tasks before any handler (including 
     /change level exceeds the apply ceiling \(level 2\) for task-level-3 \(level 3\)/
   );
   assert.equal(handlerRan, false);
+});
+
+test('change.level fails the run when a handler reports a Level 3 write for a task that declared a safe file', async () => {
+  const tempRepo = makeTempDir('playbook-change-level-reported-');
+  fs.mkdirSync(path.join(tempRepo, 'docs'), { recursive: true });
+  fs.mkdirSync(path.join(tempRepo, '.github', 'workflows'), { recursive: true });
+
+  let secondRan = false;
+  const resolver = new HandlerResolver({
+    builtIn: {},
+    plugin: {
+      'plugin.docs': async () => {
+        fs.writeFileSync(path.join(tempRepo, 'docs', 'a.md'), '# a\n');
+        fs.writeFileSync(path.join(tempRepo, '.github', 'workflows', 'ci.yml'), 'name: smuggled\n');
+        return { status: 'applied', summary: 'fixed docs', filesChanged: ['docs/a.md', 'docs/../.github/workflows/ci.yml'] };
+      },
+      'plugin.docs2': async () => {
+        secondRan = true;
+        return { status: 'applied', summary: 'fixed b', filesChanged: ['docs/b.md'] };
+      }
+    }
+  });
+
+  const tasks = [
+    { id: 'task-1', ruleId: 'plugin.docs', file: 'docs/a.md', action: 'fix a', autoFix: true },
+    { id: 'task-2', ruleId: 'plugin.docs2', file: 'docs/b.md', action: 'fix b', autoFix: true }
+  ];
+
+  const blocked = await new FixExecutor(resolver).apply(tasks, { repoRoot: tempRepo, dryRun: false });
+  assert.equal(blocked.summary.failed, 1);
+  assert.equal(blocked.summary.skipped, 1);
+  assert.match(blocked.results[0]?.message ?? '', /Change-level violation/);
+  assert.equal(secondRan, false);
+
+  // The explicit Level 3 override raises the ceiling for both the declared and the reported paths.
+  const allowed = await new FixExecutor(resolver).apply([tasks[0]], { repoRoot: tempRepo, dryRun: false, maxChangeLevel: 3 });
+  assert.equal(allowed.summary.failed, 0);
+  assert.equal(allowed.summary.applied, 1);
+});
+
+test('apply.scope refuses a change-scope that was not written for the plan being applied', () => {
+  const planTasks = [{ id: 'task-a', ruleId: 'notes.missing', file: null, action: 'create notes', autoFix: true }];
+  const bundle = buildChangeScopeBundleFromPlan({ tasks: planTasks });
+  const scope = {
+    scopeId: bundle.scopeId,
+    source: bundle.source,
+    allowedFiles: bundle.mutationScope.allowedFiles,
+    patchSizeBudget: bundle.mutationScope.patchSizeBudget,
+    boundaryChecks: bundle.mutationScope.boundaryChecks
+  };
+
+  assert.doesNotThrow(() => assertApplyChangeScopeBinding(scope, computePlanArtifactDigest(planTasks)));
+  assert.throws(
+    () => assertApplyChangeScopeBinding(scope, computePlanArtifactDigest([...planTasks, { ...planTasks[0], id: 'task-b' }])),
+    /derived from a different plan/
+  );
+  assert.throws(() => assertApplyChangeScopeBinding({ ...scope, source: { command: 'analyze-pr', artifactPath: '.playbook/analyze-pr.json' } }, computePlanArtifactDigest(planTasks)), /written by "analyze-pr"/);
 });
 
 test('change.level classification is deterministic and a declared level can only raise it', () => {

@@ -353,6 +353,8 @@ const commandRunners: Record<
       maintenanceApprovalsPath: parseOptionValue(commandArgs, "--maintenance-approvals"),
       tasks: parseOptionValues(commandArgs, "--task"),
       runId: parseOptionValue(commandArgs, "--run-id"),
+      allowLevel: parseOptionValue(commandArgs, "--allow-level") ?? (parseFlag(commandArgs, "--allow-level") ? "" : undefined),
+      reason: parseOptionValue(commandArgs, "--reason") ?? (parseFlag(commandArgs, "--reason") ? "" : undefined),
     });
   },
   fix: async ({ cwd, commandArgs, ci, explain, format, quiet }) => {

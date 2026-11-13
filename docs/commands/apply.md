@@ -11,6 +11,7 @@ Examples:
 - `pnpm playbook apply --from-plan .playbook/release-plan.json`
 - `pnpm playbook apply --from-plan .playbook/plan.json --task <task-id>`
 - `pnpm playbook apply --from-plan .playbook/plan.json --task <task-a> --task <task-b>`
+- `pnpm playbook apply --from-plan .playbook/plan.json --allow-level 3 --reason "<why this security-sensitive change is approved>"`
 - `pnpm playbook apply --policy-check`
 - `pnpm playbook apply --policy-check --json`
 - `pnpm playbook apply --policy`
@@ -28,6 +29,10 @@ Contract rules:
 - Executes only tasks with `autoFix: true`.
 - Rejects the entire selection, before any handler runs, when any `autoFix` task resolves above change Level 2. A task's level is the highest of its declared `changeLevel` (if any), the level Playbook classifies from `ruleId` and the canonical repo-relative `file` (`.`/`..`, `.//`, absolute-in-repo, trailing-dot and case variants are normalized first), and Level 2 for any rule id served by a plugin handler or outside the built-in table. A plan artifact therefore cannot lower it. Level 3 (security-sensitive: `.github/`, `.git/`, `.husky/`, `.env*` including `.env.example`, `.npmrc`, `secrets/`) is advisory-only; there is no override flag yet (`TM-GAP-01`). The ceiling gates the file a task declares, not what a plugin handler writes (`TM-GAP-11`). See `docs/architecture/REMEDIATION_TRUST_MODEL.md`.
 - Fails when a task declares `changeLevel` other than `1`, `2`, or `3`.
+- `--allow-level 3 --reason "<text>"` authorizes Level 3 tasks for that run. Both flags are required together, only `3` is accepted, and the reason must be one non-empty line of at most 400 characters. The reason and the tasks that needed the override are recorded in the JSON result (`changeLevelOverride`) and in an `apply.change-level-override.v1` memory event. Without both flags Level 3 stays rejected. The override is a recorded declaration, not an authenticated approval (`TM-GAP-12`), and it is rejected with `--policy` / `--policy-check`.
+- After each handler reports `applied`, every reported `filesChanged` path is level-checked against the ceiling. A Level 3 write without the override fails that task and halts the run: remaining tasks are reported `skipped` and the exit code is a failure. This is detection after the write, not prevention (`TM-GAP-10`).
+- Binds `.playbook/change-scope.json` to the plan being applied: `plan --json` records a digest of its tasks in the scope, and `apply` refuses a scope written by another command (for example `analyze-pr`), written before binding existed, or derived from different tasks. Re-run `playbook plan --json` (or remove the stale file) to continue. With no change-scope file, no scope is enforced (`TM-GAP-13`).
+- Maintenance-plan execution (`--from-plan <maintenance-plan>`) validates its tasks with the same plan checks before any maintenance command runs.
 - Marks non-auto-fix tasks as `skipped`.
 - Marks missing handlers as `unsupported`.
 - Reports handler failures as `failed`.

@@ -25,7 +25,9 @@ const RULE_CHANGE_LEVELS: Readonly<Record<string, ChangeLevel>> = {
   PB013: 1,
   PB014: 1,
   'docs-consolidation.managed-write': 1,
-  'release.package-json.version': 2
+  'release.package-json.version': 2,
+  // Approval-gated maintenance commands run through apply's maintenance branch; the command set is fixed and reviewed.
+  'maintenance.execution': 2
 };
 
 const SECURITY_SENSITIVE_PREFIXES = ['.github/', '.git/', '.husky/'] as const;
@@ -119,6 +121,47 @@ export const classifyTaskChangeLevel = (
     level: 2,
     reason: task.file === null ? 'rule id has no reviewed built-in handler and no declared target file' : 'rule id has no reviewed built-in handler'
   };
+};
+
+/**
+ * Path-only level for a file a handler reports having written: Level 3 when the canonical path is
+ * security-sensitive or cannot be confined to the repository, otherwise Level 1 (the task-level floor still
+ * comes from the task). Used to check handler-reported `filesChanged` after the write.
+ */
+export const classifyPathChangeLevel = (file: string, context: ChangeLevelContext = {}): ChangeLevel => {
+  const canonical = canonicalizeTaskPath(file, context);
+  return canonical === null || isSecuritySensitivePath(canonical) ? 3 : 1;
+};
+
+/** Thrown when a handler reports writes above the change-level ceiling. The write has already happened. */
+export class ChangeLevelWriteViolationError extends Error {
+  constructor(
+    readonly files: string[],
+    readonly maxLevel: ChangeLevel
+  ) {
+    super(
+      `Change-level violation: handler reported writes above the apply ceiling (level ${maxLevel}) for ${files.join(', ')}. The write already happened; the run is failed and remaining tasks are not executed.`
+    );
+    this.name = 'ChangeLevelWriteViolationError';
+  }
+}
+
+/** Level-check handler-reported `filesChanged` after the write. Throws {@link ChangeLevelWriteViolationError}. */
+export const assertReportedWritesWithinCeiling = (
+  files: readonly string[],
+  maxLevel: ChangeLevel = DEFAULT_MAX_APPLY_CHANGE_LEVEL,
+  context: ChangeLevelContext = {}
+): void => {
+  const offending = files.filter((file) => classifyPathChangeLevel(file, context) > maxLevel).sort((left, right) => left.localeCompare(right));
+  if (offending.length > 0) {
+    throw new ChangeLevelWriteViolationError(offending, maxLevel);
+  }
+};
+
+/** Explicit, recorded authorization to apply tasks above the default ceiling. Only Level 3 can be allowed. */
+export type ChangeLevelOverride = {
+  allowLevel: 3;
+  reason: string;
 };
 
 export type ResolveChangeLevelContext = ChangeLevelContext & {

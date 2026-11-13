@@ -1,5 +1,6 @@
-import type { FixHandler, FixHandlerResult, PlanTask } from './types.js';
+import type { ChangeLevel, FixHandler, FixHandlerResult, PlanTask } from './types.js';
 import { redactSecretsForLogs, validateRemediationPlan, validateRepoBoundary } from '../security/guards.js';
+import { assertReportedWritesWithinCeiling, ChangeLevelWriteViolationError, DEFAULT_MAX_APPLY_CHANGE_LEVEL } from './changeLevel.js';
 
 export type ApplyTaskStatus = 'applied' | 'skipped' | 'unsupported' | 'failed';
 
@@ -59,7 +60,7 @@ const validateFilesChanged = (filesChanged: unknown): string[] => {
   return filesChanged;
 };
 
-const validateAppliedHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string): void => {
+const validateAppliedHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string, maxChangeLevel: ChangeLevel): void => {
   const filesChanged = validateFilesChanged(result.filesChanged);
 
   if (typeof result.summary !== 'string' || result.summary.trim().length === 0) {
@@ -73,6 +74,9 @@ const validateAppliedHandlerResult = (result: FixHandlerResult, task: PlanTask, 
   if (task.file && !filesChanged.includes(task.file)) {
     throw new Error(`Fix handler contract violation: filesChanged must include ${task.file}.`);
   }
+
+  // The ceiling gates the declared task.file before the handler runs; this gates what the handler says it wrote.
+  assertReportedWritesWithinCeiling(filesChanged, maxChangeLevel, { repoRoot });
 };
 
 const validateNonAppliedHandlerResult = (result: FixHandlerResult, status: 'skipped' | 'unsupported'): void => {
@@ -85,13 +89,13 @@ const validateNonAppliedHandlerResult = (result: FixHandlerResult, status: 'skip
   }
 };
 
-const validateHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string): void => {
+const validateHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string, maxChangeLevel: ChangeLevel): void => {
   if (!result || typeof result !== 'object') {
     throw new Error('Fix handler contract violation: handler must return an object result.');
   }
 
   if (result.status === 'applied') {
-    validateAppliedHandlerResult(result, task, repoRoot);
+    validateAppliedHandlerResult(result, task, repoRoot, maxChangeLevel);
     return;
   }
 
@@ -144,11 +148,26 @@ export class HandlerResolver {
 export class FixExecutor {
   constructor(private readonly resolver: HandlerResolver) {}
 
-  async apply(tasks: PlanTask[], options: { repoRoot: string; dryRun: boolean }): Promise<FixExecutionResult> {
+  async apply(tasks: PlanTask[], options: { repoRoot: string; dryRun: boolean; maxChangeLevel?: ChangeLevel }): Promise<FixExecutionResult> {
     const results: ApplyTaskResult[] = [];
-    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds: this.resolver.pluginRuleIds() });
+    const maxChangeLevel = options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL;
+    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds: this.resolver.pluginRuleIds(), maxChangeLevel });
+    let halted = false;
 
     for (const task of tasks) {
+      if (halted) {
+        results.push({
+          id: task.id,
+          ruleId: task.ruleId,
+          file: task.file,
+          action: task.action,
+          autoFix: task.autoFix,
+          status: 'skipped',
+          message: 'Not executed: an earlier task reported a write above the change-level ceiling.'
+        });
+        continue;
+      }
+
       if (!task.autoFix) {
         results.push({
           id: task.id,
@@ -178,7 +197,7 @@ export class FixExecutor {
 
       try {
         const handlerResult = await resolved.handler({ repoRoot: options.repoRoot, dryRun: options.dryRun, task });
-        validateHandlerResult(handlerResult, task, options.repoRoot);
+        validateHandlerResult(handlerResult, task, options.repoRoot, maxChangeLevel);
         results.push({
           id: task.id,
           ruleId: task.ruleId,
@@ -190,6 +209,9 @@ export class FixExecutor {
           details: handlerResult.details
         });
       } catch (error) {
+        if (error instanceof ChangeLevelWriteViolationError) {
+          halted = true;
+        }
         results.push({
           id: task.id,
           ruleId: task.ruleId,

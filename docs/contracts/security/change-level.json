@@ -1,6 +1,6 @@
 {
   "id": "change.level",
-  "description": "Plan tasks carry a trust-model change level, and apply refuses to execute auto-fix tasks above the default ceiling (Level 2) so Level 3 stays advisory-only. The ceiling gates the file a task declares; it does not constrain which files a plugin handler writes.",
+  "description": "Plan tasks carry a trust-model change level, and apply refuses to execute auto-fix tasks above the default ceiling (Level 2) unless an explicit, recorded Level 3 override is given, so Level 3 stays advisory-only by default. Handler-reported writes are level-checked after the write (detection, not prevention), and change-scope is bound to the plan being applied.",
   "enforcedBy": "validateRemediationPlan",
   "expectedBehavior": [
     "generatePlanContract labels every plan task with changeLevel 1, 2, or 3 derived deterministically from ruleId and the canonical repo-relative file path.",
@@ -9,12 +9,20 @@
     "parsePlanArtifact rejects a declared changeLevel that is not 1, 2, or 3.",
     "A rule id outside the reviewed built-in table, and any rule id served by a plugin-registered handler, is never below Level 2.",
     "validateRemediationPlan and FixExecutor.apply reject any auto-fix task above Level 2 before any handler runs.",
-    "Non-auto-fix tasks are skipped by apply and are not gated by the ceiling."
+    "Non-auto-fix tasks are skipped by apply and are not gated by the ceiling.",
+    "apply --allow-level 3 --reason \"<text>\" (both required, only 3, single-line reason up to 400 chars) raises the ceiling to Level 3 for that run and records changeLevelOverride in the apply result and an apply.change-level-override.v1 memory event; without both flags Level 3 stays rejected.",
+    "After a handler reports applied, each filesChanged path is canonicalized and level-checked; a Level 3 write without the override fails the task and halts the run (remaining tasks are skipped).",
+    "The maintenance-plan branch of apply validates its tasks (validateRemediationPlan) before any maintenance command runs.",
+    "plan --json stamps its change-scope bundle with source.artifactDigest; apply refuses a change-scope written by another command, without a digest, or with a different digest than the plan being applied."
   ],
   "failureModes": [
     "levelThreeAutoApplied",
     "declaredLevelUnderstatesRisk",
     "obfuscatedPathSpellingDodgesLevelThree",
-    "pluginHandlerWritesOutsideDeclaredFile"
+    "pluginHandlerWritesOutsideDeclaredFile",
+    "overrideUsedWithoutReason",
+    "maintenanceCommandRunsUnvalidated",
+    "staleOrForeignChangeScopeEnforced",
+    "levelThreeWriteReportedByHandler"
   ]
 }

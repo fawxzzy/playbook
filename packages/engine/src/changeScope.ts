@@ -28,6 +28,8 @@ export type ChangeScopeBundle = {
   source: {
     command: 'plan' | 'analyze-pr' | 'workers launch-plan' | 'ai propose';
     artifactPath: string;
+    /** Content digest of the source artifact's task list (see computePlanArtifactDigest). Present on `plan` bundles. */
+    artifactDigest?: string;
   };
   mutationScope: MutationScopeDeclaration;
   expectedTests: string[];
@@ -46,8 +48,19 @@ export type ChangeScopeArtifact = {
 };
 
 type PlanLikePayload = {
-  tasks?: Array<{ file?: string | null; ruleId?: string; action?: string }>;
+  tasks?: Array<{ id?: string; file?: string | null; ruleId?: string; action?: string; autoFix?: boolean }>;
 };
+
+/**
+ * Stable identity of a plan artifact: sha256 over its ordered tasks (id, ruleId, file, action, autoFix).
+ * Excludes presentation-only and additive labels such as `changeLevel`, so labeling a plan does not change its id.
+ */
+export const computePlanArtifactDigest = (
+  tasks: ReadonlyArray<{ id?: string; ruleId?: string; file?: string | null; action?: string; autoFix?: boolean }>
+): string =>
+  `sha256:${createHash('sha256')
+    .update(JSON.stringify(tasks.map((task) => [task.id ?? null, task.ruleId ?? null, task.file ?? null, task.action ?? null, task.autoFix ?? null])))
+    .digest('hex')}`;
 
 const uniqueSorted = (values: readonly string[]): string[] => [...new Set(values)].filter(Boolean).sort((a, b) => a.localeCompare(b));
 
@@ -93,6 +106,7 @@ const defaultBoundaryChecks = (allowedFiles: string[]): string[] => uniqueSorted
 const buildBundle = (input: {
   command: ChangeScopeBundle['source']['command'];
   artifactPath: string;
+  artifactDigest?: string;
   allowedFiles: string[];
   rulesTouched: string[];
   riskLevel: ChangeScopeRiskLevel;
@@ -114,7 +128,8 @@ const buildBundle = (input: {
     scopeId: createScopeId(seed),
     source: {
       command: input.command,
-      artifactPath: input.artifactPath
+      artifactPath: input.artifactPath,
+      ...(input.artifactDigest ? { artifactDigest: input.artifactDigest } : {})
     },
     mutationScope: {
       allowedFiles,
@@ -138,6 +153,7 @@ export const buildChangeScopeBundleFromPlan = (payload: PlanLikePayload): Change
   return buildBundle({
     command: 'plan',
     artifactPath: '.playbook/plan.json',
+    artifactDigest: computePlanArtifactDigest(payload.tasks ?? []),
     allowedFiles,
     rulesTouched,
     riskLevel: scoreToRisk(riskScore),

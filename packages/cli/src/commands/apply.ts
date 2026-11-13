@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 import * as engine from '@zachariahredfield/playbook-engine';
+import { parseChangeLevelOverride, type ChangeLevelOverride } from '../lib/changeLevelOverride.js';
 import { ExitCode } from '../lib/cliContract.js';
 import { writeJsonArtifactAbsolute } from '../lib/jsonArtifact.js';
 import { loadVerifyRules } from '../lib/loadVerifyRules.js';
@@ -26,6 +27,10 @@ type ApplyOptions = {
   tasks?: string[];
   runId?: string;
   skipReleaseGovernanceBoundary?: boolean;
+  /** `--allow-level <n>`; only 3 is accepted and `--reason` is required with it. */
+  allowLevel?: string | number;
+  /** `--reason <text>`; recorded with the Level 3 override. */
+  reason?: string;
 };
 
 type ApplyMode = 'standard' | 'policy-check' | 'policy';
@@ -48,6 +53,8 @@ type ApplyJsonResult = {
   exitCode: number;
   remediation: PlanRemediation;
   message?: string;
+  /** Present only when `--allow-level 3 --reason` was used: the recorded authorization and the tasks that needed it. */
+  changeLevelOverride?: ChangeLevelOverride & { overriddenTaskIds: string[] };
   results: ApplyResult[];
   summary: {
     applied: number;
@@ -826,6 +833,7 @@ const printApplyHelp = (): void => {
   console.log('  --from-plan <path>         Apply tasks from a previously saved `playbook plan --json` artifact');
   console.log(`  --maintenance-approvals <path>  Approval artifact for maintenance-plan execution (default: ${engine.MAINTENANCE_APPROVALS_RELATIVE_PATH})`);
   console.log('  --task <id>                Apply only selected task ID (repeatable; requires --from-plan)');
+  console.log('  --allow-level 3 --reason <text>  Authorize change Level 3 (security-sensitive) tasks; both flags required, reason is recorded');
   console.log('  --json                     Alias for --format=json');
   console.log('  --format <text|json>       Output format');
   console.log('  --quiet                    Suppress success output in text mode');
@@ -845,6 +853,11 @@ const resolveApplyMode = (options: ApplyOptions): ApplyMode => {
 };
 
 const validateApplyOptions = (options: ApplyOptions, mode: ApplyMode): void => {
+  const override = parseChangeLevelOverride({ allowLevel: options.allowLevel, reason: options.reason });
+  if (override && mode !== 'standard') {
+    throw new Error('The --allow-level/--reason override applies only to standard apply and cannot be combined with --policy or --policy-check.');
+  }
+
   if (mode === 'policy-check') {
     if (options.policy) {
       throw new Error('The --policy flag cannot be combined with --policy-check.');
@@ -1065,6 +1078,7 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
     throw new Error(`Cannot execute apply flow: ${routeDecision.why}`);
   }
 
+  const changeLevelOverride = parseChangeLevelOverride({ allowLevel: options.allowLevel, reason: options.reason });
   const runId = resolveRunId(cwd, options.runId);
 
   const plan: PlanSelection = options.fromPlan
@@ -1132,7 +1146,19 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   }
 
   const selectedTasks = selectPlanTasks(plan.tasks, options.tasks);
+  const validationOptions = changeLevelOverride ? { maxChangeLevel: changeLevelOverride.allowLevel } : undefined;
+  const validateSelectedTasks = (tasks: PlanTask[]): void => {
+    if (validationOptions) {
+      engine.validateRemediationPlan(cwd, tasks, validationOptions);
+    } else {
+      engine.validateRemediationPlan(cwd, tasks);
+    }
+  };
+
   if (plan.maintenanceExecution) {
+    // Maintenance tasks are marked autoFix:false in the artifact (apply's handler pipeline never runs them) but this
+    // branch executes their commands, so they are validated as executable tasks before any command runs.
+    validateSelectedTasks(selectedTasks.map((task: PlanTask) => ({ ...task, autoFix: true })));
     const outcomes: engine.MaintenanceExecutionOutcome[] = [];
     for (const selectedTask of selectedTasks) {
       const executionTask = plan.maintenanceExecution.byTaskId[selectedTask.id];
@@ -1219,9 +1245,11 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   validateReleaseTaskSelection(plan, selectedTasks);
   const declaredScope = engine.readApplyChangeScope(cwd);
   if (declaredScope) {
+    // The scope file is last-writer-wins; only enforce it for the exact plan that produced it, otherwise refuse.
+    engine.assertApplyChangeScopeBinding(declaredScope, engine.computePlanArtifactDigest(plan.tasks));
     engine.enforceApplyChangeScope(selectedTasks, declaredScope);
   }
-  engine.validateRemediationPlan(cwd, selectedTasks);
+  validateSelectedTasks(selectedTasks);
   const verifyRules = await loadVerifyRules(cwd);
 
   const handlers: Record<string, NonNullable<(typeof verifyRules)[number]['fix']>> = {};
@@ -1232,7 +1260,11 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
     }
   }
 
-  const execution = await engine.applyExecutionPlan(cwd, selectedTasks, { dryRun: false, handlers });
+  const execution = await engine.applyExecutionPlan(cwd, selectedTasks, {
+    dryRun: false,
+    handlers,
+    ...(changeLevelOverride ? { changeLevelOverride } : {})
+  });
 
   const exitCode = execution.summary.failed > 0 ? ExitCode.Failure : ExitCode.Success;
   const payload: ApplyJsonResult = {
@@ -1242,6 +1274,16 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
     exitCode,
     remediation: plan.remediation,
     message: applyPrecondition.message,
+    ...(changeLevelOverride
+      ? {
+          changeLevelOverride: {
+            ...changeLevelOverride,
+            overriddenTaskIds: selectedTasks
+              .filter((task: PlanTask) => task.autoFix && engine.resolveTaskChangeLevel(task, { repoRoot: cwd }) > engine.DEFAULT_MAX_APPLY_CHANGE_LEVEL)
+              .map((task: PlanTask) => task.id)
+          }
+        }
+      : {}),
     results: execution.results,
     summary: execution.summary
   };
