@@ -472,6 +472,8 @@ declare module "@zachariahredfield/playbook-engine" {
   export type RepositoryQueryField = string;
   export const generateArchitectureDiagrams: (...args: any[]) => Promise<any>;
   export const verifyRepo: (...args: any[]) => any;
+  export const loadRuleCatalog: (...args: any[]) => any;
+  export const loadRuleRegistry: (...args: any[]) => any;
   export const formatHuman: (...args: any[]) => string;
   export const generateExecutionPlan: (...args: any[]) => any;
   export const generatePlanContract: (...args: any[]) => any;

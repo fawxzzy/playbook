@@ -1,5 +1,9 @@
 export { analyze, analyzeRepo } from './analyze/index.js';
 export { VERIFY_PHASE_RULES, verifyRepo } from './verify/index.js';
+export { loadRuleCatalog, loadRuleRegistry } from './plugins/unifiedPluginRegistry.js';
+export type { RuleCatalog, RuleCatalogEntry, RuleSource } from './plugins/unifiedPluginRegistry.js';
+export { PLUGIN_CONTRACT_VERSION } from './plugins/pluginTypes.js';
+export type { PlaybookPlugin, PlaybookRule, PluginRuleFailureRef, PluginRuleGuidance } from './plugins/pluginTypes.js';
 export type { VerifyPhase, VerifyRepoOptions } from './verify/index.js';
 export {
   VERIFY_FINDING_STATE_RELATIVE_PATH,

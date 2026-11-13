@@ -14,12 +14,28 @@ export type AnalyzeRecommendation = Finding;
 export type AnalyzeResult = Omit<ContextAnalyzeResult, 'architectureSuggestions'>;
 type PackageJson = AnalyzePackageJson;
 
-// Preserve the CLI dependency-only detector contract. The filesystem/plugin
-// analyzeRepo surface remains compatible until unified registry parity is proven.
+// The CLI keeps its dependency-only core detector contract; plugin detectors
+// (docs/contracts/PLUGIN_CONTRACT_V1.md) are added on top through the unified
+// registry, so repositories without plugins produce the same report as before.
 export const analyze = (ctx: ProjectContext): ContextAnalyzeResult => {
   const pkgRaw = ctx.readTextFile('package.json');
   const pkg = (pkgRaw ? JSON.parse(pkgRaw) : {}) as PackageJson;
-  const result = createAnalyzeReport(ctx.repoRoot, detectAnalyzeDependencies(pkg), ['nextjs', 'supabase', 'tailwind']);
+  const repoContext: RepoContext = {
+    repoRoot: ctx.repoRoot,
+    packageJsonPath: path.join(ctx.repoRoot, 'package.json'),
+    dependencies: pkg.dependencies ?? {},
+    devDependencies: pkg.devDependencies ?? {}
+  };
+  const pluginDetectors = loadDetectorRegistry(ctx.repoRoot, []);
+  const pluginDetected = pluginDetectors.flatMap((detector) => {
+    const detection = detector.detect(repoContext);
+    return detection ? [{ id: detector.id, label: detector.label, evidence: detection.evidence }] : [];
+  });
+  const result = createAnalyzeReport(
+    ctx.repoRoot,
+    [...detectAnalyzeDependencies(pkg), ...pluginDetected],
+    ['nextjs', 'supabase', 'tailwind', ...pluginDetectors.map((detector) => detector.id)]
+  );
   const architecture = ctx.readTextFile('docs/ARCHITECTURE.md');
   if (architecture !== undefined) {
     const updated = renderAnalyzeArchitecture(architecture, result.architectureSuggestions);
