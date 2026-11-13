@@ -83,10 +83,12 @@ export const validateRemediationPlan = (
     validateTaskShape(task, repoRoot);
   }
 
-  assertCeilingAuthorized(options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL, options.changeLevelReason);
+  // `undefined` means "use the default"; any other value (null, NaN, non-integers) is validated and fails closed.
+  const maxChangeLevel = options.maxChangeLevel === undefined ? DEFAULT_MAX_APPLY_CHANGE_LEVEL : options.maxChangeLevel;
+  assertCeilingAuthorized(maxChangeLevel, options.changeLevelReason);
 
   // Classify the repo-relative resolved path (not the raw task string) so `..`, `.//`, absolute and trailing-dot forms cannot dodge Level 3.
-  enforceChangeLevelCeiling(tasks, options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL, {
+  enforceChangeLevelCeiling(tasks, maxChangeLevel, {
     repoRoot,
     pluginRuleIds: options.pluginRuleIds
   });

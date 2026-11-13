@@ -152,6 +152,7 @@ export const assertReportedWritesWithinCeiling = (
   maxLevel: ChangeLevel = DEFAULT_MAX_APPLY_CHANGE_LEVEL,
   context: ChangeLevelContext = {}
 ): void => {
+  assertValidCeiling(maxLevel);
   const offending = files.filter((file) => classifyPathChangeLevel(file, context) > maxLevel).sort((left, right) => left.localeCompare(right));
   if (offending.length > 0) {
     throw new ChangeLevelWriteViolationError(offending, maxLevel);
@@ -159,6 +160,14 @@ export const assertReportedWritesWithinCeiling = (
 };
 
 export const MAX_OVERRIDE_REASON_LENGTH = 400;
+
+// Any control, format (bidi override, zero-width), surrogate, private-use or unassigned code point (\p{C}), line and
+// paragraph separators, plus characters that render as blank but are letters/symbols: Hangul fillers (U+115F, U+1160,
+// U+3164, U+FFA0), Braille blank (U+2800), Khmer inherent vowels (U+17B4, U+17B5) and the combining grapheme joiner (U+034F).
+const OVERRIDE_REASON_FORBIDDEN_CHARACTER = /[\p{C}\p{Zl}\p{Zp}\u115F\u1160\u3164\uFFA0\u2800\u17B4\u17B5\u034F]/u;
+// A combining mark at the start or directly after whitespace has no base character.
+const OVERRIDE_REASON_LONE_COMBINING_MARK = /(?:^|\s)\p{M}/u;
+const OVERRIDE_REASON_VISIBLE_CHARACTER = /[\p{L}\p{N}\p{P}\p{S}]/u;
 
 /**
  * Validate the human-supplied reason recorded with a change-level override. The CLI parser applies the same rules
@@ -171,20 +180,32 @@ export const normalizeOverrideReason = (reason: unknown): string => {
     throw new Error('Raising the change-level ceiling above Level 2 requires a recorded reason string.');
   }
   const trimmed = reason.trim();
-  if (!/[^\p{Z}\p{C}]/u.test(trimmed)) {
-    throw new Error('The change-level override reason must contain at least one visible non-space character.');
+  if (!OVERRIDE_REASON_VISIBLE_CHARACTER.test(trimmed)) {
+    throw new Error('The change-level override reason must contain at least one visible letter, number, punctuation, or symbol character.');
   }
   if (trimmed.length > MAX_OVERRIDE_REASON_LENGTH) {
     throw new Error(`The change-level override reason must be at most ${MAX_OVERRIDE_REASON_LENGTH} characters.`);
   }
-  if (/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(trimmed)) {
-    throw new Error('The change-level override reason must be a single line without control, format, or separator characters.');
+  if (OVERRIDE_REASON_FORBIDDEN_CHARACTER.test(trimmed)) {
+    throw new Error(
+      'The change-level override reason must be a single line without control, format, separator, unassigned, private-use, or invisible filler characters.'
+    );
+  }
+  if (OVERRIDE_REASON_LONE_COMBINING_MARK.test(trimmed)) {
+    throw new Error('The change-level override reason must not contain a combining mark without a base character.');
   }
   return trimmed;
 };
 
 /** A ceiling above the default is only accepted together with a valid recorded reason. */
+function assertValidCeiling(maxLevel: unknown): void {
+  if (!isChangeLevel(maxLevel)) {
+    throw new Error(`Invalid change-level ceiling ${String(maxLevel)}: must be the integer 1, 2, or 3.`);
+  }
+}
+
 export const assertCeilingAuthorized = (maxLevel: ChangeLevel, reason: unknown): void => {
+  assertValidCeiling(maxLevel);
   if (maxLevel > DEFAULT_MAX_APPLY_CHANGE_LEVEL) {
     normalizeOverrideReason(reason);
   }
@@ -229,6 +250,7 @@ export const enforceChangeLevelCeiling = (
   maxLevel: ChangeLevel = DEFAULT_MAX_APPLY_CHANGE_LEVEL,
   context: ChangeLevelCeilingContext = {}
 ): void => {
+  assertValidCeiling(maxLevel);
   const rejected = tasks
     .filter((task) => task.autoFix)
     .map((task) => ({

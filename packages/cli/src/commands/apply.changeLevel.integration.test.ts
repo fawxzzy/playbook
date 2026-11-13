@@ -235,6 +235,44 @@ const runRealPlan = async (): Promise<{ tasks: Array<{ id: string; ruleId: strin
   return JSON.parse(String(logSpy.mock.calls[before]?.[0]));
 };
 
+describe('plan --json -> apply --from-plan for notes.missing (TM-GAP-14, real engine)', () => {
+  it('runs the whole verify -> plan -> apply -> verify loop with a change-scope file present', async () => {
+    fs.mkdirSync(path.join(repoDir, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'docs', 'PROJECT_GOVERNANCE.md'), '# Governance\n');
+
+    const plan = await runRealPlan();
+    expect(plan.tasks).toEqual([expect.objectContaining({ ruleId: 'notes.missing', file: 'docs/PLAYBOOK_NOTES.md', autoFix: true })]);
+
+    const scope = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'change-scope.json'), 'utf8')).bundles[0];
+    expect(scope.mutationScope.allowedFiles).toEqual(['docs/PLAYBOOK_NOTES.md']);
+    expect(scope.mutationScope.boundaryChecks).toContain('writes-must-stay-inside-allowedFiles');
+    expect(scope.mutationScope.boundaryChecks).not.toContain('proposal-only-no-write-authority');
+
+    const exitCode = await runFromPlan({ fromPlan: '.playbook/plan.json' });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(lastJson().summary).toMatchObject({ applied: 1, failed: 0 });
+    expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(true);
+
+    // verify (the last step of the loop) is clean now.
+    const before = logSpy.mock.calls.length;
+    const replanned = await runRealPlan();
+    expect(replanned.tasks.some((task) => task.ruleId === 'notes.missing')).toBe(false);
+    expect(logSpy.mock.calls.length).toBeGreaterThan(before);
+  });
+
+  it('applies the same plan with no --from-plan (regenerated tasks) while the scope file is present', async () => {
+    fs.mkdirSync(path.join(repoDir, 'docs'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'docs', 'PROJECT_GOVERNANCE.md'), '# Governance\n');
+    await runRealPlan();
+
+    const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: true, skipReleaseGovernanceBoundary: true });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(true);
+  });
+});
+
 describe('plan --json -> apply --from-plan roundtrip (real engine)', () => {
   // A committed runtime artifact makes verify/plan emit a file-bearing task (PB013 -> .gitignore) next to notes.missing.
   const setupRepoWithFileBearingPlan = async () => {
@@ -299,8 +337,8 @@ describe('a leftover plan-sourced change-scope does not block first-party non-pl
     await runRealPlan();
     const scope = JSON.parse(fs.readFileSync(path.join(repoDir, '.playbook', 'change-scope.json'), 'utf8')).bundles[0];
     expect(scope.source.command).toBe('plan');
-    // The file-less notes plan makes the scope "proposal-only", which would reject every later apply that read it.
-    expect(scope.mutationScope.boundaryChecks).not.toContain('writes-must-stay-inside-allowedFiles');
+    // The scope only allows the notes file, so a release or fix plan that read it would be rejected as out of scope.
+    expect(scope.mutationScope.allowedFiles).toEqual(['docs/PLAYBOOK_NOTES.md']);
   };
 
   it('release sync path: applies a release-plan artifact that bumps a real package.json', async () => {
@@ -381,5 +419,28 @@ describe('apply override on maintenance plans (real engine)', () => {
     await expect(runFromPlan({ allowLevel: '3', reason: 'owner approved' })).rejects.toThrow(/cannot be used with maintenance-plan execution/);
 
     expect(fs.existsSync(path.join(repoDir, '.playbook', 'maintenance-execution-receipt.json'))).toBe(false);
+  });
+
+  it('rejects the override before any execution run is created', async () => {
+    const row = { maintenanceId: 'm1', maintenanceType: 'docs-audit-maintenance', boundedTargetSurface: 'docs/', sourceEvidenceRefs: [] };
+    fs.mkdirSync(path.join(repoDir, '.playbook'), { recursive: true });
+    fs.writeFileSync(path.join(repoDir, 'plan.json'), JSON.stringify({ schemaVersion: '1.0', kind: 'playbook-maintenance-plan', maintenanceRows: [row] }));
+    fs.writeFileSync(
+      path.join(repoDir, '.playbook', 'maintenance-approvals.json'),
+      JSON.stringify({
+        schemaVersion: '1.0',
+        kind: 'playbook-maintenance-approvals',
+        generatedAt: new Date(0).toISOString(),
+        approvals: [{ maintenanceId: 'm1', approved: true, approvalRef: 'approval:1', approvedBy: 'owner', boundedTargetSurface: 'docs/' }]
+      })
+    );
+    fs.writeFileSync(path.join(repoDir, '.playbook', 'policy-evaluation.json'), JSON.stringify({ evaluations: [{ proposal_id: 'maintenance:m1', decision: 'safe', reason: 'approved' }] }));
+    const before = fs.readdirSync(path.join(repoDir, '.playbook')).sort();
+
+    await expect(runFromPlan({ allowLevel: '3', reason: 'owner approved' })).rejects.toThrow(/cannot be used with maintenance-plan execution/);
+
+    // resolveRunId would have created .playbook/runs/...; a refused request must leave no new files behind.
+    expect(fs.readdirSync(path.join(repoDir, '.playbook')).sort()).toEqual(before);
+    expect(fs.existsSync(path.join(repoDir, '.playbook', 'runs'))).toBe(false);
   });
 });

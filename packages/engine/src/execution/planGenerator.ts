@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import type { MemoryKnowledgeArtifact, MemoryKnowledgeEntry, MemoryKnowledgeKind } from '../memory/knowledge.js';
+import { BUILT_IN_WRITE_TARGETS } from './builtInTargets.js';
 import type { PlanTask, RuleFailure } from './types.js';
 
 export type Plan = {
@@ -178,7 +179,8 @@ export class PlanGenerator {
         return {
           id: stableTaskId(seed, occurrence),
           ruleId: finding.id,
-          file: finding.evidence ?? null,
+          // Auto-fix tasks of built-in rules without evidence declare the file their handler writes (see builtInTargets.ts).
+          file: finding.evidence ?? (autoFix ? (BUILT_IN_WRITE_TARGETS[finding.id] ?? null) : null),
           action,
           autoFix,
           ...(rationale ? { advisory: rationale } : {})

@@ -34,14 +34,19 @@ export const parseChangeLevelOverride = (flags: RawOverrideFlags): ChangeLevelOv
   }
 
   const reason = (flags.reason ?? '').trim();
-  if (!/[^\p{Z}\p{C}]/u.test(reason)) {
-    throw new Error('The --reason flag must contain at least one visible non-space character recorded with the Level 3 override.');
+  if (!/[\p{L}\p{N}\p{P}\p{S}]/u.test(reason)) {
+    throw new Error('The --reason flag must contain at least one visible letter, number, punctuation, or symbol character recorded with the Level 3 override.');
   }
   if (reason.length > MAX_OVERRIDE_REASON_LENGTH) {
     throw new Error(`The --reason flag must be at most ${MAX_OVERRIDE_REASON_LENGTH} characters.`);
   }
-  if (/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(reason)) {
-    throw new Error('The --reason flag must be a single line without control, format (bidi override, zero-width) or separator characters.');
+  if (/[\p{C}\p{Zl}\p{Zp}\u115F\u1160\u3164\uFFA0\u2800\u17B4\u17B5\u034F]/u.test(reason)) {
+    throw new Error(
+      'The --reason flag must be a single line without control, format (bidi override, zero-width), separator, unassigned, private-use, or invisible filler characters.'
+    );
+  }
+  if (/(?:^|\s)\p{M}/u.test(reason)) {
+    throw new Error('The --reason flag must not contain a combining mark without a base character.');
   }
 
   return { allowLevel: 3, reason };

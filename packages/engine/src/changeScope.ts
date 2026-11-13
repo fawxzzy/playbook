@@ -56,6 +56,7 @@ type DigestableTask = {
   task_kind?: string | null;
   write?: unknown;
   preconditions?: unknown;
+  provenance?: unknown;
 };
 
 type PlanLikePayload = {
@@ -81,9 +82,11 @@ const hashOrNull = (value: unknown): string | null =>
 
 /**
  * Stable identity of a plan artifact: sha256 over its ordered tasks (id, ruleId, file, action, autoFix, task_kind,
- * a hash of the whole `write` object (operation, block id, markers, anchor, content) and a hash of `preconditions`).
+ * a hash of the whole `write` object (operation, block id, markers, anchor, content), a hash of `preconditions`, and a hash of
+ * `provenance`, which handlers read, e.g. the release version bump).
  * A hand-edited plan.json therefore cannot change what a task writes under the same digest. Excludes additive
- * labels such as `changeLevel`, and treats null and undefined consistently. This is integrity-only binding: the
+ * labels such as `changeLevel` and the explanatory `advisory` block (ranking rationale that no handler reads), and treats
+ * null and undefined consistently. This is integrity-only binding: the
  * change-scope file itself is unauthenticated.
  */
 export const computePlanArtifactDigest = (tasks: ReadonlyArray<DigestableTask>): string =>
@@ -98,7 +101,8 @@ export const computePlanArtifactDigest = (tasks: ReadonlyArray<DigestableTask>):
           task.autoFix ?? null,
           task.task_kind ?? null,
           hashOrNull(task.write),
-          hashOrNull(task.preconditions)
+          hashOrNull(task.preconditions),
+          hashOrNull(task.provenance)
         ])
       )
     )

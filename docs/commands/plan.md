@@ -16,6 +16,7 @@ Generate a deterministic remediation task plan from current verify findings.
 - Records plan execution step metadata in runtime session state.
 - In `--json` mode, always persists canonical lifecycle state to `.playbook/plan.json` on successful runs, including no-op (`tasks: []`) outcomes. Text mode only renders the plan and does not write the artifact (tracked as `TM-GAP-08` in `docs/architecture/REMEDIATION_TRUST_MODEL.md`).
 - Labels every task with `changeLevel` (`1` reviewed built-in docs, notes and ignore-file fixes; `2` scoped module or manifest changes and any rule id without a reviewed built-in handler; `3` security-sensitive or unconfinable paths). The label is derived deterministically from `ruleId` and `file`; see the trust model for the classification rules.
+- Built-in auto-fix tasks declare the file their handler writes (`notes.missing` and `notes.empty` declare `docs/PLAYBOOK_NOTES.md`; `PB012`/`PB013` declare `.playbookignore`/`.gitignore`), so the change-scope written next to `.playbook/plan.json` carries write authority for exactly that file and `apply --from-plan .playbook/plan.json` works with it present. `PB014` has no single target and still declares `file: null` (`TM-GAP-15`).
 - When `--repo <target>` is used, lifecycle artifacts are persisted in the target repository's `.playbook/` directory.
 - `--out <path>` writes the JSON artifact when using JSON mode.
 - `--run-id <id>` attaches planning to an existing execution run; otherwise a run is created/resolved automatically.
