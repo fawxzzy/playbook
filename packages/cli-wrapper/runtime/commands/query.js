@@ -736,6 +736,7 @@ export const runQuery = async (cwd, commandArgs, options) => {
             memorySummary: query.memorySummary,
             memorySources: query.memorySources,
             knowledgeHits: query.knowledgeHits,
+            doctrineHits: query.doctrineHits,
             recentRelevantEvents: query.recentRelevantEvents,
             memoryKnowledge: query.memoryKnowledge
         };

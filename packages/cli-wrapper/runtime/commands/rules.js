@@ -1,10 +1,11 @@
 import { ExitCode } from '../lib/cliContract.js';
 import { loadAnalyzeRules } from '../lib/loadAnalyzeRules.js';
-import { loadVerifyRules } from '../lib/loadVerifyRules.js';
+import { loadRuleListing } from '../lib/loadVerifyRules.js';
 const toRuleSummary = (rule, explain) => ({
     id: rule.id,
     description: rule.description,
-    ...(explain && rule.explanation ? { explanation: rule.explanation } : {})
+    ...(explain && rule.explanation ? { explanation: rule.explanation } : {}),
+    ...(rule.source ? { source: rule.source } : {})
 });
 const printText = (result, explain) => {
     console.log('Verify Rules');
@@ -29,7 +30,7 @@ export const runRules = async (_cwd, options) => {
     const result = {
         schemaVersion: '1.0',
         command: 'rules',
-        verify: (await loadVerifyRules(_cwd)).map((rule) => toRuleSummary(rule, options.explain)),
+        verify: (await loadRuleListing(_cwd)).map((rule) => toRuleSummary(rule, options.explain)),
         analyze: (await loadAnalyzeRules()).map((rule) => toRuleSummary(rule, options.explain))
     };
     if (options.format === 'json') {
