@@ -195,7 +195,7 @@
         "node scripts/validate-roadmap-contract.mjs --ci",
         "pnpm playbook docs audit --json"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -295,9 +295,7 @@
         "index",
         "graph",
         "query",
-        "explain",
-        "analyze-pr",
-        "plan"
+        "explain"
       ],
       "contracts": [
         "docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md",
@@ -305,8 +303,7 @@
         "docs/contracts/COMMAND_CONTRACTS_V1.md"
       ],
       "tests": [
-        "tests/contracts/architecture-graph.contract.test.ts",
-        "tests/integration/impact-analysis.integration.test.ts"
+        "tests/contracts/architecture-graph.contract.test.ts"
       ],
       "docs": [
         "docs/commands/graph.md",
@@ -327,7 +324,7 @@
         "pnpm playbook graph --json",
         "pnpm playbook analyze-pr --json"
       ],
-      "status": "planned"
+      "status": "in-progress"
     },
     {
       "feature_id": "PB-V1-DEMO-REFRESH-001",
@@ -391,7 +388,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -423,7 +420,7 @@
         "pnpm playbook index --json",
         "pnpm -C packages/engine test -- compaction.candidates.test.ts"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -456,7 +453,7 @@
         "pnpm playbook index --json",
         "pnpm -C packages/engine test -- compaction.buckets.test.ts"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -490,7 +487,7 @@
         "pnpm playbook index --json",
         "pnpm -C packages/engine test -- compaction.patternCards.test.ts"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -508,7 +505,9 @@
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "packages/core/test/run-cycle.test.ts",
+        "test/scripts/repository-memory-doc-pins.test.mjs"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
@@ -526,7 +525,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "planned",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-core",
@@ -616,7 +615,8 @@
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/README.md",
-        "docs/roadmap/IMPROVEMENTS_BACKLOG.md"
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
+        "docs/architecture/PLAYBOOK_KNOWLEDGE_PERSISTENCE_LAYER.md"
       ],
       "dependencies": [
         "PB-V09-PLATFORM-OBSERVATION-001",
@@ -626,7 +626,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "planned-later",
+      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -638,10 +638,8 @@
       "title": "Knowledge compaction and promotion layer",
       "goal": "Implement deterministic local pattern promotion pipeline with explicit review queue and decision-recorded approvals/rejections so compacted observations become durable knowledge only after governed promotion.",
       "commands": [
-        "query patterns",
-        "query pattern-review",
-        "query promoted-patterns",
-        "patterns promote"
+        "query",
+        "patterns"
       ],
       "contracts": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
@@ -657,7 +655,9 @@
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/architecture/pattern_compaction.md",
         "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-        "docs/roadmap/README.md"
+        "docs/roadmap/README.md",
+        "docs/commands/patterns.md",
+        "docs/commands/query.md"
       ],
       "dependencies": [
         "PB-V09-KNOWLEDGE-PERSISTENCE-001",
@@ -672,7 +672,7 @@
         "pnpm playbook query promoted-patterns --json",
         "pnpm playbook verify --json"
       ],
-      "status": "planned-later",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -737,13 +737,16 @@
         "docs/CONSUMER_INTEGRATION_CONTRACT.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/scripts/repository-memory-doc-pins.test.mjs",
+        "packages/cli/src/commands/session.test.ts"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_SESSION_EVIDENCE_ARCHITECTURE.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-        "docs/AUTOMATION_SYNTHESIS_VISION.md"
+        "docs/AUTOMATION_SYNTHESIS_VISION.md",
+        "docs/commands/session.md"
       ],
       "dependencies": [
         "PB-V04-PLAN-APPLY-001",
@@ -756,7 +759,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "architecture-defined",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1035,19 +1038,27 @@
       "version": "v0.9",
       "title": "Governed cross-repo pattern promotion and transfer",
       "goal": "Promote proven, governed patterns across repositories only after local promotion and outcome evidence validate transfer readiness.",
-      "commands": [],
+      "commands": [
+        "patterns",
+        "knowledge"
+      ],
       "contracts": [
         "docs/architecture/PLAYBOOK_GOVERNED_CROSS_REPO_PATTERN_PROMOTION_AND_TRANSFER.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/architecture-docs.test.mjs",
+        "packages/engine/src/learning/transferReadiness.test.ts",
+        "packages/engine/src/learning/transferPlanning.test.ts"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_GOVERNED_CROSS_REPO_PATTERN_PROMOTION_AND_TRANSFER.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-        "docs/roadmap/README.md"
+        "docs/roadmap/README.md",
+        "docs/commands/patterns.md",
+        "docs/commands/knowledge.md"
       ],
       "dependencies": [
         "PB-V09-LONGITUDINAL-STATE-001",
@@ -1057,7 +1068,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "dependency-blocked",
+      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1069,21 +1080,27 @@
       "version": "v0.9",
       "title": "Governed interface/API surfaces for multi-repo control planes",
       "goal": "Define optional, policy-aware server/API interface surfaces that coordinate many Playbook-enabled repositories over one deterministic runtime without collapsing per-repo boundaries.",
-      "commands": [],
+      "commands": [
+        "observer"
+      ],
       "contracts": [
         "docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/architecture-docs.test.mjs",
+        "packages/cli/src/commands/observer.test.ts",
+        "packages/engine/src/controlPlane/multiRepoControlPlaneReadInterface.test.ts"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_GOVERNED_INTERFACE_API_SURFACES_FOR_MULTI_REPO_CONTROL_PLANES.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
         "docs/CONSUMER_INTEGRATION_CONTRACT.md",
-        "docs/AUTOMATION_SYNTHESIS_VISION.md"
+        "docs/AUTOMATION_SYNTHESIS_VISION.md",
+        "docs/commands/observer.md"
       ],
       "dependencies": [
         "PB-V09-CONTROL-PLANE-001",
@@ -1093,7 +1110,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "dependency-blocked",
+      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1105,7 +1122,9 @@
       "version": "v0.9",
       "title": "Workspace / tenant governance + optional hosted deployment model",
       "goal": "Define explicit workspace/tenant policy boundaries and optional hosted/self-hosted control-plane packaging over one deterministic runtime without weakening CLI-first, offline-capable, private-first guarantees.",
-      "commands": [],
+      "commands": [
+        "observer"
+      ],
       "contracts": [
         "docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE_AND_OPTIONAL_HOSTED_DEPLOYMENT.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
@@ -1113,14 +1132,17 @@
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/architecture-docs.test.mjs",
+        "packages/cli/src/commands/observer.test.ts"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE_AND_OPTIONAL_HOSTED_DEPLOYMENT.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/PLAYBOOK_BUSINESS_STRATEGY.md",
         "docs/CONSUMER_INTEGRATION_CONTRACT.md",
-        "docs/roadmap/IMPROVEMENTS_BACKLOG.md"
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
+        "docs/commands/observer.md"
       ],
       "dependencies": [
         "PB-V09-GOVERNED-INTERFACE-API-001",
@@ -1130,7 +1152,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "dependency-blocked",
+      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1151,7 +1173,8 @@
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/architecture-docs.test.mjs"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_PACKAGING_AND_SKU_ARCHITECTURE_OPEN_CORE_TO_TEAM_TO_ENTERPRISE.md",
@@ -1167,7 +1190,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "dependency-blocked",
+      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1188,7 +1211,8 @@
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/architecture-docs.test.mjs"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_METRICS_ROI_AND_PROOF_OF_VALUE_ARCHITECTURE.md",
@@ -1205,7 +1229,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "dependency-blocked",
+      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1226,7 +1250,8 @@
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/architecture-docs.test.mjs"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_PILOT_DESIGN_PARTNER_AND_ROLLOUT_ARCHITECTURE.md",
@@ -1242,7 +1267,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "dependency-blocked",
+      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1331,7 +1356,8 @@
         "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "packages/engine/test/doctrineExtraction.test.ts"
       ],
       "docs": [
         "docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md",
@@ -1348,7 +1374,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "planned",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
@@ -1404,7 +1430,9 @@
       "version": "v0.9",
       "title": "Repository Memory System foundation",
       "goal": "Establish first-class repository memory architecture and contracts that separate structural intelligence from episodic memory and doctrine promotion boundaries without changing current runtime behavior.",
-      "commands": [],
+      "commands": [
+        "memory"
+      ],
       "contracts": [
         "docs/architecture/REPOSITORY_MEMORY_MODEL.md",
         "docs/contracts/REPOSITORY_MEMORY_EVENT_CONTRACT.md",
@@ -1412,13 +1440,17 @@
         "docs/contracts/repository-graph-contract.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/scripts/repository-memory-doc-pins.test.mjs",
+        "packages/engine/test/memory.events.test.ts",
+        "packages/engine/test/repositoryMemoryEvents.test.ts"
       ],
       "docs": [
         "docs/ARCHITECTURE.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/PLAYBOOK_NOTES.md",
-        "docs/roadmap/IMPROVEMENTS_BACKLOG.md"
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
+        "docs/commands/memory.md"
       ],
       "dependencies": [
         "PB-V06-FAILURE-INTELLIGENCE-001",
@@ -1428,7 +1460,7 @@
         "node scripts/validate-roadmap-contract.mjs --ci",
         "pnpm playbook docs audit --json"
       ],
-      "status": "planned",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1439,18 +1471,25 @@
       "version": "v0.9",
       "title": "Repository memory replay and consolidation",
       "goal": "Define deterministic replay/consolidation artifacts that derive candidate knowledge from episodic memory for human review before doctrine promotion.",
-      "commands": [],
+      "commands": [
+        "memory"
+      ],
       "contracts": [
         "docs/architecture/REPOSITORY_MEMORY_MODEL.md",
         "docs/contracts/REPOSITORY_MEMORY_EVENT_CONTRACT.md",
         "docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "packages/engine/test/replayConsolidation.test.ts",
+        "packages/engine/test/memoryReplay.test.ts",
+        "packages/cli/src/commands/memory.test.ts"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-        "docs/roadmap/ROADMAP.json"
+        "docs/roadmap/ROADMAP.json",
+        "docs/commands/memory.md",
+        "docs/architecture/REPLAY_CONSOLIDATION_AND_PROMOTION_V1.md"
       ],
       "dependencies": [
         "PB-V09-REPO-MEMORY-FOUNDATION-001",
@@ -1461,7 +1500,7 @@
         "node scripts/validate-roadmap-contract.mjs --ci",
         "pnpm playbook docs audit --json"
       ],
-      "status": "planned-later",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1483,11 +1522,20 @@
         "docs/contracts/COMMAND_CONTRACTS_V1.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "packages/engine/test/repoQuery.test.ts",
+        "packages/engine/test/explainEngine.test.ts",
+        "packages/engine/test/runtimeMemory.bridge.test.ts",
+        "packages/engine/test/askEngine.test.ts"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-        "docs/roadmap/ROADMAP.json"
+        "docs/roadmap/ROADMAP.json",
+        "docs/commands/query.md",
+        "docs/commands/explain.md",
+        "docs/commands/ask.md",
+        "docs/doctrine/README.md",
+        "docs/architecture/REPOSITORY_MEMORY_SYSTEM_V1.md"
       ],
       "dependencies": [
         "PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001",
@@ -1497,7 +1545,7 @@
         "node scripts/validate-roadmap-contract.mjs --ci",
         "pnpm playbook docs audit --json"
       ],
-      "status": "planned-later",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1509,8 +1557,7 @@
       "title": "Repository memory promotion and prune workflow",
       "goal": "Define deterministic promotion/demotion/prune workflow so durable doctrine remains compact, reviewable, and provenance-linked.",
       "commands": [
-        "patterns",
-        "query"
+        "memory"
       ],
       "contracts": [
         "docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md",
@@ -1518,12 +1565,16 @@
         "docs/roadmap/ROADMAP.json"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "packages/engine/test/memoryKnowledge.test.ts",
+        "packages/cli/src/commands/memory.test.ts"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/PLAYBOOK_NOTES.md",
-        "docs/roadmap/IMPROVEMENTS_BACKLOG.md"
+        "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
+        "docs/commands/memory.md",
+        "docs/contracts/REPOSITORY_MEMORY_KNOWLEDGE_CONTRACT.md"
       ],
       "dependencies": [
         "PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001",
@@ -1534,7 +1585,7 @@
         "node scripts/validate-roadmap-contract.mjs --ci",
         "pnpm playbook docs audit --json"
       ],
-      "status": "planned-later",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1562,7 +1613,8 @@
         "docs/architecture/OUTCOME_LEARNING_AND_POLICY_IMPROVEMENT_V1.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/contracts/roadmap/roadmap-dependency-graph.test.mjs"
       ],
       "docs": [
         "docs/roadmap/ROADMAP.json",
@@ -1583,7 +1635,7 @@
         "pnpm playbook verify --json",
         "pnpm playbook plan --json"
       ],
-      "status": "planned",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1697,7 +1749,8 @@
         "docs/architecture/STRUCTURAL_GRAPH_AND_MEMORY_INTEGRATION_V1.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/scripts/repository-memory-doc-pins.test.mjs"
       ],
       "docs": [
         "docs/roadmap/ROADMAP.json",
@@ -1715,7 +1768,7 @@
         "pnpm playbook graph --json",
         "pnpm playbook explain architecture --json"
       ],
-      "status": "planned",
+      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -1784,13 +1837,16 @@
         "AGENTS.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs"
+        "scripts/validate-roadmap-contract.mjs",
+        "test/scripts/consumer-upgrade-boundary-doc-pins.test.mjs",
+        "packages/cli/src/commands/upgrade.test.ts"
       ],
       "docs": [
         "docs/roadmap/ROADMAP.json",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/IMPROVEMENTS_BACKLOG.md",
-        "docs/CHANGELOG.md"
+        "docs/CHANGELOG.md",
+        "docs/commands/upgrade.md"
       ],
       "dependencies": [
         "PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001"
@@ -1799,7 +1855,7 @@
         "node scripts/validate-roadmap-contract.mjs --ci",
         "pnpm playbook docs audit --json"
       ],
-      "status": "planned",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",

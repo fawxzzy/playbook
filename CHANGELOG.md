@@ -4,6 +4,7 @@
 
 ### WHAT
 
+- Moved the roadmap statuses of the knowledge-compaction, repository-memory, session-evidence, consumer-upgrade-boundary, delivery-system, toroidal-flow, automation-synthesis, promotion, replay-consolidation, memory-aware retrieval and memory prune features to `implemented-hardening`, the pure architecture overlays (SKU, metrics/ROI, pilot rollout, knowledge persistence, graph memory) to `architecture-defined`, and the first-slice features (architecture graph, governed interface API, workspace governance, multi-repo transfer) to `in-progress`, each with the commands, tests and docs that exist. Added `test/contracts/roadmap/roadmap-dependency-graph.test.mjs` (stable IDs, no dangling or cyclic dependencies, consistent build order) and regenerated the project-board owner export (20 non-complete cards).
 - Widened `scripts/validate-roadmap-contract.mjs` so shipped features (`implemented`, `implemented-hardening`, `in-progress`) of any roadmap version must declare live commands and existing contract, docs and test paths (previously only v0.9, and not tests); ignored `docs/commands/README.md` as a command family; corrected `PB-V03-INDEX-001`, `PB-V03-QUERY-001` and `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001` to real artifacts; moved `PB-V06-FAILURE-INTELLIGENCE-001` from `in-progress` to `planned` because none of its declared artifacts or its `failure` command exist; bumped roadmap `updatedAt`; regenerated the project-board owner export; added validator regression tests; and used `fileURLToPath` instead of `URL.pathname` in two contract tests so they run on Windows.
 - Refreshed the committed `packages/cli-wrapper/runtime` snapshot (`commands/analyze.js` and `commands/patterns.js` plus source maps) from the current build: it lagged the `analyze` engine routing and the `patterns verta` subcommand.
 - Made the release fallback asset validation, `pack-smoke` extraction and the release-fallback proof run `tar` from the tarball folder with a bare file name (GNU tar under Git Bash on Windows read `C:...` as a remote host), and made the Windows launcher tests expect `%ComSpec%` (a full path on real Windows hosts) instead of the literal `cmd.exe`.
@@ -17,6 +18,7 @@
 
 ### WHY
 
+- Records which features the merged slices actually finished, so the public board shows finished work as finished and keeps the open work (decisions, hosted surfaces, graph-backed impact analysis) visible without recasting partial work as done.
 - Keeps the roadmap an honest source for the public project board: shipped features can no longer declare commands, contracts, docs or tests that do not exist, and the Windows test runs no longer fail on a path idiom.
 - Keeps the committed fallback runtime in step with the source the CLI is built from, so a fresh clone and a built tree agree.
 - Keeps the release-asset and pack-smoke gates runnable from any Windows shell and keeps the Windows launcher tests honest about `%ComSpec%`.

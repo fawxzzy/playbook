@@ -11,6 +11,8 @@ This directory contains roadmap support artifacts used by CI, planning, and AI a
 
 Rule: command implementation status is **not** authored in roadmap documents; use `docs/commands/README.md` for live command truth.
 
+Dependencies in `ROADMAP.json` are sequencing intent, not a status gate: a feature may ship before a listed dependency. `test/contracts/roadmap/roadmap-dependency-graph.test.mjs` only requires the graph to be well formed (unique IDs, no dangling edges, no cycles, build order consistent with edges).
+
 ## Role of each document
 
 - `docs/PLAYBOOK_PRODUCT_ROADMAP.md`: strategic direction, sequencing, and commitment posture.
