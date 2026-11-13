@@ -1,6 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import * as engine from '@zachariahredfield/playbook-engine';
 import type { VerifyReport } from '../commands/verify.js';
 import type { FixHandler } from './fixes.js';
 import { notesEmptyRule } from '../rules/verify/notesEmptyRule.js';
@@ -25,105 +23,114 @@ export type VerifyRule = {
   remediation?: string[];
 };
 
-type PluginVerifyRule = {
+export type RuleSource = 'core' | 'plugin' | 'legacy-plugin';
+
+export type RuleListingEntry = {
   id: string;
   description: string;
-  verify: (ctx: { failure: VerifyFailure }) => boolean;
-  policy?: {
-    id: string;
-    description?: string;
-  };
-  fix?: FixHandler;
   explanation?: string;
-  remediation?: string[];
-};
-
-type PluginModule = {
-  rules?: PluginVerifyRule[];
+  source: RuleSource;
 };
 
 export const coreVerifyRules: VerifyRule[] = [notesMissingRule, notesEmptyRule, requireNotesOnChangesRule, testsRequiredRule, protectedDocGovernanceRule, releaseVersionGovernanceRule];
 
-const readDependencyNames = (cwd: string): string[] => {
-  const packageJsonPath = path.join(cwd, 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
-    return [];
-  }
-
-  const raw = fs.readFileSync(packageJsonPath, 'utf8');
-  const pkg = JSON.parse(raw) as {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-    optionalDependencies?: Record<string, string>;
-    peerDependencies?: Record<string, string>;
-  };
-
-  const names = [
-    ...Object.keys(pkg.dependencies ?? {}),
-    ...Object.keys(pkg.devDependencies ?? {}),
-    ...Object.keys(pkg.optionalDependencies ?? {}),
-    ...Object.keys(pkg.peerDependencies ?? {})
-  ];
-
-  return [...new Set(names)].filter((name) => /^playbook-plugin-/.test(name));
+// Engine plugin rule shape (docs/contracts/PLUGIN_CONTRACT_V1.md). Typed structurally because the
+// engine package types are declared loosely for the CLI build.
+type EnginePluginRule = {
+  id: string;
+  description: string;
+  policy?: VerifyRule['policy'];
+  fix?: unknown;
+  explanation?: string;
+  remediation?: string[];
+  matchesFailure?: (failure: VerifyFailure) => boolean;
 };
 
-const toVerifyRule = (rule: PluginVerifyRule): VerifyRule | undefined => {
-  if (!rule || typeof rule.id !== 'string' || typeof rule.description !== 'string' || typeof rule.verify !== 'function') {
+type EngineRuleCatalog = {
+  entries: Array<{ rule: EnginePluginRule; source: RuleSource }>;
+  notices: string[];
+};
+
+// Each notice is printed once per process, to stderr only, so --json stdout stays byte-compatible.
+const printedNotices = new Set<string>();
+const emitNotices = (notices: string[]): void => {
+  for (const notice of notices) {
+    if (printedNotices.has(notice)) continue;
+    printedNotices.add(notice);
+    console.error(`playbook: ${notice}`);
+  }
+};
+
+const toVerifyRule = (rule: EnginePluginRule): VerifyRule => ({
+  id: rule.id,
+  description: rule.description,
+  check: ({ failure }) => (rule.matchesFailure ? Boolean(rule.matchesFailure(failure)) : failure.id === rule.id),
+  policy: rule.policy,
+  fix: rule.fix as FixHandler | undefined,
+  explanation: rule.explanation,
+  remediation: rule.remediation
+});
+
+const loadCatalog = async (cwd: string): Promise<EngineRuleCatalog | undefined> => {
+  try {
+    const { config } = await Promise.resolve(engine.loadConfig(cwd));
+    const catalog = engine.loadRuleCatalog(cwd, config) as EngineRuleCatalog;
+    emitNotices(catalog.notices);
+    return catalog;
+  } catch (error) {
+    emitNotices([`Plugin rules unavailable (${error instanceof Error ? error.message : String(error)}); using built-in rules only.`]);
     return undefined;
   }
-
-  return {
-    id: rule.id,
-    description: rule.description,
-    check: rule.verify,
-    policy: rule.policy,
-    fix: rule.fix,
-    explanation: rule.explanation,
-    remediation: rule.remediation
-  };
 };
 
-const loadPluginRules = async (cwd: string): Promise<VerifyRule[]> => {
-  const pluginRules: VerifyRule[] = [];
+type RuleSources = { guidance: VerifyRule[]; listing: RuleListingEntry[] };
 
-  for (const dependencyName of readDependencyNames(cwd)) {
-    const pluginEntryPath = path.join(cwd, 'node_modules', dependencyName, 'index.js');
-    if (!fs.existsSync(pluginEntryPath)) {
-      continue;
-    }
+/**
+ * The one CLI entry to rule discovery. Everything is read through the engine rule catalog
+ * (`engine.loadRuleCatalog`), the same path engine `verify`/`plan` execute. Plugin rules come first
+ * (matching the previous precedence), then the CLI's built-in guidance rules. No other CLI module
+ * may discover or import plugins.
+ */
+const loadRuleSources = async (cwd: string): Promise<RuleSources> => {
+  const catalog = await loadCatalog(cwd);
+  const pluginEntries = (catalog?.entries ?? []).filter((entry) => entry.source !== 'core');
 
-    try {
-      const loaded = (await import(pathToFileURL(pluginEntryPath).href)) as PluginModule & { default?: PluginModule };
-      const pluginModule = loaded.rules ? loaded : loaded.default;
-      const rules = Array.isArray(pluginModule?.rules) ? pluginModule.rules : [];
-
-      for (const pluginRule of rules) {
-        const mapped = toVerifyRule(pluginRule);
-        if (mapped) {
-          pluginRules.push(mapped);
-        }
-      }
-    } catch {
-      // Ignore broken plugin modules and continue loading available rules.
-    }
-  }
-
-  return pluginRules;
-};
-
-export const loadVerifyRules = async (cwd: string): Promise<VerifyRule[]> => {
-  const merged = [...(await loadPluginRules(cwd)), ...coreVerifyRules];
-  const deduped: VerifyRule[] = [];
+  const guidance: VerifyRule[] = [];
+  const listing: RuleListingEntry[] = [];
   const seen = new Set<string>();
 
-  for (const rule of merged) {
-    if (seen.has(rule.id)) {
-      continue;
-    }
+  const add = (rule: VerifyRule, source: RuleSource): void => {
+    if (seen.has(rule.id)) return;
     seen.add(rule.id);
-    deduped.push(rule);
+    guidance.push(rule);
+    listing.push({
+      id: rule.id,
+      description: rule.description,
+      ...(rule.explanation ? { explanation: rule.explanation } : {}),
+      source
+    });
+  };
+
+  for (const entry of pluginEntries) add(toVerifyRule(entry.rule), entry.source);
+  for (const rule of coreVerifyRules) add(rule, 'core');
+
+  // Engine core rules without CLI guidance are listed, but never used to explain failures.
+  for (const entry of catalog?.entries ?? []) {
+    if (entry.source !== 'core' || seen.has(entry.rule.id)) continue;
+    seen.add(entry.rule.id);
+    listing.push({
+      id: entry.rule.id,
+      description: entry.rule.description,
+      ...(entry.rule.explanation ? { explanation: entry.rule.explanation } : {}),
+      source: 'core'
+    });
   }
 
-  return deduped;
+  return { guidance, listing };
 };
+
+/** Rules used to explain, gate (policy) and fix reported verify failures. */
+export const loadVerifyRules = async (cwd: string): Promise<VerifyRule[]> => (await loadRuleSources(cwd)).guidance;
+
+/** Every verify rule known to the engine and the CLI, tagged with where it came from. */
+export const loadRuleListing = async (cwd: string): Promise<RuleListingEntry[]> => (await loadRuleSources(cwd)).listing;

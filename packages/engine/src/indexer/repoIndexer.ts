@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { loadConfig } from '../config/load.js';
 import { getCoreRules } from '../rules/coreRules.js';
+import { loadRuleRegistry } from '../plugins/unifiedPluginRegistry.js';
 import { scanWorkspaceDeps } from '../diagrams/scanWorkspaceDeps.js';
 import { extractDependencyEdges, type RepositoryDependencyEdge } from './extractDependencies.js';
 
@@ -340,9 +341,15 @@ const detectDatabase = (projectRoot: string): string => {
 
 const detectRules = (projectRoot: string): string[] => {
   const { config } = loadConfig(projectRoot);
-  return getCoreRules(config)
-    .map((rule) => rule.id)
-    .sort();
+  // Core rules plus plugin rules (docs/contracts/PLUGIN_CONTRACT_V1.md). Indexing must not
+  // fail because of a broken plugin, so fall back to the core ids.
+  let rules: Array<{ id: string }>;
+  try {
+    rules = loadRuleRegistry(projectRoot, config);
+  } catch {
+    rules = getCoreRules(config);
+  }
+  return [...new Set(rules.map((rule) => rule.id))].sort();
 };
 
 const detectWorkspace = (projectRoot: string): RepositoryWorkspaceNode[] => {

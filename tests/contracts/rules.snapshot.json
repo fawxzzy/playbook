@@ -4,27 +4,38 @@
   "verify": [
     {
       "id": "notes.missing",
-      "description": "Require docs/PLAYBOOK_NOTES.md so governance changes are recorded."
+      "description": "Require docs/PLAYBOOK_NOTES.md so governance changes are recorded.",
+      "source": "core"
     },
     {
       "id": "notes.empty",
-      "description": "Require notes entries when docs/PLAYBOOK_NOTES.md exists."
+      "description": "Require notes entries when docs/PLAYBOOK_NOTES.md exists.",
+      "source": "core"
     },
     {
       "id": "requireNotesOnChanges",
-      "description": "Require notes updates whenever source files change."
+      "description": "Require notes updates whenever source files change.",
+      "source": "core"
     },
     {
       "id": "verify.rule.tests.required",
-      "description": "Require tests when adding CLI commands or verify rules."
+      "description": "Require tests when adding CLI commands or verify rules.",
+      "source": "core"
     },
     {
       "id": "protected-doc.governance",
-      "description": "Fail closed when protected-doc consolidation is unresolved or drift-conflicted."
+      "description": "Fail closed when protected-doc consolidation is unresolved or drift-conflicted.",
+      "source": "core"
     },
     {
       "id": "release.version-governance",
-      "description": "Fail closed when release-relevant changes ship without coordinated version governance updates."
+      "description": "Fail closed when release-relevant changes ship without coordinated version governance updates.",
+      "source": "core"
+    },
+    {
+      "id": "requireNotesFileWhenGovernanceExists",
+      "description": "Require notes file whenever governance document exists.",
+      "source": "core"
     }
   ],
   "analyze": [

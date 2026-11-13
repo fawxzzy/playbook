@@ -1,11 +1,13 @@
 import { ExitCode } from '../lib/cliContract.js';
 import { loadAnalyzeRules } from '../lib/loadAnalyzeRules.js';
-import { loadVerifyRules } from '../lib/loadVerifyRules.js';
+import { loadRuleListing, type RuleSource } from '../lib/loadVerifyRules.js';
 
 type RuleSummary = {
   id: string;
   description: string;
   explanation?: string;
+  /** Additive (Plugin Contract v1): where the rule comes from. Present on verify rules. */
+  source?: RuleSource;
 };
 
 type RulesResult = {
@@ -15,10 +17,14 @@ type RulesResult = {
   analyze: RuleSummary[];
 };
 
-const toRuleSummary = (rule: { id: string; description: string; explanation?: string }, explain: boolean): RuleSummary => ({
+const toRuleSummary = (
+  rule: { id: string; description: string; explanation?: string; source?: RuleSource },
+  explain: boolean
+): RuleSummary => ({
   id: rule.id,
   description: rule.description,
-  ...(explain && rule.explanation ? { explanation: rule.explanation } : {})
+  ...(explain && rule.explanation ? { explanation: rule.explanation } : {}),
+  ...(rule.source ? { source: rule.source } : {})
 });
 
 const printText = (result: RulesResult, explain: boolean): void => {
@@ -49,7 +55,7 @@ export const runRules = async (
   const result: RulesResult = {
     schemaVersion: '1.0',
     command: 'rules',
-    verify: (await loadVerifyRules(_cwd)).map((rule) => toRuleSummary(rule, options.explain)),
+    verify: (await loadRuleListing(_cwd)).map((rule) => toRuleSummary(rule, options.explain)),
     analyze: (await loadAnalyzeRules()).map((rule) => toRuleSummary(rule, options.explain))
   };
 

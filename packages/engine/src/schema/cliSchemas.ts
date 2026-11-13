@@ -294,7 +294,8 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
           properties: {
             id: { type: 'string' },
             description: { type: 'string' },
-            explanation: { type: 'string' }
+            explanation: { type: 'string' },
+            source: { enum: ['core', 'plugin', 'legacy-plugin'] }
           }
         }
       },
