@@ -49,7 +49,8 @@ Status:
 
 - **Already existing:** core deterministic observation surfaces and artifacts.
 - **Already existing (additive read surface):** architecture role inference and dependency-direction matrix observations are emitted as observation-only repository intelligence (no policy enforcement path yet).
-- **Partially defined:** richer recurrence tracking across runs.
+- **Already existing (runtime observability substrate):** every top-level command writes `.playbook/runtime/current/coverage.json` and `telemetry.json` plus per-cycle manifests and history rollups (`.playbook/runtime/history/command-stats.json`, `coverage-trend.json`, `analyzer-version-history.json`) via `packages/cli/src/lib/runtimeObservability.ts`. Coverage reports file-inventory counts, `blind_spot_ratio`, `repo_visibility_score`, and `unknown_areas` (see `docs/REFERENCE/cli.md`).
+- **Partially defined:** richer recurrence tracking across runs; blind-spot accounting currently covers file-inventory coverage only.
 - **Missing future capability:** normalized event/observation history contracts for longitudinal learning.
 
 ## 2) Knowledge / Compaction Layer

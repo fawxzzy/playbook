@@ -914,10 +914,11 @@ Pattern: Same runtime, different operational surfaces.
 - **Already exists today**
   - `index`, `query`, `graph`, `explain`, `ask --repo-context`, `analyze-pr`, `doctor`, and `verify` already produce deterministic repository and governance observations.
   - `.playbook/repo-index.json`, `.playbook/repo-graph.json`, module context artifacts, and findings/plan artifacts provide the present observation substrate.
+  - runtime observability substrate (`packages/cli/src/lib/runtimeObservability.ts`): every top-level command writes `.playbook/runtime/current/coverage.json` and `.playbook/runtime/current/telemetry.json`, a per-cycle manifest under `.playbook/runtime/cycles/<cycle_id>/`, and history rollups under `.playbook/runtime/history/` (`command-stats.json`, `coverage-trend.json`, `analyzer-version-history.json`). Coverage reports explicit file counts, `blind_spot_ratio`, `repo_visibility_score`, and `unknown_areas`, separating observations from interpretations (see `docs/REFERENCE/cli.md`).
 - **Partially defined**
-  - coverage accounting, telemetry shaping, and observation-versus-interpretation boundaries are defined in current roadmap and architecture docs but are not yet a full longitudinal observation system.
+  - observation-versus-interpretation boundaries and coverage accounting are implemented for file inventory and command cycles; they are not yet a full longitudinal observation system (the history rollups are summary trends, not normalized event history).
 - **Future work**
-  - richer cycle telemetry, explicit blind-spot accounting, and stronger repository/runtime self-observation.
+  - normalized event/observation history contracts for longitudinal learning, richer cycle telemetry beyond phase and artifact counts, blind-spot accounting beyond file-inventory coverage, and stronger repository/runtime self-observation.
 - **Execution window**
   - inside the current near-term execution window only where observation hardens the deterministic core; broader observation expansion is later.
 
