@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-11-12",
+  "updatedAt": "2026-11-13",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -16,7 +16,8 @@
         "docs/contracts/repository-graph-contract.md"
       ],
       "tests": [
-        "tests/contracts/cliContracts.test.ts"
+        "packages/engine/test/repoIndexer.test.ts",
+        "tests/contracts/index.snapshot.json"
       ],
       "docs": [
         "docs/commands/index.md",
@@ -45,7 +46,8 @@
         "docs/contracts/COMMAND_CONTRACTS_V1.md"
       ],
       "tests": [
-        "tests/contracts/cliContracts.test.ts"
+        "packages/engine/test/repoQuery.test.ts",
+        "packages/cli/src/commands/query.test.ts"
       ],
       "docs": [
         "docs/commands/query.md"
@@ -282,7 +284,7 @@
         "pnpm playbook failure suggest --json",
         "pnpm test -- failure-intelligence"
       ],
-      "status": "in-progress"
+      "status": "planned"
     },
     {
       "feature_id": "PB-V07-ARCH-INTELLIGENCE-GRAPH-001",
@@ -690,14 +692,15 @@
       "contracts": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/ROADMAP.json",
-        "docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md"
+        "docs/contracts/repository-graph-contract.md"
       ],
       "tests": [
         "scripts/validate-roadmap-contract.mjs"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-        "docs/roadmap/ROADMAP.json"
+        "docs/roadmap/ROADMAP.json",
+        "docs/architecture/ROLE_INFERENCE.md"
       ],
       "dependencies": [
         "PB-V07-ARCH-INTELLIGENCE-GRAPH-001",
