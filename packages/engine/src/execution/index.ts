@@ -2,9 +2,7 @@ import type { FixHandler, PlanTask } from './types.js';
 import { loadConfig } from '../config/load.js';
 import { getChangedFiles } from '../git/diff.js';
 import { resolveDiffBase } from '../git/base.js';
-import { loadPlugins } from '../plugins/loadPlugins.js';
-import { getRegisteredRules, registerRule, resetPluginRegistry } from '../plugins/pluginRegistry.js';
-import { getCoreRules } from '../rules/coreRules.js';
+import { loadRuleRegistry } from '../plugins/unifiedPluginRegistry.js';
 import { defaultFixHandlers } from './defaultFixHandlers.js';
 import { FixExecutor, HandlerResolver } from './fixExecutor.js';
 import { PlanGenerator } from './planGenerator.js';
@@ -59,10 +57,7 @@ const collectExecutionInputs = (repoRoot: string): { changedFiles: string[] } =>
 
 const collectRules = (repoRoot: string) => {
   const { config } = loadConfig(repoRoot);
-  resetPluginRegistry();
-  getCoreRules(config).forEach(registerRule);
-  loadPlugins(repoRoot);
-  return getRegisteredRules();
+  return loadRuleRegistry(repoRoot, config);
 };
 
 export const runRuleExecution = (repoRoot: string) => {
