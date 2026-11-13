@@ -819,6 +819,8 @@ export {
   readPatternReviewQueue,
   readPromotedPatterns,
   promotePatternCandidate,
+  readPatternReviewDecisions,
+  PATTERN_REVIEW_DECISIONS_RELATIVE_PATH,
   scorePatternCandidate
 } from './compaction/index.js';
 export type {

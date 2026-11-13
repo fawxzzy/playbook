@@ -82,10 +82,12 @@ export {
   readPatternReviewQueue,
   readPromotedPatterns,
   promotePatternCandidate,
+  readPatternReviewDecisions,
+  PATTERN_REVIEW_DECISIONS_RELATIVE_PATH,
   PATTERN_REVIEW_QUEUE_RELATIVE_PATH,
   PROMOTED_PATTERNS_ARTIFACT_RELATIVE_PATH,
   DOCTRINE_CANDIDATES_ARTIFACT_RELATIVE_PATH
 } from './promotionQueue.js';
 export { scorePatternCandidate } from './scorePatternCandidate.js';
 export type { PatternCandidateScore, AttractorScoreBreakdown } from './scorePatternCandidate.js';
-export type { ConvergencePrioritySuggestion, PatternReviewQueueArtifact, PromotedPatternsArtifact, DoctrineCandidate, DoctrineCandidatesArtifact } from './promotionQueue.js';
+export type { ConvergencePrioritySuggestion, PatternReviewQueueArtifact, PatternReviewDecisionsArtifact, PatternReviewDecisionEntry, PromotedPatternsArtifact, DoctrineCandidate, DoctrineCandidatesArtifact } from './promotionQueue.js';

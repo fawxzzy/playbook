@@ -47,7 +47,7 @@ Specialized fields/subqueries:
 - `module-owners` (`pnpm playbook query module-owners [module]`)
 - `test-hotspots`
 - `patterns`
-- `pattern-review`
+- `pattern-review` (candidates not yet decided; rejections recorded in `.playbook/pattern-review-decisions.json` stay hidden until their evidence changes)
 - `promoted-patterns`
 - `pattern-graph` (engine read-only artifact query plane for `.playbook/pattern-knowledge-graph.json`; currently library-level)
 - `runs`

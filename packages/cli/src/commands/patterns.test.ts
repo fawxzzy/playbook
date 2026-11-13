@@ -939,10 +939,38 @@ describe('runPatterns', () => {
     expect(payload.action).toBe('promote');
     expect(payload.reviewRecord.decision.decision).toBe('approve');
     expect(fs.existsSync(path.join(repo, '.playbook', 'patterns-promoted.json'))).toBe(true);
+    const approvals = JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'pattern-review-decisions.json'), 'utf8'));
+    expect(approvals.decisions.map((entry: { decision: { decision: string } }) => entry.decision.decision)).toEqual(['approve']);
 
     logSpy.mockRestore();
   });
 
+  it('records a rejection in the decision log without promoting', async () => {
+    const repo = createRepo('playbook-cli-patterns-reject');
+    writePatternReviewQueue(repo);
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    const exitCode = await runPatterns(repo, ['promote', '--id', 'candidate-module_test_absence', '--decision', 'reject'], {
+      format: 'json',
+      quiet: false
+    });
+
+    expect(exitCode).toBe(ExitCode.Success);
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.action).toBe('promote');
+    expect(payload.reviewRecord.decision.decision).toBe('reject');
+    expect(fs.existsSync(path.join(repo, '.playbook', 'patterns-promoted.json'))).toBe(false);
+
+    const log = JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'pattern-review-decisions.json'), 'utf8'));
+    expect(log.kind).toBe('playbook-pattern-review-decisions');
+    expect(log.decisions).toHaveLength(1);
+    expect(log.decisions[0]).toMatchObject({ candidateId: 'candidate-module_test_absence', decision: { decision: 'reject' } });
+
+    const queue = JSON.parse(fs.readFileSync(path.join(repo, '.playbook', 'pattern-review-queue.json'), 'utf8'));
+    expect(queue.candidates).toHaveLength(0);
+
+    logSpy.mockRestore();
+  });
 
   it('scores pattern graph with appended attractor entries', async () => {
     const repo = createRepo('playbook-cli-patterns-score');

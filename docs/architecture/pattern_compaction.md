@@ -60,6 +60,8 @@ Promotion boundaries:
 - Compact observations are staged as candidate knowledge in `.playbook/pattern-review-queue.json`.
 - Promotion requires an explicit deterministic decision record and never happens silently.
 - Approved patterns are persisted to `.playbook/patterns-promoted.json`.
+- Every decision, approve or reject, is appended to `.playbook/pattern-review-decisions.json` (`schemaVersion` `1.0`, kind `playbook-pattern-review-decisions`, entries in recorded order). Each entry carries the full review record (candidate id, decision, `decidedBy`, `decidedAt`, rationale) plus `sourcePatternId` and an `evidenceFingerprint` (sha256 of the candidate's sorted examples and recurrence count). The log is append-only and is not a registered contract schema.
+- A rejected candidate stays out of the rebuilt review queue while its latest decision is a rejection against an identical `evidenceFingerprint`; it returns to `query pattern-review` once its evidence changes (different examples or recurrence count) or after a later approval is recorded.
 - Storage is local-only for this slice; cross-repo sync is intentionally out of scope.
 
 Rule: Compacted observations are not durable knowledge until they pass through an explicit promotion boundary.
