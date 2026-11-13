@@ -124,6 +124,7 @@ At minimum for command-surface changes:
 - `pnpm -r build`
 - `pnpm agents:update`
 - `pnpm agents:check`
+- `pnpm check:cli-wrapper-runtime` (after a build, whenever `packages/cli` or its dependencies changed: the committed `packages/cli-wrapper/runtime` snapshot must match the build; it prints the regenerate command when stale)
 
 When documentation/governance surfaces are touched, also run:
 
