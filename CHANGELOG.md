@@ -4,6 +4,7 @@
 
 ### WHAT
 
+- Reworded the `PB-V1-DELIVERY-SYSTEM-001` roadmap goal ("docs and contract checks" instead of a path-like phrase), bumped `docs/roadmap/ROADMAP.json` `updatedAt`, and regenerated the project-board owner export.
 - Made the project-board owner export check (`pnpm board:export:check`), its canonical-export test, and the managed-docs generator (`pnpm docs:check`) compare the LF form of committed files, so Windows checkouts that materialize them with CRLF no longer report false stale exports or managed docs; added a regression test that a CRLF-materialized export passes while real drift still fails.
 - Added a reusable `.github/actions/atlas-ui-proof/action.yml` compatibility gate that reruns ATLAS semantic drift, reruns ATLAS visual proof, derives the combined proof summary, and exports completion-facing outputs for downstream workflow consumers.
 - Clarified workflow-pack reuse docs so consumer-side proof gating remains a read-only compatibility layer over owner reports rather than a replacement verification truth surface.
@@ -13,6 +14,7 @@
 
 ### WHY
 
+- Lets the Playbook roadmap goals pass the public project-board text screen so the delivery-system card can be published, and records the roadmap as current as of this change.
 - Keeps the owner export and managed-docs gates portable across Git line-ending settings, matching the roadmap source-revision hash that already normalizes to LF.
 - Lets Playbook and `_stack` enforce proof-backed completion for the ATLAS UI-governance lane without creating a second UI truth store.
 - Keeps workflow-pack reuse explicit about the difference between canonical verification contracts and downstream compatibility projections.

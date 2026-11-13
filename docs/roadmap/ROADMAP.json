@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-15",
+  "updatedAt": "2026-11-12",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -169,7 +169,7 @@
       "feature_id": "PB-V1-DELIVERY-SYSTEM-001",
       "version": "v1.0",
       "title": "Deterministic delivery system and CI gating",
-      "goal": "Require roadmap IDs, roadmap contract validity, and docs/contract checks in branch validation.",
+      "goal": "Require roadmap IDs, roadmap contract validity, and docs and contract checks in branch validation.",
       "commands": [
         "docs",
         "schema",
