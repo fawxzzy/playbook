@@ -519,17 +519,17 @@ Current slice establishes:
 - safe-default-only managed `.playbookignore` updates with review-only handling for lower-confidence recommendations
 - runtime coverage honors explicit `.playbookignore` rules so follow-up pilot/index cycles reflect tightened scan boundaries
 
-Next planned external-consumer hardening slice: **Managed-vs-Local Upgrade Boundaries**.
+Shipped external-consumer hardening slice: **Managed-vs-Local Upgrade Boundaries** (runtime in `init`/`upgrade`; contract in `docs/CONSUMER_INTEGRATION_CONTRACT.md`; command reference in `docs/commands/upgrade.md`).
 
-This slice formalizes upgrade safety as a trust-boundary problem for external consumer repositories rather than a generic docs note. The intent is to let Playbook evolve its own managed surfaces without collapsing repo-local product truth into framework-global doctrine. Runtime support now exists through the installable `.playbook/managed-surfaces.json` contract, deterministic boundary categories, and fail-closed `upgrade --apply` review handling for mixed/protected targets.
+This slice formalizes upgrade safety as a trust-boundary problem for external consumer repositories rather than a generic docs note. The intent is to let Playbook evolve its own managed surfaces without collapsing repo-local product truth into framework-global doctrine. Runtime support is shipped through the installable `.playbook/managed-surfaces.json` contract, deterministic boundary categories, and fail-closed `upgrade --apply` review handling for mixed/protected targets.
 
-Planned direction:
+Direction (the manifest, categories, and `upgrade --apply` handling below are implemented; broader hardening of additional managed surfaces continues):
 
 - Split external consumer repositories into a **Managed Layer** and a **Local Layer**.
 - Treat repo-local `AGENT.md` as the consumer repo's product-truth and execution-identity surface so product-specific rules remain local.
-- Evolve `playbook upgrade` toward mutating only Playbook-managed artifacts and explicitly Playbook-owned generated surfaces.
+- `playbook upgrade --apply` mutates only paths the manifest categorizes as `managed_by_playbook`; protected, migration-required, and unclassified paths fail closed with review-required output.
 - Keep repo-owned product files protected unless an explicit migration path exists.
-- Add and maintain a first-class manifest contract (`.playbook/managed-surfaces.json`) that marks managed vs protected paths so upgrade decisions are deterministic and reviewable.
+- Maintain a first-class manifest contract (`.playbook/managed-surfaces.json`, seeded by `init` and the `contract.managed-surface-manifest.installable` migration) that marks managed vs protected paths so upgrade decisions are deterministic and reviewable.
 
 Managed Layer examples:
 
