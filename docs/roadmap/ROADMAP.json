@@ -76,13 +76,15 @@
       ],
       "contracts": [
         "docs/contracts/verify-output.md",
-        "docs/architecture/REMEDIATION_TRUST_MODEL.md"
+        "docs/architecture/REMEDIATION_TRUST_MODEL.md",
+        "docs/contracts/security/change-level.json"
       ],
       "tests": [
         "packages/engine/test/verify.plan.apply.workflow.test.ts",
         "packages/cli/src/commands/apply.test.ts",
         "test/security/security-regression.test.mjs",
-        "test/contracts/security/security-contracts.test.mjs"
+        "test/contracts/security/security-contracts.test.mjs",
+        "packages/engine/src/execution/changeLevel.test.ts"
       ],
       "docs": [
         "docs/commands/plan.md",
@@ -148,7 +150,8 @@
         "docs/contracts/COMMAND_CONTRACTS_V1.md"
       ],
       "tests": [
-        "packages/engine/test/plugins.test.ts"
+        "packages/engine/test/plugins.test.ts",
+        "packages/engine/test/pluginLoadingPath.test.ts"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md"
@@ -219,8 +222,10 @@
         "AGENTS.md"
       ],
       "tests": [
-        "scripts/validate-roadmap-contract.mjs",
-        "scripts/update-managed-docs.mjs"
+        "packages/engine/test/docsAudit.test.ts",
+        "packages/cli/src/lib/commandMetadata.test.ts",
+        "test/scripts/command-truth-metadata.test.mjs",
+        "scripts/validate-roadmap-contract.mjs"
       ],
       "docs": [
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
@@ -238,7 +243,7 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
@@ -247,8 +252,60 @@
     {
       "feature_id": "PB-V06-FAILURE-INTELLIGENCE-001",
       "version": "v0.6",
-      "title": "Failure intelligence loop and prevention codification",
-      "goal": "Capture failures as structured intelligence and deterministically map them into rules, tests, docs, and remediation scaffolds.",
+      "title": "Test-failure intelligence loop: triage, fix plan, governed autofix",
+      "goal": "Turn test and CI failures into deterministic diagnosis artifacts, bounded remediation plans and governed autofix with remediation history, using existing verify, plan and apply seams.",
+      "commands": [
+        "test-triage",
+        "test-fix-plan",
+        "test-autofix",
+        "remediation-status"
+      ],
+      "contracts": [
+        "docs/contracts/COMMAND_CONTRACTS_V1.md",
+        "packages/contracts/src/test-triage.schema.json",
+        "packages/contracts/src/test-fix-plan.schema.json",
+        "packages/contracts/src/test-autofix.schema.json",
+        "packages/contracts/src/test-autofix-remediation-history.schema.json",
+        "packages/contracts/src/remediation-status.schema.json"
+      ],
+      "tests": [
+        "packages/cli/src/commands/testTriage.test.ts",
+        "packages/cli/src/commands/testFixPlan.test.ts",
+        "packages/cli/src/commands/testAutofix.test.ts",
+        "packages/cli/src/commands/remediationStatus.test.ts",
+        "packages/core/test/test-triage-contract.test.ts",
+        "packages/core/test/test-fix-plan-contract.test.ts",
+        "packages/core/test/test-autofix-contract.test.ts",
+        "packages/core/test/test-autofix-remediation-history-contract.test.ts"
+      ],
+      "docs": [
+        "docs/commands/test-triage.md",
+        "docs/commands/test-fix-plan.md",
+        "docs/commands/test-autofix.md",
+        "docs/commands/remediation-status.md",
+        "docs/architecture/REMEDIATION_TRUST_MODEL.md"
+      ],
+      "dependencies": [
+        "PB-V05-PACKAGE-BOUNDARIES-001",
+        "PB-V1-DELIVERY-SYSTEM-001"
+      ],
+      "package_ownership": [
+        "@fawxzzy/playbook",
+        "@zachariahredfield/playbook-engine",
+        "@zachariahredfield/playbook-core"
+      ],
+      "verification_commands": [
+        "pnpm playbook test-triage --help",
+        "pnpm -C packages/cli test -- testTriage",
+        "pnpm -C packages/core test -- test-triage-contract"
+      ],
+      "status": "implemented-hardening"
+    },
+    {
+      "feature_id": "PB-V06-FAILURE-TAXONOMY-001",
+      "version": "v0.6",
+      "title": "General failure taxonomy, ingest and prevention mapping",
+      "goal": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
       "commands": [
         "verify",
         "plan",
@@ -271,8 +328,7 @@
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md"
       ],
       "dependencies": [
-        "PB-V05-PACKAGE-BOUNDARIES-001",
-        "PB-V1-DELIVERY-SYSTEM-001"
+        "PB-V06-FAILURE-INTELLIGENCE-001"
       ],
       "package_ownership": [
         "@fawxzzy/playbook",
@@ -2377,7 +2433,8 @@
       "goal": "Restore engine package stability under full workspace and package-load execution by fixing timeout pressure, fixture isolation, and heavy git or temp test behavior without changing workflow-pack bridge contracts, research contracts, scorecard contracts, golden-path registry contracts, or command surfaces unless a direct interaction is proven.",
       "commands": [],
       "contracts": [
-        "docs/roadmap/ROADMAP.json"
+        "docs/roadmap/ROADMAP.json",
+        "packages/engine/vitest.config.mjs"
       ],
       "tests": [
         "packages/engine/test/askEngine.test.ts",
@@ -2387,7 +2444,8 @@
         "packages/engine/src/release/changelog/pipeline.test.ts"
       ],
       "docs": [
-        "docs/roadmap/ROADMAP.json"
+        "docs/roadmap/ROADMAP.json",
+        "docs/TESTING.md"
       ],
       "dependencies": [
         "PB-V10-CLI-TEST-BASELINE-HARDENING-001"
@@ -2407,7 +2465,7 @@
         "pnpm docs:check",
         "pnpm test"
       ],
-      "status": "planned",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@zachariahredfield/playbook-engine",
         "@fawxzzy/playbook"
