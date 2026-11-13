@@ -62,14 +62,33 @@ export type MemorySupersedeResult = {
   artifactPath: string;
 };
 
+export type MemoryPruneReason = 'stale-candidate' | 'duplicate-candidate' | 'superseded-knowledge' | 'duplicate-knowledge';
+
+export type MemoryPruneItem = {
+  artifactPath: string;
+  id: string;
+  recordType: 'candidate' | MemoryKnowledgeKind;
+  reason: MemoryPruneReason;
+  /** Human-readable justification (last-seen date, successor ids, or the record kept instead). */
+  detail: string;
+};
+
+export type MemoryPruneOptions = {
+  /** When true, compute and return the removal plan without writing any artifact. Default false (engine callers keep prior behavior). */
+  dryRun?: boolean;
+};
+
 export type MemoryPruneResult = {
   schemaVersion: '1.0';
   command: 'memory-prune';
+  dryRun: boolean;
   staleCandidatesPruned: number;
   supersededKnowledgePruned: number;
   duplicateKnowledgeCollapsed: number;
   duplicateCandidatesCollapsed: number;
   updatedArtifacts: string[];
+  /** Deterministically ordered records removed (or, in dry-run, that would be removed). */
+  items: MemoryPruneItem[];
 };
 
 const uniqueSorted = (values: string[]): string[] => [...new Set(values)].sort((a, b) => a.localeCompare(b));
@@ -338,6 +357,10 @@ export const supersedePromotedKnowledge = (
   supersededKnowledgeId: string,
   successorKnowledgeId: string
 ): MemorySupersedeResult => {
+  if (supersededKnowledgeId === successorKnowledgeId) {
+    throw new Error('playbook memory supersede: a knowledge record cannot supersede itself');
+  }
+
   const kinds = Object.keys(knowledgePathByKind) as MemoryKnowledgeKind[];
   const artifacts = kinds.map((kind) => ({ kind, artifact: readKnowledgeArtifact(projectRoot, kind) }));
 
@@ -398,9 +421,12 @@ export const supersedePromotedKnowledge = (
 
 const staleCutoffMs = (): number => Date.now() - CANDIDATE_STALE_DAYS * 24 * 60 * 60 * 1000;
 
-const collapseByFingerprint = <T extends { fingerprint: string }>(entries: T[], chooseKeep: (left: T, right: T) => T): { kept: T[]; removed: number } => {
+const collapseByFingerprint = <T extends { fingerprint: string }>(
+  entries: T[],
+  chooseKeep: (left: T, right: T) => T
+): { kept: T[]; removed: number; removedEntries: Array<{ entry: T; keptAgainst: T }> } => {
   const byFingerprint = new Map<string, T>();
-  let removed = 0;
+  const removedEntries: Array<{ entry: T; keptAgainst: T }> = [];
 
   for (const entry of entries) {
     const existing = byFingerprint.get(entry.fingerprint);
@@ -408,15 +434,21 @@ const collapseByFingerprint = <T extends { fingerprint: string }>(entries: T[], 
       byFingerprint.set(entry.fingerprint, entry);
       continue;
     }
-    removed += 1;
-    byFingerprint.set(entry.fingerprint, chooseKeep(existing, entry));
+    const keep = chooseKeep(existing, entry);
+    const dropped = keep === existing ? entry : existing;
+    removedEntries.push({ entry: dropped, keptAgainst: keep });
+    byFingerprint.set(entry.fingerprint, keep);
   }
 
-  return { kept: [...byFingerprint.values()], removed };
+  return { kept: [...byFingerprint.values()], removed: removedEntries.length, removedEntries };
 };
 
-export const pruneMemoryKnowledge = (projectRoot: string): MemoryPruneResult => {
+const PRUNE_REASON_ORDER: MemoryPruneReason[] = ['stale-candidate', 'duplicate-candidate', 'superseded-knowledge', 'duplicate-knowledge'];
+
+export const pruneMemoryKnowledge = (projectRoot: string, options: MemoryPruneOptions = {}): MemoryPruneResult => {
+  const dryRun = options.dryRun === true;
   const updatedArtifacts = new Set<string>();
+  const items: MemoryPruneItem[] = [];
   let staleCandidatesPruned = 0;
   let supersededKnowledgePruned = 0;
   let duplicateKnowledgeCollapsed = 0;
@@ -425,26 +457,47 @@ export const pruneMemoryKnowledge = (projectRoot: string): MemoryPruneResult => 
   const candidatesPath = path.join(projectRoot, MEMORY_CANDIDATES_PATH);
   if (fs.existsSync(candidatesPath)) {
     const candidatesArtifact = readCandidates(projectRoot);
+    const cutoff = staleCutoffMs();
+    let staleRemoved = 0;
     const activeCandidates = candidatesArtifact.candidates.filter((candidate) => {
       const candidateLastSeen = safeIsoDate((candidate as MemoryReplayCandidate & { lastSeenAt?: string }).lastSeenAt);
       if (!candidateLastSeen) {
         return true;
       }
-      if (Date.parse(candidateLastSeen) < staleCutoffMs()) {
-        staleCandidatesPruned += 1;
+      if (Date.parse(candidateLastSeen) < cutoff) {
+        staleRemoved += 1;
+        items.push({
+          artifactPath: MEMORY_CANDIDATES_PATH,
+          id: candidate.candidateId,
+          recordType: 'candidate',
+          reason: 'stale-candidate',
+          detail: `lastSeenAt ${candidateLastSeen} is older than ${CANDIDATE_STALE_DAYS} days`
+        });
         return false;
       }
       return true;
     });
+    staleCandidatesPruned += staleRemoved;
 
     const dedupedCandidates = collapseByFingerprint(activeCandidates, (left) => left);
     duplicateCandidatesCollapsed += dedupedCandidates.removed;
-
-    if (staleCandidatesPruned > 0 || duplicateCandidatesCollapsed > 0) {
-      writeJson(candidatesPath, {
-        ...candidatesArtifact,
-        candidates: dedupedCandidates.kept
+    for (const { entry, keptAgainst } of dedupedCandidates.removedEntries) {
+      items.push({
+        artifactPath: MEMORY_CANDIDATES_PATH,
+        id: entry.candidateId,
+        recordType: 'candidate',
+        reason: 'duplicate-candidate',
+        detail: `duplicate fingerprint ${entry.fingerprint}; kept ${keptAgainst.candidateId}`
       });
+    }
+
+    if (staleRemoved > 0 || dedupedCandidates.removed > 0) {
+      if (!dryRun) {
+        writeJson(candidatesPath, {
+          ...candidatesArtifact,
+          candidates: dedupedCandidates.kept
+        });
+      }
       updatedArtifacts.add(MEMORY_CANDIDATES_PATH);
     }
   }
@@ -457,37 +510,70 @@ export const pruneMemoryKnowledge = (projectRoot: string): MemoryPruneResult => 
     }
 
     const artifact = readKnowledgeArtifact(projectRoot, kind);
+    let supersededRemoved = 0;
     const withoutSuperseded = artifact.entries.filter((entry) => {
       if (entry.status === 'superseded' || entry.supersededBy.length > 0) {
-        supersededKnowledgePruned += 1;
+        supersededRemoved += 1;
+        items.push({
+          artifactPath: relativePath,
+          id: entry.knowledgeId,
+          recordType: kind,
+          reason: 'superseded-knowledge',
+          detail: entry.supersededBy.length > 0 ? `superseded by ${entry.supersededBy.join(', ')}` : 'status is superseded'
+        });
         return false;
       }
       return true;
     });
+    supersededKnowledgePruned += supersededRemoved;
 
-    const deduped = collapseByFingerprint(withoutSuperseded, (left, right) =>
+    // Retired records are demoted, not deleted: they never take part in duplicate collapse.
+    const retiredEntries = withoutSuperseded.filter((entry) => entry.status === 'retired');
+    const dedupeCandidates = withoutSuperseded.filter((entry) => entry.status !== 'retired');
+    const collapsed = collapseByFingerprint(dedupeCandidates, (left, right) =>
       toComparableTimestamp(left.promotedAt) >= toComparableTimestamp(right.promotedAt) ? left : right
     );
+    const deduped = { ...collapsed, kept: [...collapsed.kept, ...retiredEntries] };
 
     duplicateKnowledgeCollapsed += deduped.removed;
-
-    if (supersededKnowledgePruned > 0 || deduped.removed > 0) {
-      writeJson(fullPath, {
-        ...artifact,
-        generatedAt: new Date().toISOString(),
-        entries: sortEntries(deduped.kept)
+    for (const { entry, keptAgainst } of deduped.removedEntries) {
+      items.push({
+        artifactPath: relativePath,
+        id: entry.knowledgeId,
+        recordType: kind,
+        reason: 'duplicate-knowledge',
+        detail: `duplicate fingerprint ${entry.fingerprint}; kept ${keptAgainst.knowledgeId}`
       });
+    }
+
+    if (supersededRemoved > 0 || deduped.removed > 0) {
+      if (!dryRun) {
+        writeJson(fullPath, {
+          ...artifact,
+          generatedAt: new Date().toISOString(),
+          entries: sortEntries(deduped.kept)
+        });
+      }
       updatedArtifacts.add(relativePath);
     }
   });
 
+  const orderedItems = [...items].sort(
+    (a, b) =>
+      a.artifactPath.localeCompare(b.artifactPath) ||
+      PRUNE_REASON_ORDER.indexOf(a.reason) - PRUNE_REASON_ORDER.indexOf(b.reason) ||
+      a.id.localeCompare(b.id)
+  );
+
   return {
     schemaVersion: '1.0',
     command: 'memory-prune',
+    dryRun,
     staleCandidatesPruned,
     supersededKnowledgePruned,
     duplicateKnowledgeCollapsed,
     duplicateCandidatesCollapsed,
-    updatedArtifacts: [...updatedArtifacts].sort((a, b) => a.localeCompare(b))
+    updatedArtifacts: [...updatedArtifacts].sort((a, b) => a.localeCompare(b)),
+    items: orderedItems
   };
 };

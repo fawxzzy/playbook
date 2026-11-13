@@ -8,7 +8,9 @@ import {
   lookupMemoryEventTimeline,
   lookupPromotedMemoryKnowledge,
   promoteMemoryCandidate,
+  pruneMemoryKnowledge,
   retirePromotedKnowledge,
+  supersedePromotedKnowledge,
   resolvePatternKnowledgeStore
 } from '@zachariahredfield/playbook-engine';
 import { emitJsonOutput } from '../lib/jsonArtifact.js';
@@ -19,7 +21,15 @@ type MemoryOptions = {
   quiet: boolean;
 };
 
-type MemorySubcommand = 'events' | 'query' | 'candidates' | 'knowledge' | 'outcome-feedback' | 'policy-improvement' | 'compaction' | 'pressure' | 'replay-promotion' | 'show' | 'promote' | 'retire';
+type MemoryPruneResultView = {
+  staleCandidatesPruned: number;
+  supersededKnowledgePruned: number;
+  duplicateKnowledgeCollapsed: number;
+  duplicateCandidatesCollapsed: number;
+  items: Array<{ artifactPath: string; id: string; reason: string; detail: string }>;
+} & Record<string, unknown>;
+
+type MemorySubcommand ='events' | 'query' | 'candidates' | 'knowledge' | 'outcome-feedback' | 'policy-improvement' | 'compaction' | 'pressure' | 'replay-promotion' | 'show' | 'promote' | 'retire' | 'supersede' | 'prune';
 type MemoryPressureBand = 'normal' | 'warm' | 'pressure' | 'critical';
 type MemoryPressureActionFilter = 'dedupe' | 'compact' | 'summarize' | 'evict';
 type MemoryClassFilter = 'canonical' | 'compactable' | 'disposable';
@@ -82,6 +92,9 @@ Subcommands:
   show <id>                        Show a candidate or knowledge record by id
   promote <candidate-id>           Promote one candidate into knowledge
   retire <knowledge-id>            Retire one promoted knowledge record
+  supersede <knowledge-id> --by <successor-id>
+                                   Mark one promoted record superseded by another (same kind)
+  prune                            Preview (default) or apply (--apply) stale/duplicate/superseded memory cleanup
 
 Options:
   --kind <kind>                Filter candidates/knowledge by kind
@@ -100,6 +113,9 @@ Options:
   --source <name>              Filter candidates by source (replay|interop-followup)
   --include-superseded         Include superseded knowledge in memory knowledge
   --reason <text>              Retirement reason override for memory retire
+  --by <knowledge-id>          Successor knowledge id for memory supersede
+  --apply                      Perform the memory prune deletions (default is a read-only dry-run preview)
+  --dry-run                    Explicitly request the memory prune preview (default; conflicts with --apply)
   --decision <name>            Filter compaction review by decision bucket
   --band <name>                Filter memory pressure by band (normal|warm|pressure|critical)
   --action <name>              Filter memory pressure plan actions (dedupe|compact|summarize|evict)
@@ -154,6 +170,21 @@ const resolveSubcommandArgument = (args: string[]): string | null => {
   return positional[1] ?? null;
 };
 
+const resolvePositionalsWithoutOptionValues = (args: string[], valueOptions: string[]): string[] => {
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index] as string;
+    if (valueOptions.includes(arg)) {
+      index += 1;
+      continue;
+    }
+    if (!arg.startsWith('-')) {
+      positional.push(arg);
+    }
+  }
+  return positional;
+};
+
 const resolvePressureNestedSubcommand = (args: string[]): string | null => {
   const pressureIndex = args.findIndex((arg) => arg === 'pressure');
   if (pressureIndex < 0) {
@@ -172,7 +203,7 @@ const parseSubcommand = (args: string[]): MemorySubcommand | null => {
     return null;
   }
 
-  if (['events', 'query', 'candidates', 'knowledge', 'outcome-feedback', 'policy-improvement', 'compaction', 'pressure', 'replay-promotion', 'show', 'promote', 'retire'].includes(subcommand)) {
+  if (['events', 'query', 'candidates', 'knowledge', 'outcome-feedback', 'policy-improvement', 'compaction', 'pressure', 'replay-promotion', 'show', 'promote', 'retire', 'supersede', 'prune'].includes(subcommand)) {
     return subcommand as MemorySubcommand;
   }
 
@@ -291,7 +322,7 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
     emitMemoryError(
       options,
       requestedSubcommand,
-      'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, policy-improvement, compaction, pressure, replay-promotion, show, promote, or retire.'
+      'playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, policy-improvement, compaction, pressure, replay-promotion, show, promote, retire, supersede, or prune.'
     );
     return ExitCode.Failure;
   }
@@ -1005,7 +1036,51 @@ export const runMemory = async (cwd: string, args: string[], options: MemoryOpti
       emitMemoryResult(cwd, options, 'memory retire', payload, `Retired knowledge ${knowledgeId}.`);
       return ExitCode.Success;
     }
-    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, policy-improvement, compaction, pressure, replay-promotion, show, promote, or retire.');
+    if (subcommand === 'supersede') {
+      const positional = resolvePositionalsWithoutOptionValues(args, ['--by']);
+      const supersededId = positional[1];
+      if (!supersededId) {
+        throw new Error('playbook memory supersede: missing required <knowledge-id> argument');
+      }
+      const successorId = readOptionValue(args, '--by');
+      if (!successorId) {
+        throw new Error('playbook memory supersede: missing required --by <successor-knowledge-id> option');
+      }
+      if (supersededId === successorId) {
+        throw new Error('playbook memory supersede: <knowledge-id> and --by must be different records');
+      }
+
+      const payload = supersedePromotedKnowledge(cwd, supersededId, successorId);
+
+      emitMemoryResult(cwd, options, 'memory supersede', payload, `Superseded knowledge ${supersededId} with ${successorId}.`);
+      return ExitCode.Success;
+    }
+
+    if (subcommand === 'prune') {
+      const apply = args.includes('--apply');
+      if (apply && args.includes('--dry-run')) {
+        throw new Error('playbook memory prune: --apply and --dry-run are mutually exclusive');
+      }
+
+      const result = pruneMemoryKnowledge(cwd, { dryRun: !apply }) as MemoryPruneResultView;
+      const payload = {
+        ...result,
+        mode: apply ? 'apply' : 'dry-run',
+        ...(apply ? {} : { applyHint: 'Re-run with --apply to remove exactly the listed records.' })
+      };
+      const verb = apply ? 'Pruned' : 'Would prune';
+      const textSummary = [
+        `${apply ? 'Memory prune applied' : 'Memory prune preview (dry-run; nothing was changed)'}`,
+        `${verb} ${result.items.length} record(s): stale candidates=${result.staleCandidatesPruned} duplicate candidates=${result.duplicateCandidatesCollapsed} superseded knowledge=${result.supersededKnowledgePruned} duplicate knowledge=${result.duplicateKnowledgeCollapsed}`,
+        ...result.items.map((item) => `  - [${item.reason}] ${item.id} (${item.artifactPath}): ${item.detail}`),
+        ...(apply || result.items.length === 0 ? [] : ['Re-run with --apply to remove exactly these records.'])
+      ].join('\n');
+
+      emitMemoryResult(cwd, options, 'memory prune', payload, textSummary);
+      return ExitCode.Success;
+    }
+
+    throw new Error('playbook memory: unsupported subcommand. Use events, query, candidates, knowledge, outcome-feedback, policy-improvement, compaction, pressure, replay-promotion, show, promote, retire, supersede, or prune.');
 
   } catch (error) {
     emitMemoryError(options, subcommand, error);

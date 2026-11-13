@@ -178,6 +178,33 @@ Promotion remains explicit and reviewed: replay/consolidation artifacts never mu
 
 Retire an existing promoted knowledge record without deleting provenance.
 
+### `memory supersede <knowledge-id> --by <successor-id>`
+
+Mark one promoted knowledge record as superseded by another promoted record of the **same kind**, keeping a provenance pointer in both directions:
+
+- the superseded record becomes `status: superseded`, gains `supersededBy: [<successor-id>]`, and keeps its own `provenance` untouched;
+- the successor gains `supersedes: [<knowledge-id>]` and absorbs the superseded record's `sourceCandidateIds` and `sourceEventFingerprints`.
+
+Usage errors exit non-zero without writing anything: missing `<knowledge-id>`, missing `--by`, `<knowledge-id>` equal to `--by`, unknown ids, or records of different kinds. `--by` may appear before or after the positional id.
+
+### `memory prune`
+
+Remove stale, duplicate, and superseded memory records so durable knowledge stays compact. **Prune is a dry-run preview by default**: it prints exactly what would be removed and why, and changes nothing on disk.
+
+- `pnpm playbook memory prune` (or `--dry-run`) previews the removal plan.
+- `pnpm playbook memory prune --apply` removes exactly the records the preview listed. `--apply` and `--dry-run` together are a usage error.
+
+Removal reasons (each item reports `artifactPath`, `id`, `recordType`, `reason`, `detail`):
+
+| `reason` | Scope | Rule |
+| --- | --- | --- |
+| `stale-candidate` | `.playbook/memory/candidates.json` | candidate `lastSeenAt` is older than 30 days |
+| `duplicate-candidate` | `.playbook/memory/candidates.json` | same `fingerprint` as an earlier candidate; the first is kept |
+| `superseded-knowledge` | `.playbook/memory/knowledge/*.json` | `status: superseded` or non-empty `supersededBy`; the successor keeps the `supersedes` pointer |
+| `duplicate-knowledge` | `.playbook/memory/knowledge/*.json` | same `fingerprint` among remaining records; the most recently promoted is kept |
+
+Retired records are never pruned (demotion keeps provenance), and prune never touches committed rules, docs, or contracts. JSON output is `{ command: "memory-prune", mode: "dry-run" | "apply", dryRun, items, updatedArtifacts, <per-reason counts> }`; items are ordered deterministically (artifact path, reason, id).
+
 ## Guarantees
 
 - Pattern: **Fast Episodic Store, Slow Doctrine Store**.
@@ -259,4 +286,7 @@ pnpm playbook memory replay-promotion --state promotion-ready --bucket promotion
 pnpm playbook memory show <id> --json
 pnpm playbook memory promote <candidate-id> --json
 pnpm playbook memory retire <knowledge-id> --json
+pnpm playbook memory supersede <knowledge-id> --by <successor-id> --json
+pnpm playbook memory prune --json
+pnpm playbook memory prune --apply --json
 ```
