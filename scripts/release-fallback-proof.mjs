@@ -275,7 +275,8 @@ const main = async () => {
       })
     : { name: 'release asset download', ...run(CURL_COMMAND, ['-sSfL', assetUrl, '-o', tarPath]) };
 
-  const inspect = sourceCheck.ok ? run(TAR_COMMAND, ['-tzf', tarPath]) : { ok: false, command: `${TAR_COMMAND} -tzf ${tarPath}` };
+  // Bare file name + cwd: GNU tar (Git Bash on Windows) reads `C:\...` as host:path.
+  const inspect = sourceCheck.ok ? run(TAR_COMMAND, ['-tzf', path.basename(tarPath)], path.dirname(tarPath)) : { ok: false, command: `${TAR_COMMAND} -tzf ${tarPath}` };
   const tarEntries = inspect.ok ? parseTarEntries(inspect.stdout) : [];
 
   const checks = [sourceCheck, { name: 'release asset tar inspection', ...inspect }];

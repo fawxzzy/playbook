@@ -51,7 +51,8 @@ export const resolveReleaseVersionContext = (env = process.env) => {
 };
 
 const validateTarball = (tarballPath) => {
-  const tarEntries = execFileSync('tar', ['-tzf', tarballPath], { cwd: repoRoot, encoding: 'utf8', maxBuffer: EXEC_MAX_BUFFER })
+  // Run from the tarball's folder with a bare file name: GNU tar (Git Bash on Windows) reads `C:\...` as host:path.
+  const tarEntries = execFileSync('tar', ['-tzf', path.basename(tarballPath)], { cwd: path.dirname(tarballPath), encoding: 'utf8', maxBuffer: EXEC_MAX_BUFFER })
     .split('\n')
     .map((entry) => entry.trim())
     .filter(Boolean);

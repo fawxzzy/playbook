@@ -41,6 +41,9 @@ const contracts = [
   }
 ];
 
+// Mirrors scripts/release-fallback-proof.mjs: the Windows launcher is %ComSpec% when set (a full path on real Windows hosts).
+const WINDOWS_SHELL = process.env.ComSpec || 'cmd.exe';
+
 test('flags missing both artifacts as missing prerequisites', () => {
   withTempRepo((repoRoot) => {
     const checks = evaluateArtifactContracts({ repoRoot, contracts, producerRuns: {} });
@@ -156,17 +159,17 @@ test('resolveCommand maps npm and npx to cmd executables on Windows only', () =>
 
 test('createSpawnInvocation uses cmd.exe launcher for Windows npm and npx commands', () => {
   assert.deepEqual(createSpawnInvocation('npm.cmd', ['install'], 'win32'), {
-    spawnCommand: 'cmd.exe',
+    spawnCommand: WINDOWS_SHELL,
     spawnArgs: ['/d', '/s', '/c', 'npm.cmd install'],
     command: 'npm.cmd install'
   });
   assert.deepEqual(createSpawnInvocation('npm.cmd', ['install', '@fawxzzy/playbook-cli@9999.0.0'], 'win32'), {
-    spawnCommand: 'cmd.exe',
+    spawnCommand: WINDOWS_SHELL,
     spawnArgs: ['/d', '/s', '/c', 'npm.cmd install @fawxzzy/playbook-cli@9999.0.0'],
     command: 'npm.cmd install @fawxzzy/playbook-cli@9999.0.0'
   });
   assert.deepEqual(createSpawnInvocation('npx.cmd', ['playbook', 'plan', '--out', '.playbook/plan.json'], 'win32'), {
-    spawnCommand: 'cmd.exe',
+    spawnCommand: WINDOWS_SHELL,
     spawnArgs: ['/d', '/s', '/c', 'npx.cmd playbook plan --out .playbook/plan.json'],
     command: 'npx.cmd playbook plan --out .playbook/plan.json'
   });
@@ -224,7 +227,7 @@ test('run launches Windows npm commands through cmd.exe while preserving logical
 
   assert.deepEqual(calls, [
     {
-      command: 'cmd.exe',
+      command: WINDOWS_SHELL,
       args: ['/d', '/s', '/c', 'npm.cmd install --no-save https://example.com/playbook-cli-0.1.8.tgz'],
       options: { cwd: 'C:/temp/playbook-test', encoding: 'utf8' }
     }

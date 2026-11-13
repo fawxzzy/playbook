@@ -42,7 +42,8 @@ const ensureInstalledCliContract = (projectDir) => {
 };
 
 const readPackedPackageJson = (tarballPath) => {
-  const raw = run('tar', ['-xOf', tarballPath, 'package/package.json']);
+  // Bare file name + cwd: GNU tar (Git Bash on Windows) reads `C:\...` as host:path.
+  const raw = run('tar', ['-xOf', path.basename(tarballPath), 'package/package.json'], { cwd: path.dirname(tarballPath) });
   return JSON.parse(raw);
 };
 
@@ -124,7 +125,7 @@ const installFromTarballs = (projectDir, tarballs) => {
       : path.join(nodeModulesDir, pkg.name);
 
     fs.mkdirSync(packageDir, { recursive: true });
-    run('tar', ['-xzf', tarballPath, '-C', packageDir, '--strip-components=1']);
+    run('tar', ['-xzf', path.basename(tarballPath), '-C', packageDir, '--strip-components=1'], { cwd: path.dirname(tarballPath) });
   }
 
   console.log('[pack-smoke] install mode=tar-extract');
