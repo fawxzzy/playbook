@@ -185,6 +185,14 @@ runs:
         echo "+ pnpm contracts:check"
         pnpm contracts:check
 
+    - name: Check committed cli-wrapper runtime snapshot
+      if: inputs.execution-path == 'ci'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "+ pnpm check:cli-wrapper-runtime"
+        pnpm check:cli-wrapper-runtime
+
     - name: Detect release governance eligibility
       if: inputs.execution-path == 'ci'
       id: release-governance

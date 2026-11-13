@@ -9,7 +9,12 @@ const require = createRequire(import.meta.url);
 
 const cliDir = path.join(repoRoot, 'packages', 'cli');
 const cliDistDir = path.join(cliDir, 'dist');
-const wrapperRuntimeDir = path.join(repoRoot, 'packages', 'cli-wrapper', 'runtime');
+// `--out <dir>` writes the runtime somewhere else (used by scripts/check-cli-wrapper-runtime.mjs);
+// without it the committed packages/cli-wrapper/runtime snapshot is regenerated in place.
+const outFlagIndex = process.argv.indexOf('--out');
+const wrapperRuntimeDir = outFlagIndex >= 0 && process.argv[outFlagIndex + 1]
+  ? path.resolve(process.argv[outFlagIndex + 1])
+  : path.join(repoRoot, 'packages', 'cli-wrapper', 'runtime');
 const workspacePackages = [
   path.join(repoRoot, 'packages', 'core'),
   path.join(repoRoot, 'packages', 'engine'),
