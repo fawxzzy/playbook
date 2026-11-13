@@ -9,8 +9,8 @@ const repoRoot = process.cwd();
 const roadmapPath = path.join(repoRoot, 'docs', 'roadmap', 'ROADMAP.json');
 const prMetadataPath = path.join(repoRoot, '.playbook', 'pr-metadata.json');
 const commandTruthPath = path.join(repoRoot, 'docs', 'contracts', 'command-truth.json');
-const shippedStatuses = new Set(['implemented-hardening', 'in-progress']);
-const enforcedVersionForStrictValidation = 'v0.9';
+// Shipped features must keep their declared commands, contracts, docs and tests real (any roadmap version).
+const shippedStatuses = new Set(['implemented', 'implemented-hardening', 'in-progress']);
 
 const validateReferencedPath = (candidatePath, context) => {
   if (typeof candidatePath !== 'string' || !candidatePath.trim()) return;
@@ -135,7 +135,7 @@ for (const [index, feature] of (roadmap.features ?? []).entries()) {
       continue;
     }
 
-    if (feature.version === enforcedVersionForStrictValidation && shippedStatuses.has(feature.status) && !liveCommandNames.has(commandName)) {
+    if (shippedStatuses.has(feature.status) && !liveCommandNames.has(commandName)) {
       fail(
         `features[${index}].commands includes unknown live command "${commandName}" for shipped status ${JSON.stringify(feature.status)}. Update docs/contracts/command-truth.json or roadmap command mapping.`
       );
@@ -147,8 +147,8 @@ for (const [index, feature] of (roadmap.features ?? []).entries()) {
     fail(`features[${index}].commands contains duplicate entries: ${duplicateCommands.join(', ')}`);
   }
 
-  if (feature.version === enforcedVersionForStrictValidation && shippedStatuses.has(feature.status)) {
-    for (const [fieldName, values] of [['contracts', feature.contracts], ['docs', feature.docs]]) {
+  if (shippedStatuses.has(feature.status)) {
+    for (const [fieldName, values] of [['contracts', feature.contracts], ['docs', feature.docs], ['tests', feature.tests]]) {
       for (const value of values) {
         validateReferencedPath(value, `features[${index}].${fieldName}`);
       }
@@ -158,12 +158,12 @@ for (const [index, feature] of (roadmap.features ?? []).entries()) {
   if (feature.package_ownership.some((entry) => typeof entry !== 'string' || !entry.trim())) {
     fail(`features[${index}].package_ownership must contain non-empty package names`);
   }
-  if (feature.version === enforcedVersionForStrictValidation && shippedStatuses.has(feature.status)) {
+  if (shippedStatuses.has(feature.status)) {
     const docCommandFamilies = new Set(
       feature.docs
         .filter((entry) => typeof entry === 'string' && entry.startsWith('docs/commands/') && entry.endsWith('.md'))
         .map((entry) => path.basename(entry, '.md').trim())
-        .filter((entry) => entry)
+        .filter((entry) => entry && entry !== 'README')
     );
     for (const commandFamily of docCommandFamilies) {
       if (!feature.commands.includes(commandFamily)) {

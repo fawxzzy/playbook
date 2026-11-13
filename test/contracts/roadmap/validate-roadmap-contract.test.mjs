@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-const repoRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../..');
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const validatorPath = path.join(repoRoot, 'scripts', 'validate-roadmap-contract.mjs');
 
 const createRoadmapFixture = (cwd, commandNames = ['verify']) => {
@@ -141,4 +142,58 @@ test('fails when roadmap feature command list contains duplicates', () => {
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /commands contains duplicate entries: verify/);
+});
+
+const runWithFeatureOverrides = (overrides, { files = [] } = {}) => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-roadmap-validator-'));
+  createRoadmapFixture(tempDir);
+  const roadmapFile = path.join(tempDir, 'docs', 'roadmap', 'ROADMAP.json');
+  const roadmap = JSON.parse(fs.readFileSync(roadmapFile, 'utf8'));
+  Object.assign(roadmap.features[0], overrides);
+  fs.writeFileSync(roadmapFile, JSON.stringify(roadmap, null, 2));
+  for (const relativePath of files) {
+    fs.mkdirSync(path.dirname(path.join(tempDir, relativePath)), { recursive: true });
+    fs.writeFileSync(path.join(tempDir, relativePath), 'fixture\n');
+  }
+  return spawnSync('node', [validatorPath], { cwd: tempDir, encoding: 'utf8' });
+};
+
+test('fails when a shipped feature of any roadmap version declares a missing test path', () => {
+  const result = runWithFeatureOverrides({
+    version: 'v0.3',
+    status: 'implemented-hardening',
+    tests: ['tests/contracts/does-not-exist.test.ts']
+  });
+  assert.notEqual(result.status, 0);
+  assert.ok(result.stderr.includes('tests references missing path: tests/contracts/does-not-exist.test.ts'), result.stderr);
+});
+
+test('fails when an implemented feature declares a missing contract path', () => {
+  const result = runWithFeatureOverrides({ status: 'implemented', contracts: ['docs/contracts/NOT_THERE.md'] });
+  assert.notEqual(result.status, 0);
+  assert.ok(result.stderr.includes('contracts references missing path: docs/contracts/NOT_THERE.md'), result.stderr);
+});
+
+test('fails when an in-progress feature declares a command that is not live', () => {
+  const result = runWithFeatureOverrides({ version: 'v0.6', status: 'in-progress', commands: ['verify', 'failure'] });
+  assert.notEqual(result.status, 0);
+  assert.ok(result.stderr.includes('unknown live command "failure"'), result.stderr);
+});
+
+test('allows planned features to declare artifacts that do not exist yet', () => {
+  const result = runWithFeatureOverrides({
+    status: 'planned',
+    contracts: ['docs/contracts/FUTURE.md'],
+    docs: ['docs/commands/future.md'],
+    tests: ['tests/future.test.ts']
+  });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('does not treat docs/commands/README.md as a command family', () => {
+  const result = runWithFeatureOverrides(
+    { status: 'implemented-hardening', docs: ['docs/commands/README.md'] },
+    { files: ['docs/commands/README.md'] }
+  );
+  assert.equal(result.status, 0, result.stderr);
 });
