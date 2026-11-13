@@ -42,6 +42,7 @@ type AskResult = {
     memorySummary?: string;
     memorySources?: unknown;
     knowledgeHits?: unknown;
+    doctrineHits?: unknown;
     recentRelevantEvents?: unknown;
     memoryKnowledge?: unknown;
     architecture: string;

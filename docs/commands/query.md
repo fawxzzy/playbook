@@ -64,8 +64,15 @@ Specialized fields/subqueries:
 - `memorySummary`
 - `memorySources`
 - `knowledgeHits`
+- `doctrineHits`
 - `recentRelevantEvents`
 - `memoryKnowledge`
+
+### Governed doctrine layer
+
+When `--with-memory` is set, `doctrineHits` composes the fourth layer of the repository memory contract (`docs/architecture/REPOSITORY_MEMORY_SYSTEM_V1.md`) with structural and episodic memory. It reads only records with `lifecycle: promoted` (and not `imported-provenance`) from the committed registry `docs/doctrine/atlas-engineering-doctrine-registry.v1.json`. Candidate, retired, and superseded records are never returned.
+
+Each hit carries `id`, `kind`, `status`, `statement`, `appliesTo`, and `provenance` (`sourceFile`, `entryId`, `status`, sorted `evidenceRefs`). Hits are relevance-scored against the query target, ordered by relevance then `id`, and capped. A missing, unreadable, or unrecognized registry yields `doctrineHits: []` and a `memorySources` entry (`kind: doctrine-registry`) with `available: false`; it is not an error. Without `--with-memory` output is unchanged.
 
 ## JSON contracts
 

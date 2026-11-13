@@ -38,7 +38,7 @@ These answers rely on the repo-scoped roadmap/story contract documented in `docs
 - Uses Playbook-managed intelligence instead of broad repository scanning.
 - Returns deterministic answerability state in JSON (`answered-from-trusted-artifact`, `artifact-missing`, `artifact-stale`, or `unsupported-question`).
 - Includes provenance descriptors in `context.sources` (for example `repo-index`, `repo-graph`, `module`, `diff`, `docs`, `ai-contract`).
-- Memory descriptors (`memorySummary`, `memorySources`, `knowledgeHits`, `recentRelevantEvents`, `memoryKnowledge`) are additive context fields when memory-aware hydration is enabled.
+- Memory descriptors (`memorySummary`, `memorySources`, `knowledgeHits`, `doctrineHits`, `recentRelevantEvents`, `memoryKnowledge`) are additive context fields when memory-aware hydration is enabled.
 
 ## JSON output highlights
 

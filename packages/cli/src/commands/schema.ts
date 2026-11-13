@@ -39,6 +39,7 @@ const withQueryAdditiveMemoryFields = (schema: Record<string, unknown>): void =>
       memorySummary: { type: 'string' },
       memorySources: { type: 'array', items: { type: 'object', minProperties: 1, additionalProperties: true } },
       knowledgeHits: { type: 'array', items: { type: 'object', minProperties: 1, additionalProperties: true } },
+      doctrineHits: { type: 'array', items: { type: 'object', minProperties: 1, additionalProperties: true } },
       recentRelevantEvents: { type: 'array', items: { type: 'object', minProperties: 1, additionalProperties: true } },
       memoryKnowledge: {
         type: 'array',

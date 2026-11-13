@@ -43,6 +43,7 @@ export type RepositoryQueryResult = {
   memorySummary?: RuntimeMemoryEnvelope['memorySummary'];
   memorySources?: RuntimeMemoryEnvelope['memorySources'];
   knowledgeHits?: RuntimeMemoryEnvelope['knowledgeHits'];
+  doctrineHits?: RuntimeMemoryEnvelope['doctrineHits'];
   recentRelevantEvents?: RuntimeMemoryEnvelope['recentRelevantEvents'];
   memoryKnowledge?: MemoryKnowledgeResult[];
 };
@@ -207,6 +208,7 @@ export const queryRepositoryIndex = (projectRoot: string, field: string, options
     queryResult.memorySummary = memory.memorySummary;
     queryResult.memorySources = memory.memorySources;
     queryResult.knowledgeHits = memory.knowledgeHits;
+    queryResult.doctrineHits = memory.doctrineHits;
     queryResult.recentRelevantEvents = memory.recentRelevantEvents;
     queryResult.memoryKnowledge = buildMemoryKnowledge(projectRoot, resolvedField, queryResult.result);
   }

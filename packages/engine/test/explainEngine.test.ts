@@ -448,6 +448,63 @@ describe('explainTarget', () => {
 
     expect(first).toEqual(second);
   });
+
+  describe('governed doctrine layer under withMemory', () => {
+    const setup = (name: string, withDoctrine: boolean): string => {
+      const repo = createRepo(name);
+      writeRepoIndex(repo, {
+        schemaVersion: '1.0',
+        framework: 'nextjs',
+        language: 'typescript',
+        architecture: 'modular-monolith',
+        modules: ['workouts'],
+        database: 'supabase',
+        rules: []
+      });
+      if (withDoctrine) {
+        const file = path.join(repo, 'docs', 'doctrine', 'atlas-engineering-doctrine-registry.v1.json');
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        const base = { kind: 'rule', scope: { truth_class: 'universal-doctrine', applies_to: 'Feature modules', excludes: [] }, evidence: [{ evidence_id: 'e', authority: 'canonical-playbook', ref: 'docs/x.md', note: 'n' }] };
+        fs.writeFileSync(
+          file,
+          JSON.stringify({
+            schema_version: 'atlas-engineering-doctrine-registry.v1',
+            records: [
+              { ...base, id: 'rule-workouts-owner', lifecycle: 'promoted', statement: 'The workouts module owns its data.' },
+              { ...base, id: 'rule-workouts-draft', lifecycle: 'candidate', statement: 'The workouts module might change.' }
+            ]
+          })
+        );
+      }
+      return repo;
+    };
+
+    it('is absent-safe when no doctrine registry exists', () => {
+      const result = explainTarget(setup('playbook-explain-doctrine-absent', false), 'workouts', { withMemory: true });
+      expect(result.type).toBe('module');
+      expect((result as { doctrineHits?: unknown[] }).doctrineHits).toEqual([]);
+    });
+
+    it('adds promoted doctrine hits with provenance, deterministically', () => {
+      const repo = setup('playbook-explain-doctrine-present', true);
+      const first = explainTarget(repo, 'workouts', { withMemory: true });
+      const hits = (first as { doctrineHits?: Array<Record<string, unknown>> }).doctrineHits;
+      expect(hits?.map((hit) => hit.id)).toEqual(['rule-workouts-owner']);
+      expect(hits?.[0]).toMatchObject({
+        status: 'promoted',
+        provenance: { sourceFile: 'docs/doctrine/atlas-engineering-doctrine-registry.v1.json', entryId: 'rule-workouts-owner', status: 'promoted', evidenceRefs: ['docs/x.md'] }
+      });
+      expect(explainTarget(repo, 'workouts', { withMemory: true })).toEqual(first);
+    });
+
+    it('leaves default explain output identical when the flag is off', () => {
+      const withDoctrine = explainTarget(setup('playbook-explain-doctrine-off-a', true), 'workouts');
+      const without = explainTarget(setup('playbook-explain-doctrine-off-b', false), 'workouts');
+      expect(withDoctrine).toEqual(without);
+      expect(withDoctrine).not.toHaveProperty('doctrineHits');
+    });
+  });
+
   it('inspects known command ownership with deterministic JSON shape', () => {
     const repo = createRepo('playbook-explain-engine-command-known');
     writeRepoIndex(repo, {

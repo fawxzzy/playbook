@@ -8,7 +8,7 @@ import { stripRelevance } from '../util/stripRelevance.js';
 
 type KnowledgeHitSource = 'promoted-pattern' | 'knowledge-candidate';
 
-type MemorySourceKind = 'promoted-patterns' | 'knowledge-candidates' | 'session' | 'runtime-runs';
+type MemorySourceKind = 'promoted-patterns' | 'knowledge-candidates' | 'session' | 'runtime-runs' | 'doctrine-registry';
 
 export type RuntimeMemorySource = {
   kind: MemorySourceKind;
@@ -22,6 +22,20 @@ export type RuntimeKnowledgeHit = {
   source: KnowledgeHitSource;
   summary: string;
   confidence?: number;
+};
+
+export type RuntimeDoctrineHit = {
+  id: string;
+  kind: string;
+  status: 'promoted';
+  statement: string;
+  appliesTo: string;
+  provenance: {
+    sourceFile: string;
+    entryId: string;
+    status: 'promoted';
+    evidenceRefs: string[];
+  };
 };
 
 export type RuntimeRecentRelevantEvent = {
@@ -51,6 +65,7 @@ export type RuntimeMemoryEnvelope = {
   memorySummary: string;
   memorySources: RuntimeMemorySource[];
   knowledgeHits: RuntimeKnowledgeHit[];
+  doctrineHits: RuntimeDoctrineHit[];
   recentRelevantEvents: RuntimeRecentRelevantEvent[];
   runtimeTaskProvenance: RuntimeTaskMemoryProvenanceExpanded[];
   dryRunEvidence: RuntimeDryRunEvidenceSummary[];
@@ -85,6 +100,63 @@ type KnowledgeCandidatesArtifact = {
 
 const KNOWLEDGE_CANDIDATES_RELATIVE_PATH = '.playbook/knowledge/candidates.json' as const;
 const EXECUTION_RUNS_DIR_RELATIVE_PATH = '.playbook/runs' as const;
+export const DOCTRINE_REGISTRY_RELATIVE_PATH = 'docs/doctrine/atlas-engineering-doctrine-registry.v1.json' as const;
+const DOCTRINE_REGISTRY_SCHEMA_VERSION = 'atlas-engineering-doctrine-registry.v1' as const;
+
+type DoctrineRegistryRecord = {
+  id?: unknown;
+  kind?: unknown;
+  lifecycle?: unknown;
+  statement?: unknown;
+  scope?: { truth_class?: unknown; applies_to?: unknown };
+  evidence?: Array<{ ref?: unknown }>;
+};
+
+/**
+ * Reads only promoted, non-imported records of the committed governed doctrine registry.
+ * An absent, unreadable, or unrecognized registry yields an empty layer (never throws).
+ */
+const readPromotedDoctrineRecords = (projectRoot: string): RuntimeDoctrineHit[] => {
+  const artifactPath = path.join(projectRoot, DOCTRINE_REGISTRY_RELATIVE_PATH);
+  if (!fs.existsSync(artifactPath)) {
+    return [];
+  }
+
+  let parsed: { schema_version?: unknown; records?: unknown };
+  try {
+    parsed = JSON.parse(fs.readFileSync(artifactPath, 'utf8')) as typeof parsed;
+  } catch {
+    return [];
+  }
+  if (parsed?.schema_version !== DOCTRINE_REGISTRY_SCHEMA_VERSION || !Array.isArray(parsed.records)) {
+    return [];
+  }
+
+  return (parsed.records as DoctrineRegistryRecord[])
+    .filter(
+      (record) =>
+        typeof record?.id === 'string' &&
+        typeof record.statement === 'string' &&
+        record.lifecycle === 'promoted' &&
+        record.scope?.truth_class !== 'imported-provenance'
+    )
+    .map((record) => ({
+      id: record.id as string,
+      kind: typeof record.kind === 'string' ? record.kind : 'unknown',
+      status: 'promoted' as const,
+      statement: record.statement as string,
+      appliesTo: typeof record.scope?.applies_to === 'string' ? record.scope.applies_to : '',
+      provenance: {
+        sourceFile: DOCTRINE_REGISTRY_RELATIVE_PATH,
+        entryId: record.id as string,
+        status: 'promoted' as const,
+        evidenceRefs: (record.evidence ?? [])
+          .map((entry) => entry?.ref)
+          .filter((ref): ref is string => typeof ref === 'string')
+          .sort((left, right) => left.localeCompare(right))
+      }
+    }));
+};
 
 type RuntimeStepRecord = {
   runId: string;
@@ -473,6 +545,17 @@ export const readRuntimeMemoryEnvelope = (projectRoot: string, options?: Runtime
     .slice(0, maxEntries)
     .map(stripRelevance);
 
+  const promotedDoctrine = readPromotedDoctrineRecords(projectRoot);
+  const doctrineHits = promotedDoctrine
+    .map((hit) => ({
+      hit,
+      relevance: scoreRelevance(relevanceTokens, [hit.id, hit.kind, hit.statement, hit.appliesTo].join(' '))
+    }))
+    .filter((entry) => relevanceTokens.length === 0 || entry.relevance > 0)
+    .sort((left, right) => right.relevance - left.relevance || left.hit.id.localeCompare(right.hit.id))
+    .slice(0, maxEntries)
+    .map((entry) => entry.hit);
+
   const session = readSession(projectRoot);
   const runs = readExecutionRuns(projectRoot);
   const runtimeTaskProvenance = expandRuntimeTaskMemoryProvenance(projectRoot, buildRuntimeTaskMemoryProvenance(projectRoot));
@@ -540,6 +623,12 @@ export const readRuntimeMemoryEnvelope = (projectRoot: string, options?: Runtime
       records: candidates?.candidates?.length ?? 0
     },
     {
+      kind: 'doctrine-registry',
+      artifact: DOCTRINE_REGISTRY_RELATIVE_PATH,
+      available: promotedDoctrine.length > 0,
+      records: promotedDoctrine.length
+    },
+    {
       kind: 'session',
       artifact: SESSION_ARTIFACT_RELATIVE_PATH,
       available: session !== null,
@@ -557,6 +646,7 @@ export const readRuntimeMemoryEnvelope = (projectRoot: string, options?: Runtime
     memorySummary: summarizeMemory({ sources: memorySources, knowledgeHits, events: recentRelevantEvents }),
     memorySources,
     knowledgeHits,
+    doctrineHits,
     recentRelevantEvents: recentRelevantEvents.slice(0, maxEntries * 2),
     runtimeTaskProvenance,
     dryRunEvidence
