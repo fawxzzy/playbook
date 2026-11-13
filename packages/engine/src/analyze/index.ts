@@ -1,11 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadPlugins } from '../plugins/loadPlugins.js';
-import {
-  getRegisteredDetectors,
-  registerDetector,
-  resetPluginRegistry
-} from '../plugins/pluginRegistry.js';
+import { loadDetectorRegistry } from '../plugins/unifiedPluginRegistry.js';
 import type { RepoContext, StackDetector } from '../plugins/pluginTypes.js';
 import { nextjsDetector } from './detectors/nextjs.js';
 import { supabaseDetector } from './detectors/supabase.js';
@@ -54,11 +49,9 @@ export const analyzeRepo = (repoRoot: string): AnalyzeResult => {
     devDependencies: pkg.devDependencies ?? {}
   };
 
-  resetPluginRegistry();
-  coreDetectors.forEach(registerDetector);
-  loadPlugins(repoRoot);
+  const detectors = loadDetectorRegistry(repoRoot, coreDetectors);
 
-  const detectorResults = getRegisteredDetectors().flatMap((detector) => {
+  const detectorResults = detectors.flatMap((detector) => {
     const result = detector.detect(repoContext);
     if (!result) return [];
     return [{ id: detector.id, label: detector.label, ...result }];
@@ -67,7 +60,7 @@ export const analyzeRepo = (repoRoot: string): AnalyzeResult => {
   const result = createAnalyzeReport(
     repoRoot,
     detectorResults.map(({ id, label, evidence }) => ({ id, label, evidence })),
-    getRegisteredDetectors().map((detector) => detector.id)
+    detectors.map((detector) => detector.id)
   );
   const architecturePath = path.join(repoRoot, 'docs', 'ARCHITECTURE.md');
   if (fs.existsSync(architecturePath)) {

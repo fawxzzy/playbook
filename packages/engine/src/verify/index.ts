@@ -3,9 +3,7 @@ import { collectScmContext } from '@zachariahredfield/playbook-core';
 import { loadConfig } from '../config/load.js';
 import { getChangedFiles } from '../git/diff.js';
 import type { VerifyReport } from '../report/types.js';
-import { loadPlugins } from '../plugins/loadPlugins.js';
-import { getRegisteredRules, registerRule, resetPluginRegistry } from '../plugins/pluginRegistry.js';
-import { getCoreRules } from '../rules/coreRules.js';
+import { loadRuleRegistry } from '../plugins/unifiedPluginRegistry.js';
 import { RuleRunner } from '../execution/ruleRunner.js';
 import { compactPatterns } from '../compaction/compactPatterns.js';
 import { buildVerifyMemoryEvent, captureMemoryRuntimeEventSafe } from '../memory/runtimeEvents.js';
@@ -48,11 +46,7 @@ export const verifyRepo = (repoRoot: string, options: VerifyRepoOptions = {}): V
 
   const changedFiles = scmContext.diffBase.baseSha ? getChangedFiles(repoRoot, scmContext.diffBase.baseSha) : [];
 
-  resetPluginRegistry();
-  getCoreRules(config).forEach(registerRule);
-  loadPlugins(repoRoot);
-
-  const runner = new RuleRunner(filterRulesForExecution(getRegisteredRules(), options));
+  const runner = new RuleRunner(filterRulesForExecution(loadRuleRegistry(repoRoot, config), options));
   const { failures } = runner.run({
     repoRoot,
     changedFiles,
