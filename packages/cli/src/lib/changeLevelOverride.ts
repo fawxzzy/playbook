@@ -37,7 +37,6 @@ export const parseChangeLevelOverride = (flags: RawOverrideFlags): ChangeLevelOv
   if (reason.length > MAX_OVERRIDE_REASON_LENGTH) {
     throw new Error(`The --reason flag must be at most ${MAX_OVERRIDE_REASON_LENGTH} characters.`);
   }
-  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(reason)) {
     throw new Error('The --reason flag must be a single line without control characters.');
   }

@@ -50,7 +50,7 @@ const workflowManagedWriteTask = (spelling: string, original: string) => ({
 const runFromPlan = (extra: Record<string, unknown> = {}) =>
   runApply(repoDir, { format: 'json', ci: false, quiet: true, fromPlan: 'plan.json', skipReleaseGovernanceBoundary: true, ...extra });
 
-const lastJson = (): any => JSON.parse(String(logSpy.mock.calls.at(-1)?.[0]));
+const lastJson = (): { summary: { applied: number }; changeLevelOverride?: unknown } => JSON.parse(String(logSpy.mock.calls.at(-1)?.[0]));
 
 const overrideEvents = (): Array<{ summary: string }> => {
   const dir = path.join(repoDir, '.playbook', 'memory', 'events', 'runtime');
