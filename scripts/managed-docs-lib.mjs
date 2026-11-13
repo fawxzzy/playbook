@@ -85,6 +85,14 @@ export const toCommandTruth = (commands) => {
     .filter((command) => command.lifecycle === 'utility')
     .map((command) => command.name)
     .sort();
+  const plannedCommands = commands
+    .filter((command) => command.lifecycle === 'planned-reference')
+    .map((command) => command.name)
+    .sort();
+  const questionBoundedCommands = commands
+    .filter((command) => command.questionBounded === true)
+    .map((command) => command.name)
+    .sort();
   const bootstrapLadder = commands
     .filter((command) => typeof command.canonicalSequence === 'number' && command.role === 'bootstrap')
     .sort((left, right) => left.canonicalSequence - right.canonicalSequence)
@@ -106,12 +114,15 @@ export const toCommandTruth = (commands) => {
         canonicalSequence: command.canonicalSequence,
         productFacing: command.productFacing,
         machineReadable: command.machineReadable,
+        ...(command.questionBounded === true ? { questionBounded: true } : {}),
         example: `pnpm playbook ${command.exampleArgs}`
       }))
       .sort((left, right) => left.name.localeCompare(right.name)),
     canonicalCommands,
     compatibilityCommands,
     utilityCommands,
+    plannedCommands,
+    questionBoundedCommands,
     bootstrapLadder,
     remediationLoop
   };

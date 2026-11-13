@@ -758,5 +758,129 @@ describe('docs audit', () => {
       expect(result.ok).toBe(false);
       expect(result.status).toBe('fail');
     });
+
+    it('does not let a bare `context` ladder step be satisfied by `ai-context`', () => {
+      const root = createRepo();
+      write(root, 'README.md', '# README\nai-context ai-contract verify plan apply');
+      write(
+        root,
+        'docs/ONBOARDING_DEMO.md',
+        '# Onboarding\nRun pnpm playbook ai-context --json then ai-contract.\nSupported question classes\nUnsupported question classes\nDeterministic fallback'
+      );
+
+      const result = runDocsAudit(root);
+      const findings = findingsFor(result, 'docs.command-truth.bootstrap-ladder');
+      expect(findings.map((finding) => finding.path).sort()).toEqual(['README.md', 'docs/ONBOARDING_DEMO.md']);
+      for (const finding of findings) {
+        expect(finding.level).toBe('warning');
+        expect(finding.message).toContain('missing: context');
+      }
+    });
+
+    it('accepts ladder commands that appear as standalone tokens in prose, code spans, and punctuation', () => {
+      const root = createRepo();
+      write(root, 'README.md', '# README\n`ai-context`, ai-contract; (context) -> verify plan apply');
+
+      const result = runDocsAudit(root);
+      expect(findingsFor(result, 'docs.command-truth.bootstrap-ladder').filter((finding) => finding.path === 'README.md')).toEqual([]);
+    });
+
+    describe('per-command classification values', () => {
+      const writeTruthAndTable = (root: string, rows: string[], header = '| Command / Artifact | Purpose | Lifecycle | Role | Discoverability |') => {
+        write(
+          root,
+          'docs/contracts/command-truth.json',
+          JSON.stringify({
+            bootstrapLadder: ['ai-context', 'ai-contract', 'context'],
+            remediationLoop: ['verify', 'plan', 'apply', 'verify'],
+            canonicalCommands: ['verify', 'analyze'],
+            compatibilityCommands: ['analyze'],
+            utilityCommands: [],
+            commandTruth: [
+              { name: 'verify', lifecycle: 'canonical', role: 'governance', discoverability: 'primary', productFacing: true },
+              { name: 'analyze', lifecycle: 'compatibility', role: 'compatibility', discoverability: 'hidden-compatibility', productFacing: true }
+            ]
+          })
+        );
+        write(
+          root,
+          'docs/commands/README.md',
+          ['# Commands', '<!-- PLAYBOOK:DOCS_COMMAND_STATUS_START -->', header, '| --- | --- | --- | --- | --- |', ...rows, '<!-- PLAYBOOK:DOCS_COMMAND_STATUS_END -->'].join('\n')
+        );
+      };
+
+      it('passes when every documented classification matches command truth', () => {
+        const root = createRepo();
+        writeTruthAndTable(root, [
+          '| `verify` | Verify | canonical | governance | primary |',
+          '| `analyze` | Analyze | compatibility | compatibility | hidden-compatibility |'
+        ]);
+
+        const result = runDocsAudit(root);
+        expect(findingsFor(result, 'docs.command-truth.classification-missing')).toEqual([]);
+        expect(findingsFor(result, 'docs.command-truth.status-table-drift')).toEqual([]);
+      });
+
+      it('warns per command when a documented lifecycle, role, or discoverability differs from command truth', () => {
+        const root = createRepo();
+        writeTruthAndTable(root, [
+          '| `verify` | Verify | utility | governance | secondary |',
+          '| `analyze` | Analyze | compatibility | compatibility | hidden-compatibility |'
+        ]);
+
+        const result = runDocsAudit(root);
+        const findings = findingsFor(result, 'docs.command-truth.classification-missing');
+        expect(findings).toHaveLength(1);
+        expect(findings[0]).toMatchObject({
+          level: 'warning',
+          path: 'docs/commands/README.md',
+          suggestedDestination: 'pnpm docs:update'
+        });
+        expect(findings[0].message).toContain('"verify"');
+        expect(findings[0].message).toContain('lifecycle is "utility" but command truth says "canonical"');
+        expect(findings[0].message).toContain('discoverability is "secondary" but command truth says "primary"');
+        expect(findings[0].message).not.toContain('role is');
+        expect(result.ok).toBe(true);
+        expect(result.status).toBe('warn');
+      });
+
+      it('reports each drifting command separately', () => {
+        const root = createRepo();
+        writeTruthAndTable(root, [
+          '| `verify` | Verify | utility | governance | primary |',
+          '| `analyze` | Analyze | canonical | compatibility | hidden-compatibility |'
+        ]);
+
+        const result = runDocsAudit(root);
+        const findings = findingsFor(result, 'docs.command-truth.classification-missing');
+        expect(findings).toHaveLength(2);
+        expect(findings.map((finding) => finding.message.match(/for "([^"]+)"/u)?.[1]).sort()).toEqual(['analyze', 'verify']);
+      });
+
+      it('skips per-command validation when the status table does not expose classification columns', () => {
+        const root = createRepo();
+        writeTruthAndTable(
+          root,
+          ['| `verify` | Verify | utility | governance | secondary |', '| `analyze` | Analyze | utility | utility | secondary |'],
+          '| Command / Artifact | Purpose | Kind | Owner | Visibility |'
+        );
+
+        const result = runDocsAudit(root);
+        // Only the generic keyword warning may fire; no per-command drift finding is produced.
+        expect(findingsFor(result, 'docs.command-truth.classification-missing').filter((finding) => finding.message.includes('drifts from command truth'))).toEqual([]);
+      });
+
+      it('ignores documented rows for commands that command truth does not know', () => {
+        const root = createRepo();
+        writeTruthAndTable(root, [
+          '| `verify` | Verify | canonical | governance | primary |',
+          '| `analyze` | Analyze | compatibility | compatibility | hidden-compatibility |',
+          '| `ghost` | Ghost | utility | utility | secondary |'
+        ]);
+
+        const result = runDocsAudit(root);
+        expect(findingsFor(result, 'docs.command-truth.classification-missing')).toEqual([]);
+      });
+    });
   });
 });

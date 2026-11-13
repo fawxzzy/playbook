@@ -109,6 +109,7 @@
       "canonicalSequence": 7,
       "productFacing": true,
       "machineReadable": true,
+      "questionBounded": true,
       "example": "pnpm playbook ask \"where should a new feature live?\" --repo-context --json"
     },
     {
@@ -789,6 +790,10 @@
     "status",
     "telemetry",
     "upgrade"
+  ],
+  "plannedCommands": [],
+  "questionBoundedCommands": [
+    "ask"
   ],
   "bootstrapLadder": [
     "ai-context",

@@ -7,12 +7,15 @@ type CommandTruthCommand = {
   role?: string;
   discoverability?: string;
   productFacing?: boolean;
+  questionBounded?: boolean;
 };
 
 type CommandTruth = {
   canonicalCommands: string[];
   compatibilityCommands: string[];
   utilityCommands: string[];
+  plannedCommands?: string[];
+  questionBoundedCommands?: string[];
   bootstrapLadder: string[];
   remediationLoop: string[];
   commandTruth?: CommandTruthCommand[];
@@ -349,9 +352,59 @@ const hasQuickStartSection = (content: string): boolean =>
     .split(/\r?\n/u)
     .some((line) => /^#{1,6}\s+/u.test(line) && /(quick\s*start|onboarding|30-second demo|get started)/iu.test(line));
 
-const hasAllMarkers = (content: string, markers: readonly string[]): boolean => {
-  const normalized = content.toLowerCase();
-  return markers.every((marker) => normalized.includes(marker.toLowerCase()));
+// Command names contain hyphens, so a bare `context` must not be satisfied by `ai-context`.
+// A command token is bounded by anything other than a word character or hyphen.
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+
+const hasCommandToken = (content: string, command: string): boolean =>
+  new RegExp(`(?<![\\w-])${escapeRegExp(command)}(?![\\w-])`, 'iu').test(content);
+
+const missingCommandTokens = (content: string, commands: readonly string[]): string[] =>
+  commands.filter((command) => !hasCommandToken(content, command));
+
+type ManagedCommandClassification = { lifecycle: string; role: string; discoverability: string };
+
+// Parses the per-command Lifecycle / Role / Discoverability cells of the managed command status table.
+// Returns null when the table header does not expose all three columns.
+const extractManagedCommandClassifications = (content: string): Map<string, ManagedCommandClassification> | null => {
+  const startMarker = '<!-- PLAYBOOK:DOCS_COMMAND_STATUS_START -->';
+  const endMarker = '<!-- PLAYBOOK:DOCS_COMMAND_STATUS_END -->';
+  const startIndex = content.indexOf(startMarker);
+  const endIndex = content.indexOf(endMarker);
+  if (startIndex === -1 || endIndex === -1 || endIndex <= startIndex) {
+    return null;
+  }
+
+  const splitRow = (line: string): string[] =>
+    line.trim().replace(/^\|/u, '').replace(/\|$/u, '').split('|').map((cell) => cell.trim());
+
+  const rows = content
+    .slice(startIndex + startMarker.length, endIndex)
+    .split(/\r?\n/u)
+    .filter((line) => line.trim().startsWith('|'));
+  const header = rows.length > 0 ? splitRow(rows[0]).map((cell) => cell.toLowerCase()) : [];
+  const lifecycleIndex = header.indexOf('lifecycle');
+  const roleIndex = header.indexOf('role');
+  const discoverabilityIndex = header.indexOf('discoverability');
+  if (lifecycleIndex === -1 || roleIndex === -1 || discoverabilityIndex === -1) {
+    return null;
+  }
+
+  const classifications = new Map<string, ManagedCommandClassification>();
+  for (const row of rows.slice(1)) {
+    const cells = splitRow(row);
+    const match = /^`([^`]+)`$/u.exec(cells[0] ?? '');
+    if (!match || cells.length <= Math.max(lifecycleIndex, roleIndex, discoverabilityIndex)) {
+      continue;
+    }
+    classifications.set(match[1], {
+      lifecycle: cells[lifecycleIndex],
+      role: cells[roleIndex],
+      discoverability: cells[discoverabilityIndex]
+    });
+  }
+
+  return classifications;
 };
 
 
@@ -801,21 +854,23 @@ export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
     const onboarding = readTextIfExists(repoRoot, 'docs/ONBOARDING_DEMO.md');
     const roadmap = readTextIfExists(repoRoot, 'docs/PLAYBOOK_PRODUCT_ROADMAP.md');
 
-    if (readme && !hasAllMarkers(readme, commandTruth.bootstrapLadder)) {
+    const readmeMissingLadder = readme ? missingCommandTokens(readme, commandTruth.bootstrapLadder) : [];
+    if (readme && readmeMissingLadder.length > 0) {
       findings.push({
         ruleId: 'docs.command-truth.bootstrap-ladder',
         level: 'warning',
-        message: 'README.md must include the canonical bootstrap ladder commands from command truth metadata.',
+        message: `README.md must include the canonical bootstrap ladder commands from command truth metadata (missing: ${readmeMissingLadder.join(', ')}).`,
         path: 'README.md',
         suggestedDestination: 'docs/contracts/command-truth.json'
       });
     }
 
-    if (onboarding && !hasAllMarkers(onboarding, commandTruth.bootstrapLadder)) {
+    const onboardingMissingLadder = onboarding ? missingCommandTokens(onboarding, commandTruth.bootstrapLadder) : [];
+    if (onboarding && onboardingMissingLadder.length > 0) {
       findings.push({
         ruleId: 'docs.command-truth.bootstrap-ladder',
         level: 'warning',
-        message: 'ONBOARDING_DEMO must include the canonical bootstrap ladder commands from command truth metadata.',
+        message: `ONBOARDING_DEMO must include the canonical bootstrap ladder commands from command truth metadata (missing: ${onboardingMissingLadder.join(', ')}).`,
         path: 'docs/ONBOARDING_DEMO.md',
         suggestedDestination: 'docs/contracts/command-truth.json'
       });
@@ -845,6 +900,32 @@ export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
       }
 
       if (commandsReadme) {
+        const documentedClassifications = extractManagedCommandClassifications(commandsReadme);
+        if (documentedClassifications) {
+          for (const command of commandTruth.commandTruth) {
+            const documented = documentedClassifications.get(command.name);
+            if (!documented) {
+              continue;
+            }
+
+            const mismatches = (
+              [['lifecycle', command.lifecycle], ['role', command.role], ['discoverability', command.discoverability]] as const
+            )
+              .filter(([field, expected]) => typeof expected === 'string' && documented[field] !== expected)
+              .map(([field, expected]) => `${field} is "${documented[field]}" but command truth says "${expected}"`);
+
+            if (mismatches.length > 0) {
+              findings.push({
+                ruleId: 'docs.command-truth.classification-missing',
+                level: 'warning',
+                message: `docs/commands/README.md classification for "${command.name}" drifts from command truth: ${mismatches.join('; ')}.`,
+                path: 'docs/commands/README.md',
+                suggestedDestination: 'pnpm docs:update'
+              });
+            }
+          }
+        }
+
         const docsStatusNames = extractManagedCommandStatusNames(commandsReadme);
         const truthProductNames = commandTruth.commandTruth.filter((command) => command.productFacing).map((command) => command.name);
         const docsMissing = unique(truthProductNames.filter((name) => !docsStatusNames.includes(name)));
