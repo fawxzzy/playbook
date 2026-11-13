@@ -27,6 +27,7 @@ Memory-aware responses may include:
 - `memorySummary`
 - `memorySources`
 - `knowledgeHits`
+- `doctrineHits` (promoted governed doctrine records with provenance; empty when no registry is committed)
 - `recentRelevantEvents`
 - `memoryKnowledge` (promoted knowledge + replay candidates with provenance)
 

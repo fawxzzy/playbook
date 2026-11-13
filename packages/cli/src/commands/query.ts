@@ -46,6 +46,7 @@ type QueryResult = {
   memorySummary?: string;
   memorySources?: Array<Record<string, unknown>>;
   knowledgeHits?: Array<Record<string, unknown>>;
+  doctrineHits?: Array<Record<string, unknown>>;
   recentRelevantEvents?: Array<Record<string, unknown>>;
   memoryKnowledge?: Array<Record<string, unknown>>;
 };
@@ -915,6 +916,7 @@ export const runQuery = async (cwd: string, commandArgs: string[], options: Quer
       memorySummary: query.memorySummary,
       memorySources: query.memorySources as Array<Record<string, unknown>> | undefined,
       knowledgeHits: query.knowledgeHits as Array<Record<string, unknown>> | undefined,
+      doctrineHits: query.doctrineHits as Array<Record<string, unknown>> | undefined,
       recentRelevantEvents: query.recentRelevantEvents as Array<Record<string, unknown>> | undefined,
       memoryKnowledge: query.memoryKnowledge as Array<Record<string, unknown>> | undefined
     };

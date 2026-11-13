@@ -291,6 +291,97 @@ describe('queryRepositoryIndex', () => {
     expect(promoted?.provenance[0]?.event?.eventInstanceId).toBe('evt-workouts');
   });
 
+  describe('governed doctrine layer under withMemory', () => {
+    const writeDoctrine = (repo: string, records: Array<Record<string, unknown>>, schemaVersion = 'atlas-engineering-doctrine-registry.v1'): void => {
+      const file = path.join(repo, 'docs', 'doctrine', 'atlas-engineering-doctrine-registry.v1.json');
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ schema_version: schemaVersion, registry_id: 'atlas-engineering-doctrine-registry', records }, null, 2));
+    };
+    const record = (id: string, lifecycle: string, statement: string, truthClass = 'universal-doctrine', appliesTo = 'Repository modules'): Record<string, unknown> => ({
+      id,
+      kind: 'rule',
+      lifecycle,
+      statement,
+      scope: { truth_class: truthClass, applies_to: appliesTo, excludes: [] },
+      evidence: [
+        { evidence_id: 'e-b', authority: 'canonical-playbook', ref: 'docs/b.md', note: 'n' },
+        { evidence_id: 'e-a', authority: 'canonical-playbook', ref: 'docs/a.md', note: 'n' }
+      ]
+    });
+    const setup = (name: string): string => {
+      const repo = createRepo(name);
+      writeRepoIndex(repo, {
+        schemaVersion: '1.0',
+        framework: 'node',
+        language: 'typescript',
+        architecture: 'modular-monolith',
+        modules: [{ name: 'auth', dependencies: [] }],
+        dependencies: [],
+        workspace: [],
+        tests: [],
+        configs: [],
+        database: 'none',
+        rules: []
+      });
+      return repo;
+    };
+
+    it('is absent-safe: no doctrine registry means an empty layer and an unavailable source', () => {
+      const repo = setup('playbook-repo-query-doctrine-absent');
+      const result = queryRepositoryIndex(repo, 'modules', { withMemory: true });
+      expect(result.doctrineHits).toEqual([]);
+      expect(result.memorySources?.find((source) => source.kind === 'doctrine-registry')).toMatchObject({
+        artifact: 'docs/doctrine/atlas-engineering-doctrine-registry.v1.json',
+        available: false,
+        records: 0
+      });
+    });
+
+    it('returns only promoted records with provenance in stable order', () => {
+      const repo = setup('playbook-repo-query-doctrine-present');
+      writeDoctrine(repo, [
+        record('rule-z-modules', 'promoted', 'Modules keep explicit boundaries.'),
+        record('rule-a-modules', 'promoted', 'Modules declare owners.'),
+        record('rule-candidate-modules', 'candidate', 'Modules might do something.'),
+        record('rule-retired-modules', 'retired', 'Modules old rule.'),
+        record('rule-imported-modules', 'promoted', 'Modules imported claim.', 'imported-provenance'),
+        record('rule-unrelated', 'promoted', 'Totally different subject.', 'universal-doctrine', 'Elsewhere')
+      ]);
+
+      const result = queryRepositoryIndex(repo, 'modules', { withMemory: true });
+      expect(result.doctrineHits?.map((hit) => hit.id)).toEqual(['rule-a-modules', 'rule-z-modules']);
+      expect(result.doctrineHits?.[0]).toMatchObject({
+        status: 'promoted',
+        kind: 'rule',
+        statement: 'Modules declare owners.',
+        provenance: {
+          sourceFile: 'docs/doctrine/atlas-engineering-doctrine-registry.v1.json',
+          entryId: 'rule-a-modules',
+          status: 'promoted',
+          evidenceRefs: ['docs/a.md', 'docs/b.md']
+        }
+      });
+      expect(result.memorySources?.find((source) => source.kind === 'doctrine-registry')).toMatchObject({ available: true, records: 3 });
+      expect(queryRepositoryIndex(repo, 'modules', { withMemory: true })).toEqual(result);
+    });
+
+    it('ignores an unrecognized registry schema version without throwing', () => {
+      const repo = setup('playbook-repo-query-doctrine-unrecognized');
+      writeDoctrine(repo, [record('rule-a-modules', 'promoted', 'Modules declare owners.')], 'something-else.v9');
+      expect(queryRepositoryIndex(repo, 'modules', { withMemory: true }).doctrineHits).toEqual([]);
+    });
+
+    it('leaves default (non-memory) output identical whether or not doctrine exists', () => {
+      const repo = setup('playbook-repo-query-doctrine-flag-off');
+      const before = queryRepositoryIndex(repo, 'modules');
+      writeDoctrine(repo, [record('rule-a-modules', 'promoted', 'Modules declare owners.')]);
+      const after = queryRepositoryIndex(repo, 'modules');
+      expect(after).toEqual(before);
+      expect(after).not.toHaveProperty('doctrineHits');
+      expect(after).not.toHaveProperty('memorySources');
+    });
+  });
+
   it('returns dependencies query payloads', () => {
     const repo = createRepo('playbook-repo-query-dependencies');
     writeRepoIndex(repo, {

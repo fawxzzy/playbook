@@ -43,6 +43,7 @@ type ExplainMemoryFields = {
   memorySummary?: RuntimeMemoryEnvelope['memorySummary'];
   memorySources?: RuntimeMemoryEnvelope['memorySources'];
   knowledgeHits?: RuntimeMemoryEnvelope['knowledgeHits'];
+  doctrineHits?: RuntimeMemoryEnvelope['doctrineHits'];
   recentRelevantEvents?: RuntimeMemoryEnvelope['recentRelevantEvents'];
   memoryKnowledge?: {
     promoted: MemoryKnowledgeExplanation[];
@@ -422,6 +423,7 @@ const withMemory = <T extends Record<string, unknown>>(
     memorySummary: memory.memorySummary,
     memorySources: memory.memorySources,
     knowledgeHits: memory.knowledgeHits,
+    doctrineHits: memory.doctrineHits,
     recentRelevantEvents: memory.recentRelevantEvents,
     memoryKnowledge
   };

@@ -37,6 +37,7 @@ export type AskEngineResult = {
     memorySummary?: RuntimeMemoryEnvelope['memorySummary'];
     memorySources?: RuntimeMemoryEnvelope['memorySources'];
     knowledgeHits?: RuntimeMemoryEnvelope['knowledgeHits'];
+    doctrineHits?: RuntimeMemoryEnvelope['doctrineHits'];
     recentRelevantEvents?: RuntimeMemoryEnvelope['recentRelevantEvents'];
     memoryKnowledge?: AskMemoryKnowledgeHit[];
     architecture: string;
@@ -331,6 +332,7 @@ export const answerRepositoryQuestion = (projectRoot: string, question: string, 
         memorySummary: memoryEnvelope.memorySummary,
         memorySources: memoryEnvelope.memorySources,
         knowledgeHits: memoryEnvelope.knowledgeHits,
+        doctrineHits: memoryEnvelope.doctrineHits,
         recentRelevantEvents: memoryEnvelope.recentRelevantEvents,
         memoryKnowledge
       }

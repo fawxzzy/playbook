@@ -164,6 +164,22 @@ describe('runtime memory bridge', () => {
     ]);
   });
 
+  it('keeps doctrine layer empty without a registry and does not leak candidate records when present', () => {
+    const root = setupRuntimeMemoryBridgeRepo();
+    expect(readRuntimeMemoryEnvelope(root, { limit: 5 }).doctrineHits).toEqual([]);
+
+    writeJson(path.join(root, 'docs/doctrine/atlas-engineering-doctrine-registry.v1.json'), {
+      schema_version: 'atlas-engineering-doctrine-registry.v1',
+      records: [
+        { id: 'rule-b', kind: 'rule', lifecycle: 'promoted', statement: 'B statement', scope: { truth_class: 'universal-doctrine', applies_to: 'x' }, evidence: [] },
+        { id: 'rule-a', kind: 'rule', lifecycle: 'promoted', statement: 'A statement', scope: { truth_class: 'universal-doctrine', applies_to: 'x' }, evidence: [] },
+        { id: 'rule-c', kind: 'rule', lifecycle: 'candidate', statement: 'C statement', scope: { truth_class: 'universal-doctrine', applies_to: 'x' }, evidence: [] }
+      ]
+    });
+    const envelope = readRuntimeMemoryEnvelope(root, { limit: 5 });
+    expect(envelope.doctrineHits.map((hit) => hit.id)).toEqual(['rule-a', 'rule-b']);
+  });
+
   it('expands task provenance through memory helpers', () => {
     const root = setupRuntimeMemoryBridgeRepo();
 
