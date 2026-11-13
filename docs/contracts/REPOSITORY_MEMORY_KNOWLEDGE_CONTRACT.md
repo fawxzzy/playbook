@@ -56,6 +56,22 @@ Pruning is deterministic and local-memory scoped:
 
 Rule: Replay/prune operations must never mutate governance doctrine artifacts automatically.
 
+### Promotion, demotion, and prune workflow
+
+Every transition is explicit, human-invoked, and provenance-preserving. Nothing runs automatically.
+
+| Transition | Command | Effect | Provenance |
+| --- | --- | --- | --- |
+| Promote (candidate -> knowledge) | `memory promote <candidate-id>` | writes an `active` entry; an `active` entry with the same fingerprint becomes `superseded` | entry keeps candidate id, event provenance, and `supersedes` links |
+| Supersede (knowledge -> knowledge) | `memory supersede <id> --by <successor-id>` | `<id>` becomes `superseded`; same-kind records only | `<id>.supersededBy` and `<successor>.supersedes` link both ways |
+| Demote (retire) | `memory retire <id> [--reason <text>]` | `<id>` becomes `retired` with `retiredAt` and `retirementReason`; not deleted | original provenance retained |
+| Prune preview | `memory prune` (default, `--dry-run`) | read-only list of removals with reason | none removed |
+| Prune apply | `memory prune --apply` | deletes exactly the previewed stale/duplicate/superseded records | successor's `supersedes` pointer remains |
+
+Rule: **Prune is preview-first.** `memory prune` must be a dry-run unless `--apply` is passed, and `--apply` removes exactly the set the preview lists.
+Rule: Retired records are demoted, not deleted; only superseded, duplicate, and stale records are removable by prune.
+Pattern: **Compact Doctrine Through Reviewed Transitions** - promote, supersede, retire, and prune are the only paths by which `.playbook/memory/knowledge/*` grows or shrinks.
+
 ## Retrieval guidance
 
 Memory-aware retrieval should compose:

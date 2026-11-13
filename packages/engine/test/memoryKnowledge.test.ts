@@ -10,6 +10,7 @@ import {
   retirePromotedKnowledge,
   supersedePromotedKnowledge
 } from '../src/memory/knowledge.js';
+import type { MemoryKnowledgeEntry } from '../src/memory/knowledge.js';
 
 const writeJson = (filePath: string, payload: unknown): void => {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -107,6 +108,55 @@ const setupRepo = (): string => {
   });
 
   return root;
+};
+
+const prunePatternEntry = (knowledgeId: string, overrides: Record<string, unknown>) => ({
+  knowledgeId,
+  candidateId: `cand-${knowledgeId}`,
+  sourceCandidateIds: [`cand-${knowledgeId}`],
+  sourceEventFingerprints: ['fp'],
+  kind: 'pattern',
+  title: knowledgeId,
+  summary: knowledgeId,
+  fingerprint: 'fp',
+  module: 'module-a',
+  ruleId: 'rule-a',
+  failureShape: 'shape-a',
+  promotedAt: '2025-01-01T00:00:00.000Z',
+  provenance: [],
+  status: 'active',
+  supersedes: [],
+  supersededBy: [],
+  ...overrides
+});
+
+const seedPrunePatterns = (root: string): void => {
+  writeJson(path.join(root, '.playbook/memory/knowledge/patterns.json'), {
+    schemaVersion: '1.0',
+    artifact: 'memory-knowledge',
+    kind: 'pattern',
+    generatedAt: '2025-01-01T00:00:00.000Z',
+    entries: [
+      prunePatternEntry('pattern-new', { fingerprint: 'dup-fp', promotedAt: '2025-01-02T00:00:00.000Z' }),
+      prunePatternEntry('pattern-old', { fingerprint: 'dup-fp', promotedAt: '2025-01-01T00:00:00.000Z' }),
+      prunePatternEntry('pattern-superseded', { fingerprint: 'old-fp', status: 'superseded', supersededBy: ['pattern-new'] }),
+      prunePatternEntry('pattern-kept', { fingerprint: 'kept-fp' })
+    ]
+  });
+};
+
+const readAll = (root: string): Record<string, string> => {
+  const files = ['.playbook/memory/candidates.json', '.playbook/memory/knowledge/decisions.json', '.playbook/memory/knowledge/patterns.json'];
+  return Object.fromEntries(files.map((file) => [file, fs.readFileSync(path.join(root, file), 'utf8')]));
+};
+
+const idsIn = (root: string): string[] => {
+  const read = (file: string) => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')) as Record<string, Array<Record<string, string>>>;
+  return [
+    ...read('.playbook/memory/candidates.json').candidates.map((entry) => entry.candidateId as string),
+    ...read('.playbook/memory/knowledge/decisions.json').entries.map((entry) => entry.knowledgeId as string),
+    ...read('.playbook/memory/knowledge/patterns.json').entries.map((entry) => entry.knowledgeId as string)
+  ].sort();
 };
 
 describe('memory knowledge promotion and pruning', () => {
@@ -342,5 +392,112 @@ describe('memory knowledge promotion and pruning', () => {
       fs.readFileSync(path.join(root, '.playbook/memory/knowledge/patterns.json'), 'utf8')
     ) as { entries: Array<{ knowledgeId: string }> };
     expect(patterns.entries.map((entry) => entry.knowledgeId)).toEqual(['pattern-active-new']);
+  });
+
+  it('dry-run prune reports the exact removal plan and changes nothing on disk', () => {
+    const root = setupRepo();
+    seedPrunePatterns(root);
+    const before = readAll(root);
+
+    const preview = pruneMemoryKnowledge(root, { dryRun: true });
+
+    expect(readAll(root)).toEqual(before);
+    expect(preview.dryRun).toBe(true);
+    expect(preview.items.map((item) => [item.reason, item.id])).toEqual([
+      ['stale-candidate', 'cand-stale'],
+      ['duplicate-candidate', 'cand-dup'],
+      ['superseded-knowledge', 'pattern-superseded'],
+      ['duplicate-knowledge', 'pattern-old']
+    ]);
+    expect(preview.items.find((item) => item.id === 'pattern-superseded')?.detail).toBe('superseded by pattern-new');
+    expect(preview.items.find((item) => item.id === 'cand-dup')?.detail).toContain('kept cand-1');
+    expect(preview.items.find((item) => item.id === 'pattern-old')?.detail).toContain('kept pattern-new');
+    expect(preview.updatedArtifacts).toEqual(['.playbook/memory/candidates.json', '.playbook/memory/knowledge/patterns.json']);
+  });
+
+  it('apply prune removes exactly the previewed set and nothing else', () => {
+    const root = setupRepo();
+    seedPrunePatterns(root);
+    const idsBefore = idsIn(root);
+
+    const preview = pruneMemoryKnowledge(root, { dryRun: true });
+    const applied = pruneMemoryKnowledge(root);
+
+    expect(applied.dryRun).toBe(false);
+    expect(applied.items).toEqual(preview.items);
+    expect(applied.updatedArtifacts).toEqual(preview.updatedArtifacts);
+
+    const idsAfter = idsIn(root);
+    const removed = idsBefore.filter((id) => !idsAfter.includes(id)).sort();
+    expect(removed).toEqual(preview.items.map((item) => item.id).sort());
+    expect(idsAfter).toEqual(['cand-1', 'decision-old', 'pattern-kept', 'pattern-new']);
+
+    // A second preview is empty: prune converges.
+    expect(pruneMemoryKnowledge(root, { dryRun: true }).items).toEqual([]);
+  });
+
+  it('prune leaves knowledge artifacts with nothing to remove untouched', () => {
+    const root = setupRepo();
+    seedPrunePatterns(root);
+    const decisionsBefore = fs.readFileSync(path.join(root, '.playbook/memory/knowledge/decisions.json'), 'utf8');
+
+    pruneMemoryKnowledge(root);
+
+    expect(fs.readFileSync(path.join(root, '.playbook/memory/knowledge/decisions.json'), 'utf8')).toBe(decisionsBefore);
+  });
+
+  it('supersede keeps a provenance pointer to the replacement and prune preview names it', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-02-02T00:00:00.000Z'));
+    const root = setupRepo();
+    const promoted = promoteMemoryCandidate(root, 'cand-1').promoted;
+    const decisionsPath = path.join(root, '.playbook/memory/knowledge/decisions.json');
+    const decisions = JSON.parse(fs.readFileSync(decisionsPath, 'utf8')) as { entries: Array<Record<string, unknown>> };
+    writeJson(decisionsPath, {
+      ...decisions,
+      entries: [
+        ...decisions.entries,
+        { ...prunePatternEntry('decision-new', { fingerprint: 'finger-new', kind: 'decision' }), promotedAt: '2026-02-03T00:00:00.000Z' }
+      ]
+    });
+
+    supersedePromotedKnowledge(root, promoted.knowledgeId, 'decision-new');
+
+    const persisted = JSON.parse(fs.readFileSync(decisionsPath, 'utf8')) as { entries: Array<MemoryKnowledgeEntry> };
+    const oldEntry = persisted.entries.find((entry) => entry.knowledgeId === promoted.knowledgeId);
+    const newEntry = persisted.entries.find((entry) => entry.knowledgeId === 'decision-new');
+    expect(oldEntry?.status).toBe('superseded');
+    expect(oldEntry?.supersededBy).toEqual(['decision-new']);
+    expect(oldEntry?.provenance).toEqual(promoted.provenance);
+    expect(newEntry?.supersedes).toContain(promoted.knowledgeId);
+
+    const preview = pruneMemoryKnowledge(root, { dryRun: true });
+    expect(preview.items).toContainEqual(
+      expect.objectContaining({ id: promoted.knowledgeId, reason: 'superseded-knowledge', detail: 'superseded by decision-new' })
+    );
+  });
+
+  it('rejects superseding a record with itself', () => {
+    const root = setupRepo();
+    seedPrunePatterns(root);
+    expect(() => supersedePromotedKnowledge(root, 'pattern-kept', 'pattern-kept')).toThrow('cannot supersede itself');
+  });
+
+  it('prune never removes retired records, even when they share a fingerprint with an active record', () => {
+    const root = setupRepo();
+    writeJson(path.join(root, '.playbook/memory/knowledge/patterns.json'), {
+      schemaVersion: '1.0',
+      artifact: 'memory-knowledge',
+      kind: 'pattern',
+      generatedAt: '2025-01-01T00:00:00.000Z',
+      entries: [
+        prunePatternEntry('pattern-active', { fingerprint: 'shared-fp', promotedAt: '2025-01-01T00:00:00.000Z' }),
+        prunePatternEntry('pattern-retired', { fingerprint: 'shared-fp', promotedAt: '2025-06-01T00:00:00.000Z', status: 'retired', retiredAt: '2025-07-01T00:00:00.000Z', retirementReason: 'obsolete' })
+      ]
+    });
+
+    expect(pruneMemoryKnowledge(root, { dryRun: true }).items.filter((item) => item.artifactPath.endsWith('patterns.json'))).toEqual([]);
+    pruneMemoryKnowledge(root);
+    expect(idsIn(root)).toEqual(expect.arrayContaining(['pattern-active', 'pattern-retired']));
   });
 });

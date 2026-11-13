@@ -18,6 +18,8 @@ const expandMemoryProvenance = vi.fn();
 const loadCandidateKnowledgeById = vi.fn();
 const promoteMemoryCandidate = vi.fn();
 const retirePromotedKnowledge = vi.fn();
+const pruneMemoryKnowledge = vi.fn();
+const supersedePromotedKnowledge = vi.fn();
 
 vi.mock('@zachariahredfield/playbook-engine', () => ({
   lookupMemoryEventTimeline,
@@ -33,7 +35,9 @@ vi.mock('@zachariahredfield/playbook-engine', () => ({
   expandMemoryProvenance,
   loadCandidateKnowledgeById,
   promoteMemoryCandidate,
-  retirePromotedKnowledge
+  retirePromotedKnowledge,
+  pruneMemoryKnowledge,
+  supersedePromotedKnowledge
 }));
 
 describe('runMemory', () => {
@@ -261,6 +265,155 @@ describe('runMemory', () => {
     const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
     expect(payload.command).toBe('memory-retire');
     logSpy.mockRestore();
+  });
+
+  const prunePreview = {
+    schemaVersion: '1.0',
+    command: 'memory-prune',
+    dryRun: true,
+    staleCandidatesPruned: 1,
+    supersededKnowledgePruned: 1,
+    duplicateKnowledgeCollapsed: 0,
+    duplicateCandidatesCollapsed: 0,
+    updatedArtifacts: ['.playbook/memory/candidates.json', '.playbook/memory/knowledge/patterns.json'],
+    items: [
+      { artifactPath: '.playbook/memory/candidates.json', id: 'cand-stale', recordType: 'candidate', reason: 'stale-candidate', detail: 'lastSeenAt 2020-01-01T00:00:00.000Z is older than 30 days' },
+      { artifactPath: '.playbook/memory/knowledge/patterns.json', id: 'pattern-old', recordType: 'pattern', reason: 'superseded-knowledge', detail: 'superseded by pattern-new' }
+    ]
+  };
+
+  it('prune is a dry-run preview by default and never passes dryRun=false', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    pruneMemoryKnowledge.mockClear();
+    pruneMemoryKnowledge.mockReturnValue(prunePreview);
+
+    const exitCode = await runMemory('/repo', ['prune'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(pruneMemoryKnowledge).toHaveBeenCalledTimes(1);
+    expect(pruneMemoryKnowledge).toHaveBeenCalledWith('/repo', { dryRun: true });
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-prune');
+    expect(payload.mode).toBe('dry-run');
+    expect(payload.dryRun).toBe(true);
+    expect(payload.items).toHaveLength(2);
+    expect(payload.applyHint).toContain('--apply');
+
+    pruneMemoryKnowledge.mockClear();
+    await runMemory('/repo', ['prune', '--dry-run'], { format: 'json', quiet: false });
+    expect(pruneMemoryKnowledge).toHaveBeenCalledWith('/repo', { dryRun: true });
+    logSpy.mockRestore();
+  });
+
+  it('prune --apply performs the deletion and reports apply mode', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    pruneMemoryKnowledge.mockClear();
+    pruneMemoryKnowledge.mockReturnValue({ ...prunePreview, dryRun: false });
+
+    const exitCode = await runMemory('/repo', ['prune', '--apply'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+    expect(pruneMemoryKnowledge).toHaveBeenCalledWith('/repo', { dryRun: false });
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.mode).toBe('apply');
+    expect(payload.applyHint).toBeUndefined();
+    logSpy.mockRestore();
+  });
+
+  it('prune text output lists each record with its reason', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    pruneMemoryKnowledge.mockReturnValue(prunePreview);
+
+    const exitCode = await runMemory('/repo', ['prune'], { format: 'text', quiet: false });
+    expect(exitCode).toBe(ExitCode.Success);
+
+    const output = String(logSpy.mock.calls[0]?.[0]);
+    expect(output).toContain('dry-run; nothing was changed');
+    expect(output).toContain('[stale-candidate] cand-stale');
+    expect(output).toContain('[superseded-knowledge] pattern-old');
+    expect(output).toContain('Re-run with --apply');
+    logSpy.mockRestore();
+  });
+
+  it('prune rejects --apply combined with --dry-run without touching memory', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    pruneMemoryKnowledge.mockClear();
+
+    const exitCode = await runMemory('/repo', ['prune', '--apply', '--dry-run'], { format: 'json', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(pruneMemoryKnowledge).not.toHaveBeenCalled();
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-prune');
+    expect(payload.error).toContain('mutually exclusive');
+    logSpy.mockRestore();
+  });
+
+  it('supports supersede subcommand with --by in either argument order', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    supersedePromotedKnowledge.mockClear();
+    supersedePromotedKnowledge.mockReturnValue({
+      schemaVersion: '1.0',
+      command: 'memory-supersede',
+      superseded: { knowledgeId: 'decision-old', status: 'superseded', supersededBy: ['decision-new'] },
+      successor: { knowledgeId: 'decision-new', supersedes: ['decision-old'] },
+      artifactPath: '.playbook/memory/knowledge/decisions.json'
+    });
+
+    expect(await runMemory('/repo', ['supersede', 'decision-old', '--by', 'decision-new'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+    expect(supersedePromotedKnowledge).toHaveBeenLastCalledWith('/repo', 'decision-old', 'decision-new');
+    expect(await runMemory('/repo', ['supersede', '--by=decision-new', 'decision-old'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+    expect(supersedePromotedKnowledge).toHaveBeenLastCalledWith('/repo', 'decision-old', 'decision-new');
+    expect(await runMemory('/repo', ['supersede', '--by', 'decision-new', 'decision-old'], { format: 'json', quiet: false })).toBe(ExitCode.Success);
+    expect(supersedePromotedKnowledge).toHaveBeenLastCalledWith('/repo', 'decision-old', 'decision-new');
+
+    const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+    expect(payload.command).toBe('memory-supersede');
+    expect(payload.superseded.supersededBy).toEqual(['decision-new']);
+    logSpy.mockRestore();
+  });
+
+  it('supersede usage errors fail without mutating', async () => {
+    const { runMemory } = await import('./memory.js');
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    supersedePromotedKnowledge.mockClear();
+
+    const cases: Array<[string[], string]> = [
+      [['supersede'], 'missing required <knowledge-id>'],
+      [['supersede', 'decision-old'], 'missing required --by'],
+      [['supersede', 'decision-old', '--by'], 'missing required --by'],
+      [['supersede', '--by', 'decision-new'], 'missing required <knowledge-id>'],
+      [['supersede', 'decision-old', '--by', 'decision-old'], 'must be different records']
+    ];
+
+    for (const [args, message] of cases) {
+      logSpy.mockClear();
+      expect(await runMemory('/repo', args, { format: 'json', quiet: false })).toBe(ExitCode.Failure);
+      const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+      expect(payload.command).toBe('memory-supersede');
+      expect(payload.error).toContain(message);
+    }
+    expect(supersedePromotedKnowledge).not.toHaveBeenCalled();
+    logSpy.mockRestore();
+  });
+
+  it('supersede surfaces engine errors as failures', async () => {
+    const { runMemory } = await import('./memory.js');
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    supersedePromotedKnowledge.mockImplementation(() => {
+      throw new Error('playbook memory supersede: incompatible knowledge kinds cannot be superseded');
+    });
+
+    const exitCode = await runMemory('/repo', ['supersede', 'pattern-1', '--by', 'decision-1'], { format: 'text', quiet: false });
+    expect(exitCode).toBe(ExitCode.Failure);
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('incompatible knowledge kinds'));
+    supersedePromotedKnowledge.mockReset();
+    errorSpy.mockRestore();
   });
 
   it('supports outcome-feedback subcommand and emits deterministic read-only summary', async () => {

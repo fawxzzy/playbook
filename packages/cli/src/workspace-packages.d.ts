@@ -91,6 +91,7 @@ declare module "@zachariahredfield/playbook-engine" {
   export const promoteMemoryCandidate: (...args: any[]) => any;
   export const retirePromotedKnowledge: (...args: any[]) => any;
   export const pruneMemoryKnowledge: (...args: any[]) => any;
+  export const supersedePromotedKnowledge: (...args: any[]) => any;
   export const generateAndWriteLifecycleCandidatesArtifact: (...args: any[]) => any;
   export const REVIEW_QUEUE_SCHEMA_VERSION: any;
   export const REVIEW_QUEUE_RELATIVE_PATH: '.playbook/review-queue.json';
