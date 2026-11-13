@@ -32,6 +32,11 @@ export type CommandMetadata = {
   productFacing: boolean;
   exampleArgs: string;
   machineReadable: boolean;
+  /**
+   * Additive: true when the command only answers a bounded set of supported question classes
+   * and must document unsupported classes plus a deterministic fallback.
+   */
+  questionBounded?: boolean;
 };
 
 export const commandMetadata: CommandMetadata[] = [
@@ -570,6 +575,7 @@ export const commandMetadata: CommandMetadata[] = [
     productFacing: true,
     exampleArgs: 'ask "where should a new feature live?" --repo-context --json',
     machineReadable: true,
+    questionBounded: true,
   },
   {
     name: "explain",

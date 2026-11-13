@@ -16,6 +16,8 @@ type CommandTruthFile = {
   canonicalCommands: string[];
   compatibilityCommands: string[];
   utilityCommands: string[];
+  plannedCommands?: string[];
+  questionBoundedCommands?: string[];
   bootstrapLadder: string[];
   remediationLoop: string[];
 };
@@ -105,6 +107,20 @@ describe('command metadata truth invariants', () => {
       expect(command?.lifecycle, `${name} lifecycle`).toBe('canonical');
       expect(command?.productFacing, `${name} productFacing`).toBe(true);
       expect(commandTruth.canonicalCommands, `${name} in canonicalCommands`).toContain(name);
+    }
+  });
+
+  it('packages planned and question-bounded commands as deterministic metadata', () => {
+    expect([...(commandTruth.plannedCommands ?? [])].sort()).toEqual(namesWhere((command) => command.lifecycle === 'planned-reference'));
+    expect([...(commandTruth.questionBoundedCommands ?? [])].sort()).toEqual(namesWhere((command) => command.questionBounded === true));
+
+    expect(getCommandMetadata('ask')?.questionBounded).toBe(true);
+    expect(commandTruth.questionBoundedCommands).toContain('ask');
+
+    // Planned commands are reference-only: never product-facing and never part of the canonical sequence.
+    for (const command of commandMetadata.filter((entry) => entry.lifecycle === 'planned-reference')) {
+      expect(command.productFacing, `${command.name} productFacing`).toBe(false);
+      expect(command.canonicalSequence, `${command.name} canonicalSequence`).toBeNull();
     }
   });
 });
