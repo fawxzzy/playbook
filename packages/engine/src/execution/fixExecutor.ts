@@ -1,5 +1,13 @@
-import type { FixHandler, FixHandlerResult, PlanTask } from './types.js';
+import type { ChangeLevel, FixHandler, FixHandlerResult, PlanTask } from './types.js';
 import { redactSecretsForLogs, validateRemediationPlan, validateRepoBoundary } from '../security/guards.js';
+import {
+  assertCeilingAuthorized,
+  assertReportedWritesWithinCeiling,
+  ChangeLevelWriteViolationError,
+  classifyPathChangeLevel,
+  DEFAULT_MAX_APPLY_CHANGE_LEVEL,
+  resolveTaskChangeLevel
+} from './changeLevel.js';
 
 export type ApplyTaskStatus = 'applied' | 'skipped' | 'unsupported' | 'failed';
 
@@ -37,6 +45,11 @@ export type ApplySummary = {
 export type FixExecutionResult = {
   results: ApplyTaskResult[];
   summary: ApplySummary;
+  /**
+   * Present only when the ceiling was raised above the default: ids of tasks that ran only because of the override,
+   * either declared above Level 2 or caught by the reported-write check (a handler wrote to a Level 3 path).
+   */
+  overriddenTaskIds?: string[];
 };
 
 const toMessage = (error: unknown): string => {
@@ -59,7 +72,7 @@ const validateFilesChanged = (filesChanged: unknown): string[] => {
   return filesChanged;
 };
 
-const validateAppliedHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string): void => {
+const validateAppliedHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string, maxChangeLevel: ChangeLevel): void => {
   const filesChanged = validateFilesChanged(result.filesChanged);
 
   if (typeof result.summary !== 'string' || result.summary.trim().length === 0) {
@@ -73,6 +86,9 @@ const validateAppliedHandlerResult = (result: FixHandlerResult, task: PlanTask, 
   if (task.file && !filesChanged.includes(task.file)) {
     throw new Error(`Fix handler contract violation: filesChanged must include ${task.file}.`);
   }
+
+  // The ceiling gates the declared task.file before the handler runs; this gates what the handler says it wrote.
+  assertReportedWritesWithinCeiling(filesChanged, maxChangeLevel, { repoRoot });
 };
 
 const validateNonAppliedHandlerResult = (result: FixHandlerResult, status: 'skipped' | 'unsupported'): void => {
@@ -85,13 +101,13 @@ const validateNonAppliedHandlerResult = (result: FixHandlerResult, status: 'skip
   }
 };
 
-const validateHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string): void => {
+const validateHandlerResult = (result: FixHandlerResult, task: PlanTask, repoRoot: string, maxChangeLevel: ChangeLevel): void => {
   if (!result || typeof result !== 'object') {
     throw new Error('Fix handler contract violation: handler must return an object result.');
   }
 
   if (result.status === 'applied') {
-    validateAppliedHandlerResult(result, task, repoRoot);
+    validateAppliedHandlerResult(result, task, repoRoot, maxChangeLevel);
     return;
   }
 
@@ -144,11 +160,41 @@ export class HandlerResolver {
 export class FixExecutor {
   constructor(private readonly resolver: HandlerResolver) {}
 
-  async apply(tasks: PlanTask[], options: { repoRoot: string; dryRun: boolean }): Promise<FixExecutionResult> {
+  async apply(
+    tasks: PlanTask[],
+    options: { repoRoot: string; dryRun: boolean; maxChangeLevel?: ChangeLevel; changeLevelReason?: string }
+  ): Promise<FixExecutionResult> {
     const results: ApplyTaskResult[] = [];
-    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds: this.resolver.pluginRuleIds() });
+    const maxChangeLevel = options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL;
+    // Raising the ceiling above the default requires a recorded reason at every entry point, not just the CLI.
+    assertCeilingAuthorized(maxChangeLevel, options.changeLevelReason);
+    const pluginRuleIds = this.resolver.pluginRuleIds();
+    validateRemediationPlan(options.repoRoot, tasks, { pluginRuleIds, maxChangeLevel, changeLevelReason: options.changeLevelReason });
+    const raised = maxChangeLevel > DEFAULT_MAX_APPLY_CHANGE_LEVEL;
+    const overriddenTaskIds = new Set<string>(
+      raised
+        ? tasks
+            .filter((task) => task.autoFix)
+            .filter((task) => resolveTaskChangeLevel(task, { repoRoot: options.repoRoot, pluginHandler: pluginRuleIds.has(task.ruleId) }) > DEFAULT_MAX_APPLY_CHANGE_LEVEL)
+            .map((task) => task.id)
+        : []
+    );
+    let halted = false;
 
     for (const task of tasks) {
+      if (halted) {
+        results.push({
+          id: task.id,
+          ruleId: task.ruleId,
+          file: task.file,
+          action: task.action,
+          autoFix: task.autoFix,
+          status: 'skipped',
+          message: 'Not executed: an earlier task reported a write above the change-level ceiling.'
+        });
+        continue;
+      }
+
       if (!task.autoFix) {
         results.push({
           id: task.id,
@@ -178,7 +224,10 @@ export class FixExecutor {
 
       try {
         const handlerResult = await resolved.handler({ repoRoot: options.repoRoot, dryRun: options.dryRun, task });
-        validateHandlerResult(handlerResult, task, options.repoRoot);
+        validateHandlerResult(handlerResult, task, options.repoRoot, maxChangeLevel);
+        if (raised && handlerResult.status === 'applied' && (handlerResult.filesChanged ?? []).some((file) => classifyPathChangeLevel(file, { repoRoot: options.repoRoot }) > DEFAULT_MAX_APPLY_CHANGE_LEVEL)) {
+          overriddenTaskIds.add(task.id);
+        }
         results.push({
           id: task.id,
           ruleId: task.ruleId,
@@ -190,6 +239,9 @@ export class FixExecutor {
           details: handlerResult.details
         });
       } catch (error) {
+        if (error instanceof ChangeLevelWriteViolationError) {
+          halted = true;
+        }
         results.push({
           id: task.id,
           ruleId: task.ruleId,
@@ -202,6 +254,10 @@ export class FixExecutor {
       }
     }
 
-    return { results, summary: summarize(results) };
+    return {
+      results,
+      summary: summarize(results),
+      ...(raised ? { overriddenTaskIds: [...overriddenTaskIds].sort((left, right) => left.localeCompare(right)) } : {})
+    };
   }
 }

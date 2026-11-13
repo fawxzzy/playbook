@@ -3,6 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  assertCeilingAuthorized,
+  assertReportedWritesWithinCeiling,
+  normalizeOverrideReason,
+  ChangeLevelWriteViolationError,
+  classifyPathChangeLevel,
   canonicalizeTaskPath,
   classifyTaskChangeLevel,
   DEFAULT_MAX_APPLY_CHANGE_LEVEL,
@@ -155,5 +160,85 @@ describe('enforceChangeLevelCeiling', () => {
     expect(() =>
       enforceChangeLevelCeiling([task('a', { ruleId: 'notes.missing', file: null })], 1, { pluginRuleIds: new Set(['notes.missing']) })
     ).toThrow(/a \(level 2\)/);
+  });
+});
+
+
+describe('handler-reported writes (TM-GAP-11)', () => {
+  const SPELLINGS = [
+    '.github/workflows/ci.yml',
+    'docs/../.github/workflows/ci.yml',
+    './/.github/workflows/ci.yml',
+    '.github./workflows/ci.yml',
+    '.GITHUB/workflows/ci.yml',
+    'a/../.npmrc',
+    'docs/../secrets/x.json',
+    '../outside.md'
+  ];
+
+  it.each(SPELLINGS)('classifies reported write %s as level 3', (file) => {
+    expect(classifyPathChangeLevel(file)).toBe(3);
+  });
+
+  it('classifies ordinary reported writes as level 1', () => {
+    expect(classifyPathChangeLevel('docs/a.md')).toBe(1);
+    expect(classifyPathChangeLevel('packages/engine/src/index.ts')).toBe(1);
+  });
+
+  it('throws a ChangeLevelWriteViolationError naming every offending file, in stable order', () => {
+    let caught: unknown;
+    try {
+      assertReportedWritesWithinCeiling(['docs/ok.md', 'docs/../.github/x.yml', '.npmrc']);
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBeInstanceOf(ChangeLevelWriteViolationError);
+    expect((caught as ChangeLevelWriteViolationError).files).toEqual(['.npmrc', 'docs/../.github/x.yml']);
+    expect((caught as Error).message).toMatch(/write already happened/);
+  });
+
+  it('allows level 3 reported writes only when the ceiling is raised to 3', () => {
+    expect(() => assertReportedWritesWithinCeiling(['.github/workflows/ci.yml'], 3)).not.toThrow();
+    expect(() => assertReportedWritesWithinCeiling(['.github/workflows/ci.yml'], 2)).toThrow(ChangeLevelWriteViolationError);
+  });
+
+  it('treats the reviewed maintenance.execution rule id as level 2 so maintenance tasks pass the default ceiling', () => {
+    expect(classifyTaskChangeLevel({ ruleId: 'maintenance.execution', file: null }).level).toBe(2);
+    expect(() => enforceChangeLevelCeiling([{ id: 'm', ruleId: 'maintenance.execution', file: null, autoFix: true }])).not.toThrow();
+    expect(() => enforceChangeLevelCeiling([{ id: 'm', ruleId: 'maintenance.execution', file: null, autoFix: true, changeLevel: 3 }])).toThrow(/m \(level 3\)/);
+  });
+});
+
+describe('override reason (library entry points)', () => {
+  it('accepts and trims a normal one-line reason', () => {
+    expect(normalizeOverrideReason('  Release owner approved (ticket 42)  ')).toBe('Release owner approved (ticket 42)');
+  });
+
+  it.each([
+    ['empty', ''],
+    ['whitespace only', '   \t '],
+    ['ideographic space only', '\u3000\u3000'],
+    ['zero-width only', '\u200B\u200B'],
+    ['newline', 'line one\nline two'],
+    ['carriage return', 'a\rb'],
+    ['C1 control (NEL)', 'next\u0085line'],
+    ['bidi override', 'looks fine\u202Egnp.exe'],
+    ['bidi isolate', 'a\u2066b'],
+    ['zero-width space', 'zero\u200Bwidth'],
+    ['zero-width joiner', 'zero\u200Dwidth'],
+    ['embedded byte order mark', 'rea\uFEFFson'],
+    ['line separator', 'a\u2028b'],
+    ['paragraph separator', 'a\u2029b'],
+    ['over the length limit', 'x'.repeat(401)],
+    ['not a string', 42 as unknown as string]
+  ])('rejects %s', (_label, reason) => {
+    expect(() => normalizeOverrideReason(reason)).toThrow();
+  });
+
+  it('requires a valid reason whenever the ceiling is above Level 2, and nothing at or below it', () => {
+    expect(() => assertCeilingAuthorized(2, undefined)).not.toThrow();
+    expect(() => assertCeilingAuthorized(3, undefined)).toThrow(/requires a recorded reason/);
+    expect(() => assertCeilingAuthorized(3, '   ')).toThrow(/visible non-space/);
+    expect(() => assertCeilingAuthorized(3, 'approved')).not.toThrow();
   });
 });

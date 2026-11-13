@@ -194,6 +194,10 @@ declare module "@zachariahredfield/playbook-engine" {
   export const writeChangeScopeArtifact: (...args: any[]) => any;
   export const readApplyChangeScope: (...args: any[]) => any;
   export const enforceApplyChangeScope: (...args: any[]) => any;
+  export const assertApplyChangeScopeBinding: (...args: any[]) => any;
+  export const computePlanArtifactDigest: (...args: any[]) => any;
+  export const resolveTaskChangeLevel: (...args: any[]) => any;
+  export const DEFAULT_MAX_APPLY_CHANGE_LEVEL: number;
   export const validateWorkerSubmitAgainstScope: (...args: any[]) => any;
   export const generateAiProposal: (...args: any[]) => any;
   export type GenerateAiProposalOptions = any;

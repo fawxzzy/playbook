@@ -33,7 +33,8 @@
             "required": ["command", "artifactPath"],
             "properties": {
               "command": { "type": "string" },
-              "artifactPath": { "type": "string" }
+              "artifactPath": { "type": "string" },
+              "artifactDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
             }
           },
           "mutationScope": {

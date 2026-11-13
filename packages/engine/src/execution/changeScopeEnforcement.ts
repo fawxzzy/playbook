@@ -10,6 +10,11 @@ type ChangeScopeCheckStatus = 'green' | 'red' | 'unspecified';
 
 export type ApplyChangeScope = {
   scopeId: string;
+  source: {
+    command: string;
+    artifactPath: string;
+    artifactDigest?: string;
+  };
   allowedFiles: string[];
   patchSizeBudget: {
     maxFiles: number;
@@ -54,8 +59,14 @@ const normalizeBundle = (bundle: unknown): ApplyChangeScope => {
     }
   }
 
+  const source = isRecord(bundle.source) ? bundle.source : {};
   return {
     scopeId,
+    source: {
+      command: typeof source.command === 'string' ? source.command : 'unknown',
+      artifactPath: typeof source.artifactPath === 'string' ? source.artifactPath : 'unknown',
+      ...(typeof source.artifactDigest === 'string' ? { artifactDigest: source.artifactDigest } : {})
+    },
     allowedFiles: [...new Set(allowedFiles)].sort((left, right) => left.localeCompare(right)),
     patchSizeBudget: {
       maxFiles: patchSizeBudget.maxFiles as number,
@@ -149,6 +160,34 @@ export const readApplyChangeScope = (repoRoot: string): ApplyChangeScope | null 
   }) ?? bundles[0];
 
   return normalizeBundle(preferredBundle as ChangeScopeBundle);
+};
+
+/**
+ * Bind the change-scope artifact to the plan being applied. `.playbook/change-scope.json` holds one bundle
+ * and `plan` / `analyze-pr` both overwrite it, so a scope on disk is only meaningful for the exact `plan` artifact
+ * that produced it. Called only when the applied artifact is a `plan` artifact (`--from-plan` of `plan --json`
+ * output); release, fix and maintenance plans do not use the change-scope file. Refuse (never silently enforce or
+ * skip) when it was derived from another command, from a plan with different tasks, or predates artifact binding.
+ * Integrity-only: the scope file is unauthenticated.
+ */
+export const assertApplyChangeScopeBinding = (scope: ApplyChangeScope, planArtifactDigest: string): void => {
+  if (scope.source.command !== 'plan') {
+    throw new Error(
+      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} was written by "${scope.source.command}", not by the plan being applied. Re-run \`playbook plan --json\` (it rewrites ${CHANGE_SCOPE_RELATIVE_PATH} and .playbook/plan.json together), or remove ${CHANGE_SCOPE_RELATIVE_PATH}.`
+    );
+  }
+
+  if (!scope.source.artifactDigest) {
+    throw new Error(
+      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} has no plan digest (written before artifact binding). Re-run \`playbook plan --json\` to regenerate it, or remove ${CHANGE_SCOPE_RELATIVE_PATH}.`
+    );
+  }
+
+  if (scope.source.artifactDigest !== planArtifactDigest) {
+    throw new Error(
+      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} was derived from a different plan (digest ${scope.source.artifactDigest}, applying ${planArtifactDigest}). Re-run \`playbook plan --json\` (then apply the regenerated .playbook/plan.json), or remove ${CHANGE_SCOPE_RELATIVE_PATH}.`
+    );
+  }
 };
 
 export const enforceApplyChangeScope = (tasks: PlanTask[], scope: ApplyChangeScope): void => {

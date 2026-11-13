@@ -27,16 +27,23 @@ export type { SystemMapArtifact, SystemMapLayer, SystemMapNode, SystemMapEdge } 
 export * from './sessions/index.js';
 
 export { runRuleExecution, generateExecutionPlan, generatePlanContract, applyExecutionPlan, parsePlanArtifact, selectPlanTasks, RuleRunner, PlanGenerator, FixExecutor } from './execution/index.js';
-export { readApplyChangeScope, enforceApplyChangeScope } from './execution/index.js';
+export { readApplyChangeScope, enforceApplyChangeScope, assertApplyChangeScopeBinding } from './execution/index.js';
 export {
   CHANGE_LEVELS,
   DEFAULT_MAX_APPLY_CHANGE_LEVEL,
   classifyTaskChangeLevel,
   resolveTaskChangeLevel,
   enforceChangeLevelCeiling,
+  normalizeOverrideReason,
+  assertCeilingAuthorized,
+  MAX_OVERRIDE_REASON_LENGTH,
+  classifyPathChangeLevel,
+  assertReportedWritesWithinCeiling,
+  canonicalizeTaskPath,
+  ChangeLevelWriteViolationError,
   isChangeLevel
 } from './execution/index.js';
-export type { ChangeLevel, ChangeLevelClassification } from './execution/index.js';
+export type { ChangeLevel, ChangeLevelClassification, ChangeLevelOverride } from './execution/index.js';
 export type { ApplyChangeScope } from './execution/index.js';
 export { renderLanePrompt, writeLanePrompts, buildLanePromptFilename } from './execution/lanePrompts.js';
 export { evaluateExecutionMergeGuards, evaluateExecutionMergeGuardForRun, readExecutionMergeGuards, EXECUTION_MERGE_GUARDS_RELATIVE_PATH } from './execution/mergeGuards.js';
@@ -442,6 +449,7 @@ export {
   CHANGE_SCOPE_SCHEMA_VERSION,
   CHANGE_SCOPE_RELATIVE_PATH,
   buildChangeScopeBundleFromPlan,
+  computePlanArtifactDigest,
   buildChangeScopeBundleFromAnalyzePr,
   buildChangeScopeBundleFromWorkerLaunchPlan,
   buildChangeScopeBundleFromAiProposal,

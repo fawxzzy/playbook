@@ -10,8 +10,9 @@ import { RuleRunner } from './ruleRunner.js';
 import type { VerifyReport } from '../report/types.js';
 import { verifyRepo } from '../verify/index.js';
 import { generateRepositoryHealth } from '../doctor/index.js';
-import { resolveTaskChangeLevel, isChangeLevel } from './changeLevel.js';
-import { buildApplyMemoryEvent, buildPlanMemoryEvent, captureMemoryRuntimeEventSafe } from '../memory/runtimeEvents.js';
+import { DEFAULT_MAX_APPLY_CHANGE_LEVEL, isChangeLevel, normalizeOverrideReason, resolveTaskChangeLevel } from './changeLevel.js';
+import type { ChangeLevelOverride } from './changeLevel.js';
+import { buildApplyMemoryEvent, buildChangeLevelOverrideMemoryEvent, buildPlanMemoryEvent, captureMemoryRuntimeEventSafe } from '../memory/runtimeEvents.js';
 export { renderLanePrompt, writeLanePrompts, buildLanePromptFilename } from './lanePrompts.js';
 export type { LanePromptSpec, RenderLanePromptInput, WriteLanePromptsInput } from './lanePrompts.js';
 
@@ -122,11 +123,38 @@ export const applyExecutionPlan = async (
     handlers?: Record<string, FixHandler | undefined>;
     postApplyVerificationArtifact?: string;
     postApplyVerification?: Pick<VerifyReport, 'ok' | 'summary'>;
+    /** Explicit, recorded authorization to run tasks above the default ceiling. Absent means the default ceiling applies. */
+    changeLevelOverride?: ChangeLevelOverride;
   }
 ) => {
   const resolver = new HandlerResolver({ builtIn: defaultFixHandlers, plugin: options.handlers });
   const executor = new FixExecutor(resolver);
-  const result = await executor.apply(tasks, { repoRoot, dryRun: options.dryRun });
+  const override = options.changeLevelOverride;
+  if (override && override.allowLevel !== 3) {
+    throw new Error('Invalid change-level override: only allowLevel 3 can be authorized.');
+  }
+  const overrideReason = override ? normalizeOverrideReason(override.reason) : undefined;
+  const maxChangeLevel = override ? override.allowLevel : DEFAULT_MAX_APPLY_CHANGE_LEVEL;
+
+  if (override && overrideReason) {
+    // Record the intent before anything runs (best-effort: capture failures never block apply). Tasks listed here are
+    // those declared above Level 2; tasks caught later by the reported-write check appear in the result only.
+    const pluginRuleIds = resolver.pluginRuleIds();
+    captureMemoryRuntimeEventSafe(
+      repoRoot,
+      buildChangeLevelOverrideMemoryEvent({
+        repoId: repoRoot,
+        allowLevel: override.allowLevel,
+        reason: overrideReason,
+        overriddenTaskIds: tasks
+          .filter((task) => task.autoFix)
+          .filter((task) => resolveTaskChangeLevel(task, { repoRoot, pluginHandler: pluginRuleIds.has(task.ruleId) }) > DEFAULT_MAX_APPLY_CHANGE_LEVEL)
+          .map((task) => task.id)
+      })
+    );
+  }
+
+  const result = await executor.apply(tasks, { repoRoot, dryRun: options.dryRun, maxChangeLevel, changeLevelReason: overrideReason });
 
   captureMemoryRuntimeEventSafe(
     repoRoot,
@@ -247,10 +275,17 @@ export {
   classifyTaskChangeLevel,
   resolveTaskChangeLevel,
   enforceChangeLevelCeiling,
+  normalizeOverrideReason,
+  assertCeilingAuthorized,
+  MAX_OVERRIDE_REASON_LENGTH,
+  classifyPathChangeLevel,
+  assertReportedWritesWithinCeiling,
+  canonicalizeTaskPath,
+  ChangeLevelWriteViolationError,
   isChangeLevel
 } from './changeLevel.js';
-export type { ChangeLevelClassification } from './changeLevel.js';
-export { readApplyChangeScope, enforceApplyChangeScope } from './changeScopeEnforcement.js';
+export type { ChangeLevelClassification, ChangeLevelOverride } from './changeLevel.js';
+export { readApplyChangeScope, enforceApplyChangeScope, assertApplyChangeScopeBinding } from './changeScopeEnforcement.js';
 export type { ApplyChangeScope } from './changeScopeEnforcement.js';
 
 export { evaluateExecutionMergeGuards, evaluateExecutionMergeGuardForRun, readExecutionMergeGuards, EXECUTION_MERGE_GUARDS_RELATIVE_PATH } from './mergeGuards.js';

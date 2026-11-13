@@ -28,6 +28,8 @@ export type ChangeScopeBundle = {
   source: {
     command: 'plan' | 'analyze-pr' | 'workers launch-plan' | 'ai propose';
     artifactPath: string;
+    /** Content digest of the source artifact's task list (see computePlanArtifactDigest). Present on `plan` bundles. */
+    artifactDigest?: string;
   };
   mutationScope: MutationScopeDeclaration;
   expectedTests: string[];
@@ -45,9 +47,62 @@ export type ChangeScopeArtifact = {
   bundles: ChangeScopeBundle[];
 };
 
-type PlanLikePayload = {
-  tasks?: Array<{ file?: string | null; ruleId?: string; action?: string }>;
+type DigestableTask = {
+  id?: string;
+  ruleId?: string;
+  file?: string | null;
+  action?: string;
+  autoFix?: boolean;
+  task_kind?: string | null;
+  write?: unknown;
+  preconditions?: unknown;
 };
+
+type PlanLikePayload = {
+  tasks?: DigestableTask[];
+};
+
+/** JSON with sorted object keys; `undefined` is treated as `null` so absent and null fields hash identically. */
+const canonicalJson = (value: unknown): string => {
+  if (value === undefined || value === null) return 'null';
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort((left, right) => left.localeCompare(right))
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value);
+};
+
+const hashOrNull = (value: unknown): string | null =>
+  value === undefined || value === null ? null : createHash('sha256').update(canonicalJson(value)).digest('hex');
+
+/**
+ * Stable identity of a plan artifact: sha256 over its ordered tasks (id, ruleId, file, action, autoFix, task_kind,
+ * a hash of the whole `write` object (operation, block id, markers, anchor, content) and a hash of `preconditions`).
+ * A hand-edited plan.json therefore cannot change what a task writes under the same digest. Excludes additive
+ * labels such as `changeLevel`, and treats null and undefined consistently. This is integrity-only binding: the
+ * change-scope file itself is unauthenticated.
+ */
+export const computePlanArtifactDigest = (tasks: ReadonlyArray<DigestableTask>): string =>
+  `sha256:${createHash('sha256')
+    .update(
+      JSON.stringify(
+        tasks.map((task) => [
+          task.id ?? null,
+          task.ruleId ?? null,
+          task.file ?? null,
+          task.action ?? null,
+          task.autoFix ?? null,
+          task.task_kind ?? null,
+          hashOrNull(task.write),
+          hashOrNull(task.preconditions)
+        ])
+      )
+    )
+    .digest('hex')}`;
 
 const uniqueSorted = (values: readonly string[]): string[] => [...new Set(values)].filter(Boolean).sort((a, b) => a.localeCompare(b));
 
@@ -93,6 +148,7 @@ const defaultBoundaryChecks = (allowedFiles: string[]): string[] => uniqueSorted
 const buildBundle = (input: {
   command: ChangeScopeBundle['source']['command'];
   artifactPath: string;
+  artifactDigest?: string;
   allowedFiles: string[];
   rulesTouched: string[];
   riskLevel: ChangeScopeRiskLevel;
@@ -114,7 +170,8 @@ const buildBundle = (input: {
     scopeId: createScopeId(seed),
     source: {
       command: input.command,
-      artifactPath: input.artifactPath
+      artifactPath: input.artifactPath,
+      ...(input.artifactDigest ? { artifactDigest: input.artifactDigest } : {})
     },
     mutationScope: {
       allowedFiles,
@@ -138,6 +195,7 @@ export const buildChangeScopeBundleFromPlan = (payload: PlanLikePayload): Change
   return buildBundle({
     command: 'plan',
     artifactPath: '.playbook/plan.json',
+    artifactDigest: computePlanArtifactDigest(payload.tasks ?? []),
     allowedFiles,
     rulesTouched,
     riskLevel: scoreToRisk(riskScore),
