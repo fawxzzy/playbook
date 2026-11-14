@@ -63,10 +63,79 @@ Transitive impact over the module dependency edges of `.playbook/repo-graph.json
 }
 ```
 
-Entries are ordered by depth, then module name; `path` is the shortest path from the target. With `--direction both` the result carries both `dependents` and `dependencies`. On failure, `--json` prints `{ "schemaVersion": "1.0", "command": "graph", "subcommand": "impact", "error": "..." }`. No JSON schema is registered for this output yet.
+Entries are ordered by depth, then module name; `path` is the shortest path from the target. With `--direction both` the result carries both `dependents` and `dependencies`. On failure, `--json` prints `{ "schemaVersion": "1.0", "command": "graph", "subcommand": "impact", "error": "..." }`.
+
+## `graph boundaries`
+
+Classifies every module-to-module dependency edge of `.playbook/repo-graph.json` against the architecture rules the repository already declares.
+
+- `pnpm playbook graph boundaries [--limit N] --json`
+- Declared rules come from `.playbook/repo-index.json` (`architectureRoleInference`: module roles plus the dependency-direction matrix, written by `pnpm playbook index` for workspace repositories). With them, each edge is `allowed`, `out_of_direction` or `unclassified`, and `violations` lists the out-of-direction edges.
+- Without declared rules the command only observes: `rules.declared` is `false` with a `reason`, roles are inferred from graph topology, every edge is `observed`, and `violations` is empty.
+- `enforced` is `false` today in every repository (the index declares `policyEnforcement: "none"`). This is a report: the exit code never depends on findings.
+- Fails with a non-zero exit only when the graph is missing, invalid or unsupported (run `pnpm playbook index`) or an argument is invalid.
+
+```json
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "boundaries",
+  "enforced": false,
+  "rules": {
+    "declared": true,
+    "source": ".playbook/repo-index.json#architectureRoleInference",
+    "classifierVersion": "role-heuristic-v1",
+    "policyEnforcement": "none",
+    "dependencyMatrix": { "interface": ["adapter", "foundation"], "foundation": ["foundation"] }
+  },
+  "roles": [{ "module": "cli", "role": "interface", "source": "declared" }],
+  "summary": { "modules": 3, "edges": 3, "allowed": 2, "violations": 1, "unclassified": 0, "observed": 0 },
+  "limit": 200,
+  "truncated": false,
+  "totals": { "violations": 1, "observations": 3 },
+  "violations": [{ "from": "core", "to": "cli", "fromRole": "foundation", "toRole": "interface", "status": "out_of_direction" }],
+  "observations": [],
+  "graph": { "schemaVersion": "1.1", "generatedAt": "..." }
+}
+```
+
+(`observations` lists every edge, including the violations; it is shortened here.)
+
+## `graph risks`
+
+Ranks modules by structural risk computed from the graph only.
+
+- `pnpm playbook graph risks [--limit N] --json`
+- Per module: `fanIn`, `fanOut`, `transitiveDependents`, `transitiveDependencies`, `inCycle`, `cycleSize`, `depth`, `hubScore`, `score`. `cycles` lists each dependency cycle.
+- Formula: `hubScore = fanIn * fanOut`; `score = 2 * transitiveDependents + fanIn + fanOut + hubScore + 3 * cycleSize`. `depth` (dependency layers beneath the module) is reported but not scored. The score ranks modules inside one repository; it has no thresholds.
+- Ordered by score (highest first), then module name; both lists are capped at `--limit` (default 200, maximum 1000) with `truncated` and `totals`.
+- Different from `query risk`, which is index-derived, includes verify failures, and is unchanged.
+
+```json
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "risks",
+  "formula": {
+    "hubScore": "fanIn * fanOut",
+    "score": "2 * transitiveDependents + fanIn + fanOut + hubScore + 3 * cycleSize",
+    "weights": { "transitiveDependents": 2, "fanIn": 1, "fanOut": 1, "hubScore": 1, "cycleSize": 3 }
+  },
+  "limit": 200,
+  "truncated": false,
+  "totals": { "modules": 1, "cycles": 0 },
+  "modules": [
+    { "module": "auth", "score": 6, "fanIn": 2, "fanOut": 0, "transitiveDependents": 2, "transitiveDependencies": 0, "inCycle": false, "cycleSize": 0, "depth": 0, "hubScore": 0 }
+  ],
+  "cycles": [],
+  "graph": { "schemaVersion": "1.1", "generatedAt": "..." }
+}
+```
+
+The JSON schema for all four outputs is `pnpm playbook schema graph --json`.
 
 ## Not implemented
 
-`graph boundaries` and `graph risks` do not exist, `analyze-pr` does not consume the graph, and `graph impact` does not map files to commands, contracts, tests or docs (module-level only). The planned architecture intelligence layer is specified, but not shipped, in [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md).
+The graph views are module-level only: nothing maps files to commands, contracts, tests or docs (no impact index), there is no semantic node/edge layer and no incremental graph update, and `explain` and `query` do not use these views. `graph boundaries` never enforces. Those pieces are deferred beyond the current card; see [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md).
 
 See also: [`repository-graph-contract.md`](../contracts/repository-graph-contract.md), [`index.md`](./index.md), [`explain.md`](./explain.md), [`query.md`](./query.md).

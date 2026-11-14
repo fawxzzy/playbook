@@ -1,3 +1,4 @@
+import { readChangedFilesGraphImpact, type ChangedFilesGraphImpact } from '../graph/graphImpact.js';
 import { queryDocsCoverage } from '../query/docsCoverage.js';
 import { readIndexedRepository, resolveIndexedModuleContext } from '../query/moduleIntelligence.js';
 import { queryModuleOwners } from '../query/moduleOwners.js';
@@ -117,6 +118,12 @@ export type AnalyzePullRequestResult = {
   context: {
     sources: AnalyzePrContextSource[];
   };
+  /**
+   * Additive: impact derived from `.playbook/repo-graph.json` (changed files -> owning modules ->
+   * transitive dependents). `{ available: false, reason }` when the graph is missing or invalid.
+   * The index-derived `impact` field above is unchanged.
+   */
+  graphImpact: ChangedFilesGraphImpact;
 };
 
 const KNOWLEDGE_STALE_DAYS = 180;
@@ -777,7 +784,8 @@ export const analyzePullRequest = (
         },
         { type: 'promoted-knowledge', knowledgeIds: preventionGuidance.map((entry) => entry.provenance.knowledgeId) }
       ]
-    }
+    },
+    graphImpact: readChangedFilesGraphImpact(projectRoot, changedFiles)
   };
 
   captureMemoryEventSafe(projectRoot, {

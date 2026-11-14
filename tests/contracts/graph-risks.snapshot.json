@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "risks",
+  "formula": {
+    "hubScore": "fanIn * fanOut",
+    "score": "2 * transitiveDependents + fanIn + fanOut + hubScore + 3 * cycleSize",
+    "weights": {
+      "transitiveDependents": 2,
+      "fanIn": 1,
+      "fanOut": 1,
+      "hubScore": 1,
+      "cycleSize": 3
+    }
+  },
+  "limit": 200,
+  "truncated": false,
+  "totals": {
+    "modules": 1,
+    "cycles": 0
+  },
+  "modules": [
+    {
+      "module": "features",
+      "score": 0,
+      "fanIn": 0,
+      "fanOut": 0,
+      "transitiveDependents": 0,
+      "transitiveDependencies": 0,
+      "inCycle": false,
+      "cycleSize": 0,
+      "depth": 0,
+      "hubScore": 0
+    }
+  ],
+  "cycles": [],
+  "graph": {
+    "schemaVersion": "1.1"
+  }
+}

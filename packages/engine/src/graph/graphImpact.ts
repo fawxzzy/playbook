@@ -5,6 +5,7 @@ import {
   type RepositoryGraph,
   type RepositoryGraphEdgeKind
 } from './repoGraph.js';
+import { compareCodeUnits } from '../util/compareCodeUnits.js';
 
 /**
  * Graph-backed impact: transitive dependents / dependencies of a module over the
@@ -69,20 +70,46 @@ export type GraphImpactReport = GraphImpactResult & {
 const IMPACT_EDGE_KINDS: readonly RepositoryGraphEdgeKind[] = ['depends_on'];
 const MODULE_PREFIX = 'module:';
 
-const compare = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
+// Code-unit order: identical on every machine and locale (never localeCompare for committed output).
+const compare = compareCodeUnits;
 
 const fail = (message: string): never => {
   throw new Error(`playbook graph impact: ${message}`);
 };
 
-const assertGraphShape = (graph: RepositoryGraph): void => {
+export const assertGraphShape = (graph: RepositoryGraph, commandName = 'playbook graph impact'): void => {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
-    fail('invalid repository graph (nodes/edges missing). Run "playbook index" to regenerate .playbook/repo-graph.json.');
+    throw new Error(`${commandName}: invalid repository graph (nodes/edges missing). Run "playbook index" to regenerate .playbook/repo-graph.json.`);
   }
 };
 
 const normalizeFilePath = (input: string): string =>
   input.trim().replace(/\\/g, '/').replace(/^(\.\/)+/, '').replace(/\/+$/, '');
+
+/**
+ * The module that owns a repo-relative file: the longest matching root among `src/<module>`
+ * and the supplied module roots. Returns undefined when no module root contains the file.
+ */
+export const resolveOwningModule = (
+  moduleNames: readonly string[],
+  filePath: string,
+  moduleRoots: Record<string, string> = {}
+): string | undefined => {
+  const file = normalizeFilePath(filePath);
+  let best: { module: string; root: string } | undefined;
+  for (const name of moduleNames) {
+    const roots = [`src/${name}`, moduleRoots[name]]
+      .filter((root): root is string => typeof root === 'string' && root.length > 0)
+      .map(normalizeFilePath);
+    for (const root of roots) {
+      if (root.length === 0 || (file !== root && !file.startsWith(`${root}/`))) continue;
+      if (!best || root.length > best.root.length) {
+        best = { module: name, root };
+      }
+    }
+  }
+  return best?.module;
+};
 
 export const resolveGraphImpactTarget = (
   graph: RepositoryGraph,
@@ -111,20 +138,9 @@ export const resolveGraphImpactTarget = (
   }
 
   const file = normalizeFilePath(trimmed);
-  let best: { module: string; root: string } | undefined;
-  for (const name of moduleNames) {
-    const roots = [`src/${name}`, moduleRoots[name]]
-      .filter((root): root is string => typeof root === 'string' && root.length > 0)
-      .map(normalizeFilePath);
-    for (const root of roots) {
-      if (root.length === 0 || (file !== root && !file.startsWith(`${root}/`))) continue;
-      if (!best || root.length > best.root.length) {
-        best = { module: name, root };
-      }
-    }
-  }
-  if (best) {
-    return { input, resolvedAs: 'file', module: best.module, file };
+  const owner = resolveOwningModule(moduleNames, file, moduleRoots);
+  if (owner) {
+    return { input, resolvedAs: 'file', module: owner, file };
   }
 
   return fail(
@@ -133,9 +149,18 @@ export const resolveGraphImpactTarget = (
   );
 };
 
-type Adjacency = Map<string, Array<{ to: string; kind: RepositoryGraphEdgeKind }>>;
+export type ModuleAdjacency = Map<string, Array<{ to: string; kind: RepositoryGraphEdgeKind }>>;
+type Adjacency = ModuleAdjacency;
 
-const buildAdjacency = (graph: RepositoryGraph, reverse: boolean): Adjacency => {
+/** Module names in the graph, sorted by code unit (deterministic across locales). */
+export const listGraphModuleNames = (graph: RepositoryGraph): string[] =>
+  graph.nodes
+    .filter((node) => node.kind === 'module')
+    .map((node) => node.name)
+    .sort(compare);
+
+/** `depends_on` adjacency between module nodes. `reverse` follows edges from dependency to dependent. */
+export const buildModuleAdjacency = (graph: RepositoryGraph, reverse: boolean): Adjacency => {
   const moduleNames = new Set(graph.nodes.filter((node) => node.kind === 'module').map((node) => node.name));
   const adjacency: Adjacency = new Map();
   for (const edge of graph.edges) {
@@ -155,7 +180,8 @@ const buildAdjacency = (graph: RepositoryGraph, reverse: boolean): Adjacency => 
   return adjacency;
 };
 
-const traverse = (
+/** Breadth-first traversal with deterministic shortest paths; the start module is never returned. */
+export const traverseModules = (
   adjacency: Adjacency,
   start: string,
   depthLimit: number | undefined
@@ -188,6 +214,20 @@ const traverse = (
   return [...found.values()].sort((left, right) => left.depth - right.depth || compare(left.module, right.module));
 };
 
+/** Number of modules reachable from `start` (excluding `start`); allocation-light for whole-graph scans. */
+export const countReachableModules = (adjacency: Adjacency, start: string): number => {
+  const visited = new Set<string>([start]);
+  const queue: string[] = [start];
+  for (let index = 0; index < queue.length; index += 1) {
+    for (const edge of adjacency.get(queue[index]) ?? []) {
+      if (visited.has(edge.to)) continue;
+      visited.add(edge.to);
+      queue.push(edge.to);
+    }
+  }
+  return visited.size - 1;
+};
+
 const validateOptions = (options: GraphImpactOptions): { direction: GraphImpactDirection; depth?: number; limit: number } => {
   const direction = options.direction ?? 'dependents';
   if (direction !== 'dependents' && direction !== 'dependencies' && direction !== 'both') {
@@ -218,13 +258,13 @@ export const computeGraphImpact = (graph: RepositoryGraph, input: string, option
   };
 
   if (direction === 'dependents' || direction === 'both') {
-    const all = traverse(buildAdjacency(graph, true), target.module, depth);
+    const all = traverseModules(buildModuleAdjacency(graph, true), target.module, depth);
     result.totals.dependents = all.length;
     result.dependents = all.slice(0, limit);
     result.truncated = result.truncated || all.length > limit;
   }
   if (direction === 'dependencies' || direction === 'both') {
-    const all = traverse(buildAdjacency(graph, false), target.module, depth);
+    const all = traverseModules(buildModuleAdjacency(graph, false), target.module, depth);
     result.totals.dependencies = all.length;
     result.dependencies = all.slice(0, limit);
     result.truncated = result.truncated || all.length > limit;
@@ -233,7 +273,8 @@ export const computeGraphImpact = (graph: RepositoryGraph, input: string, option
   return result;
 };
 
-const readModuleRoots = (projectRoot: string): Record<string, string> => {
+/** Best-effort module name to repo-relative directory map from the repository index workspace. */
+export const readModuleRoots = (projectRoot: string): Record<string, string> => {
   try {
     const indexPath = path.join(projectRoot, '.playbook', 'repo-index.json');
     if (!fs.existsSync(indexPath)) return {};
@@ -258,4 +299,94 @@ export const readGraphImpact = (projectRoot: string, input: string, options: Gra
     ...result,
     graph: { schemaVersion: graph.schemaVersion, generatedAt: graph.generatedAt }
   };
+};
+
+/**
+ * Graph impact for a set of changed files (used by `analyze-pr`): changed files -> owning
+ * modules -> transitive dependents with depth. Bounded and deterministic.
+ */
+export const CHANGED_FILES_GRAPH_IMPACT_SCHEMA_VERSION = '1.0' as const;
+export const CHANGED_FILES_GRAPH_IMPACT_LIMIT = 50;
+
+export type ChangedFilesGraphImpact =
+  | { available: false; reason: string }
+  | {
+      available: true;
+      schemaVersion: typeof CHANGED_FILES_GRAPH_IMPACT_SCHEMA_VERSION;
+      graphSchemaVersion: RepositoryGraph['schemaVersion'];
+      /** Maximum entries per list below. */
+      limit: number;
+      /** True when any list below was cut at `limit`; `totals` reports the full counts. */
+      truncated: boolean;
+      totals: { changedModules: number; affectedModules: number; unmappedFiles: number };
+      /** Modules owning at least one changed file, ordered by module name. */
+      changedModules: Array<{
+        module: string;
+        changedFileCount: number;
+        totalDependents: number;
+        /** Transitive dependents ordered by depth, then module name. */
+        dependents: Array<{ module: string; depth: number }>;
+      }>;
+      /** Changed modules plus all their transitive dependents, ordered by module name. */
+      affectedModules: string[];
+    };
+
+export const computeChangedFilesGraphImpact = (
+  graph: RepositoryGraph,
+  changedFiles: readonly string[],
+  options: { moduleRoots?: Record<string, string>; limit?: number } = {}
+): ChangedFilesGraphImpact => {
+  assertGraphShape(graph, 'playbook analyze-pr');
+  const limit = options.limit ?? CHANGED_FILES_GRAPH_IMPACT_LIMIT;
+  const moduleNames = listGraphModuleNames(graph);
+  const reverse = buildModuleAdjacency(graph, true);
+
+  const fileCountByModule = new Map<string, number>();
+  let unmappedFiles = 0;
+  for (const file of Array.from(new Set(changedFiles))) {
+    const owner = resolveOwningModule(moduleNames, file, options.moduleRoots);
+    if (!owner) {
+      unmappedFiles += 1;
+      continue;
+    }
+    fileCountByModule.set(owner, (fileCountByModule.get(owner) ?? 0) + 1);
+  }
+
+  const affected = new Set<string>();
+  let truncated = false;
+  const allChangedModules = [...fileCountByModule.keys()].sort(compare).map((module) => {
+    const dependents = traverseModules(reverse, module, undefined);
+    affected.add(module);
+    for (const entry of dependents) affected.add(entry.module);
+    if (dependents.length > limit) truncated = true;
+    return {
+      module,
+      changedFileCount: fileCountByModule.get(module) ?? 0,
+      totalDependents: dependents.length,
+      dependents: dependents.slice(0, limit).map((entry) => ({ module: entry.module, depth: entry.depth }))
+    };
+  });
+  const affectedModules = [...affected].sort(compare);
+  if (allChangedModules.length > limit || affectedModules.length > limit) truncated = true;
+
+  return {
+    available: true,
+    schemaVersion: CHANGED_FILES_GRAPH_IMPACT_SCHEMA_VERSION,
+    graphSchemaVersion: graph.schemaVersion,
+    limit,
+    truncated,
+    totals: { changedModules: allChangedModules.length, affectedModules: affectedModules.length, unmappedFiles },
+    changedModules: allChangedModules.slice(0, limit),
+    affectedModules: affectedModules.slice(0, limit)
+  };
+};
+
+/** Never throws: a missing or invalid graph yields `{ available: false, reason }`. */
+export const readChangedFilesGraphImpact = (projectRoot: string, changedFiles: readonly string[]): ChangedFilesGraphImpact => {
+  try {
+    const graph = readRepositoryGraph(projectRoot);
+    return computeChangedFilesGraphImpact(graph, changedFiles, { moduleRoots: readModuleRoots(projectRoot) });
+  } catch (error) {
+    return { available: false, reason: error instanceof Error ? error.message : String(error) };
+  }
 };

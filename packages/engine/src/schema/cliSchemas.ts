@@ -275,6 +275,104 @@ const knowledgeFiltersSchema: JsonSchema = {
   }
 };
 
+const graphArtifactRefSchema: JsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['schemaVersion'],
+  properties: {
+    schemaVersion: { const: '1.1' },
+    generatedAt: { type: 'string' }
+  }
+};
+
+const graphImpactEntrySchema: JsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['module', 'depth', 'edgeKinds', 'path'],
+  properties: {
+    module: { type: 'string' },
+    depth: { type: 'integer' },
+    edgeKinds: { type: 'array', items: { enum: ['contains', 'depends_on', 'governed_by'] } },
+    path: { type: 'array', items: { type: 'string' } }
+  }
+};
+
+const graphBoundaryEdgeSchema: JsonSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['from', 'to', 'fromRole', 'toRole', 'status'],
+  properties: {
+    from: { type: 'string' },
+    to: { type: 'string' },
+    fromRole: { type: ['string', 'null'] },
+    toRole: { type: ['string', 'null'] },
+    status: { enum: ['allowed', 'out_of_direction', 'unclassified', 'observed'] }
+  }
+};
+
+// Additive `graphImpact` section of `analyze-pr` (graph-derived; the index-derived `impact` is unchanged).
+const analyzePrGraphImpactSchema: JsonSchema = {
+  oneOf: [
+    {
+      type: 'object',
+      additionalProperties: false,
+      required: ['available', 'reason'],
+      properties: {
+        available: { const: false },
+        reason: { type: 'string' }
+      }
+    },
+    {
+      type: 'object',
+      additionalProperties: false,
+      required: ['available', 'schemaVersion', 'graphSchemaVersion', 'limit', 'truncated', 'totals', 'changedModules', 'affectedModules'],
+      properties: {
+        available: { const: true },
+        schemaVersion: { const: '1.0' },
+        graphSchemaVersion: { const: '1.1' },
+        limit: { type: 'integer' },
+        truncated: { type: 'boolean' },
+        totals: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['changedModules', 'affectedModules', 'unmappedFiles'],
+          properties: {
+            changedModules: { type: 'integer' },
+            affectedModules: { type: 'integer' },
+            unmappedFiles: { type: 'integer' }
+          }
+        },
+        changedModules: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['module', 'changedFileCount', 'totalDependents', 'dependents'],
+            properties: {
+              module: { type: 'string' },
+              changedFileCount: { type: 'integer' },
+              totalDependents: { type: 'integer' },
+              dependents: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  additionalProperties: false,
+                  required: ['module', 'depth'],
+                  properties: {
+                    module: { type: 'string' },
+                    depth: { type: 'integer' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        affectedModules: { type: 'array', items: { type: 'string' } }
+      }
+    }
+  ]
+};
+
 const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
   rules: {
     $schema: JSON_SCHEMA_DRAFT,
@@ -472,6 +570,210 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
               }
             }
           }
+        }
+      },
+      // Subcommand failures (`graph impact|boundaries|risks`).
+      {
+        type: 'object',
+        additionalProperties: false,
+        required: ['schemaVersion', 'command', 'subcommand', 'error'],
+        properties: {
+          schemaVersion: { const: '1.0' },
+          command: { const: 'graph' },
+          subcommand: { enum: ['impact', 'boundaries', 'risks'] },
+          error: { type: 'string' }
+        }
+      },
+      // `graph impact <module|file-path>`
+      {
+        type: 'object',
+        additionalProperties: false,
+        required: ['schemaVersion', 'command', 'subcommand', 'target', 'direction', 'depthLimit', 'limit', 'truncated', 'totals', 'graph'],
+        properties: {
+          schemaVersion: { const: '1.0' },
+          command: { const: 'graph' },
+          subcommand: { const: 'impact' },
+          target: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['input', 'resolvedAs', 'module'],
+            properties: {
+              input: { type: 'string' },
+              resolvedAs: { enum: ['module', 'file'] },
+              module: { type: 'string' },
+              file: { type: 'string' }
+            }
+          },
+          direction: { enum: ['dependents', 'dependencies', 'both'] },
+          depthLimit: { type: ['integer', 'null'] },
+          limit: { type: 'integer' },
+          truncated: { type: 'boolean' },
+          totals: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              dependents: { type: 'integer' },
+              dependencies: { type: 'integer' }
+            }
+          },
+          dependents: { type: 'array', items: graphImpactEntrySchema },
+          dependencies: { type: 'array', items: graphImpactEntrySchema },
+          graph: graphArtifactRefSchema
+        }
+      },
+      // `graph boundaries`
+      {
+        type: 'object',
+        additionalProperties: false,
+        required: [
+          'schemaVersion',
+          'command',
+          'subcommand',
+          'enforced',
+          'rules',
+          'roles',
+          'summary',
+          'limit',
+          'truncated',
+          'totals',
+          'violations',
+          'observations',
+          'graph'
+        ],
+        properties: {
+          schemaVersion: { const: '1.0' },
+          command: { const: 'graph' },
+          subcommand: { const: 'boundaries' },
+          enforced: { type: 'boolean' },
+          rules: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['declared', 'source', 'classifierVersion', 'policyEnforcement', 'dependencyMatrix'],
+            properties: {
+              declared: { type: 'boolean' },
+              source: { enum: ['.playbook/repo-index.json#architectureRoleInference', 'none'] },
+              reason: { type: 'string' },
+              classifierVersion: { type: ['string', 'null'] },
+              policyEnforcement: { type: ['string', 'null'] },
+              dependencyMatrix: { type: ['object', 'null'] }
+            }
+          },
+          roles: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: ['module', 'role', 'source'],
+              properties: {
+                module: { type: 'string' },
+                role: { type: ['string', 'null'] },
+                source: { enum: ['declared', 'graph-inferred', 'none'] }
+              }
+            }
+          },
+          summary: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['modules', 'edges', 'allowed', 'violations', 'unclassified', 'observed'],
+            properties: {
+              modules: { type: 'integer' },
+              edges: { type: 'integer' },
+              allowed: { type: 'integer' },
+              violations: { type: 'integer' },
+              unclassified: { type: 'integer' },
+              observed: { type: 'integer' }
+            }
+          },
+          limit: { type: 'integer' },
+          truncated: { type: 'boolean' },
+          totals: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['violations', 'observations'],
+            properties: {
+              violations: { type: 'integer' },
+              observations: { type: 'integer' }
+            }
+          },
+          violations: { type: 'array', items: graphBoundaryEdgeSchema },
+          observations: { type: 'array', items: graphBoundaryEdgeSchema },
+          graph: graphArtifactRefSchema
+        }
+      },
+      // `graph risks`
+      {
+        type: 'object',
+        additionalProperties: false,
+        required: ['schemaVersion', 'command', 'subcommand', 'formula', 'limit', 'truncated', 'totals', 'modules', 'cycles', 'graph'],
+        properties: {
+          schemaVersion: { const: '1.0' },
+          command: { const: 'graph' },
+          subcommand: { const: 'risks' },
+          formula: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['hubScore', 'score', 'weights'],
+            properties: {
+              hubScore: { type: 'string' },
+              score: { type: 'string' },
+              weights: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['transitiveDependents', 'fanIn', 'fanOut', 'hubScore', 'cycleSize'],
+                properties: {
+                  transitiveDependents: { type: 'integer' },
+                  fanIn: { type: 'integer' },
+                  fanOut: { type: 'integer' },
+                  hubScore: { type: 'integer' },
+                  cycleSize: { type: 'integer' }
+                }
+              }
+            }
+          },
+          limit: { type: 'integer' },
+          truncated: { type: 'boolean' },
+          totals: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['modules', 'cycles'],
+            properties: {
+              modules: { type: 'integer' },
+              cycles: { type: 'integer' }
+            }
+          },
+          modules: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              required: [
+                'module',
+                'score',
+                'fanIn',
+                'fanOut',
+                'transitiveDependents',
+                'transitiveDependencies',
+                'inCycle',
+                'cycleSize',
+                'depth',
+                'hubScore'
+              ],
+              properties: {
+                module: { type: 'string' },
+                score: { type: 'integer' },
+                fanIn: { type: 'integer' },
+                fanOut: { type: 'integer' },
+                transitiveDependents: { type: 'integer' },
+                transitiveDependencies: { type: 'integer' },
+                inCycle: { type: 'boolean' },
+                cycleSize: { type: 'integer' },
+                depth: { type: 'integer' },
+                hubScore: { type: 'integer' }
+              }
+            }
+          },
+          cycles: { type: 'array', items: { type: 'array', items: { type: 'string' } } },
+          graph: graphArtifactRefSchema
         }
       }
     ]
@@ -1104,7 +1406,8 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
             properties: {
               sources: { type: 'array', items: { type: 'object', minProperties: 1, additionalProperties: true } }
             }
-          }
+          },
+          graphImpact: analyzePrGraphImpactSchema
         }
       }
     ]
