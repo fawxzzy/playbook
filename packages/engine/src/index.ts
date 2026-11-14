@@ -243,6 +243,8 @@ export { computeGraphBoundaries, readGraphBoundaries, readDeclaredBoundaryRules,
 export type { GraphBoundariesOptions, GraphBoundariesReport, GraphBoundariesResult, GraphBoundaryEdge, DeclaredBoundaryRules } from './graph/graphBoundaries.js';
 export { computeGraphRisks, readGraphRisks, GRAPH_RISKS_SCHEMA_VERSION, GRAPH_RISK_FORMULA } from './graph/graphRisks.js';
 export type { GraphRiskEntry, GraphRisksOptions, GraphRisksReport, GraphRisksResult } from './graph/graphRisks.js';
+export { buildArchitectureGraph, writeArchitectureGraph, readArchitectureGraph, readArchitectureNeighborhood, summarizeArchitectureNeighborhood, validateArchitectureGraph, ARCH_GRAPH_SCHEMA_VERSION, ARCH_GRAPH_KIND, ARCH_GRAPH_RELATIVE_PATH, ARCH_GRAPH_NODE_KINDS, ARCH_GRAPH_EDGE_KINDS } from './graph/architectureGraph.js';
+export type { ArchitectureGraph, ArchitectureGraphNode, ArchitectureGraphEdge, ArchitectureGraphWriteResult, ArchitectureNeighborhood } from './graph/architectureGraph.js';
 export type { GraphImpactDirection, GraphImpactEntry, GraphImpactOptions, GraphImpactReport, GraphImpactResult, GraphImpactTarget } from './graph/graphImpact.js';
 export type { RepositoryGraph, RepositoryGraphNode, RepositoryGraphEdge, RepositoryGraphSummary, GraphNeighborhoodSummary } from './graph/repoGraph.js';
 

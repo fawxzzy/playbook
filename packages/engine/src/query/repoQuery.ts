@@ -9,6 +9,7 @@ import type {
   RepositoryConfigEntry,
   RepositoryArchitectureRoleInference
 } from '../indexer/repoIndexer.js';
+import { readArchitectureNeighborhood, type ArchitectureNeighborhood } from '../graph/architectureGraph.js';
 import { readRepositoryGraph, summarizeGraphNeighborhood, type GraphNeighborhoodSummary } from '../graph/repoGraph.js';
 import { readJsonArtifact } from '../artifacts/artifactIO.js';
 import { readRuntimeMemoryEnvelope, type RuntimeMemoryEnvelope } from '../intelligence/runtimeMemory.js';
@@ -40,6 +41,7 @@ export type RepositoryQueryResult = {
   result: string | string[] | RepositoryModule[] | RepositoryDependencyEdge[] | RepositoryWorkspaceNode[] | RepositoryTestCoverage[] | RepositoryConfigEntry[];
   architectureRoleInference?: RepositoryArchitectureRoleInference;
   graphNeighborhood?: GraphNeighborhoodSummary;
+  semanticNeighborhood?: ArchitectureNeighborhood;
   memorySummary?: RuntimeMemoryEnvelope['memorySummary'];
   memorySources?: RuntimeMemoryEnvelope['memorySources'];
   knowledgeHits?: RuntimeMemoryEnvelope['knowledgeHits'];
@@ -201,6 +203,7 @@ export const queryRepositoryIndex = (projectRoot: string, field: string, options
   if (resolvedField === 'architecture') {
     queryResult.architectureRoleInference = index.architectureRoleInference;
     queryResult.graphNeighborhood = readGraphNeighborhood(projectRoot, 'repository:root');
+    queryResult.semanticNeighborhood = readArchitectureNeighborhood(projectRoot, 'repository:root');
   }
 
   if (options?.withMemory) {

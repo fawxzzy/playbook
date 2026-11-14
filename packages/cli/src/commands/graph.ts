@@ -1,4 +1,4 @@
-import { readGraphBoundaries, readGraphImpact, readGraphRisks, readRepositoryGraph, summarizeRepositoryGraph } from '@zachariahredfield/playbook-engine';
+import { readGraphBoundaries, readGraphImpact, readGraphRisks, readRepositoryGraph, summarizeRepositoryGraph, writeArchitectureGraph } from '@zachariahredfield/playbook-engine';
 
 // Structural copies of the engine graph-impact types (the CLI build declares the engine module loosely).
 type GraphImpactDirection = 'dependents' | 'dependencies' | 'both';
@@ -20,7 +20,7 @@ import { ExitCode } from '../lib/cliContract.js';
 type GraphOptions = {
   format: 'text' | 'json';
   quiet: boolean;
-  /** Raw arguments after `graph`; only the `impact`, `boundaries` and `risks` subcommands are interpreted. */
+  /** Raw arguments after `graph`; only the `impact`, `boundaries`, `risks` and `build` subcommands are interpreted. */
   args?: string[];
 };
 
@@ -300,11 +300,67 @@ const runGraphReport = async (cwd: string, subcommand: ReportSubcommand, args: s
   }
 };
 
+type GraphBuildResult = {
+  status: 'created' | 'updated' | 'unchanged';
+  path: string;
+  graph: {
+    schemaVersion: string;
+    kind: string;
+    inputs: { repoGraphSchemaVersion: string; scannedFiles: number; digest: string };
+    stats: { nodeCount: number; edgeCount: number; nodeKinds: Record<string, number>; edgeKinds: Record<string, number> };
+  };
+};
+
+// `graph build`: derive the semantic architecture graph and write .playbook/arch-graph.v2.json (only when inputs changed).
+const runGraphBuild = async (cwd: string, args: string[], options: GraphOptions): Promise<number> => {
+  try {
+    const extra = args.filter((arg) => arg !== 'build' && arg !== '--json' && arg !== '--quiet');
+    if (extra.length > 0) {
+      throw new Error(`playbook graph build: unexpected argument "${extra[0]}". Usage: playbook graph build [--json]`);
+    }
+    const result = writeArchitectureGraph(cwd) as GraphBuildResult;
+    const { graph } = result;
+    if (options.format === 'json') {
+      console.log(
+        JSON.stringify(
+          {
+            schemaVersion: '1.0',
+            command: 'graph',
+            subcommand: 'build',
+            status: result.status,
+            artifact: result.path,
+            graph: { schemaVersion: graph.schemaVersion, kind: graph.kind, inputs: graph.inputs, stats: graph.stats }
+          },
+          null,
+          2
+        )
+      );
+      return ExitCode.Success;
+    }
+    if (!options.quiet) {
+      console.log(`Architecture graph ${result.status}: ${result.path}`);
+      console.log(`Nodes: ${graph.stats.nodeCount}; edges: ${graph.stats.edgeCount}; scanned files: ${graph.inputs.scannedFiles}`);
+    }
+    return ExitCode.Success;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (options.format === 'json') {
+      console.log(JSON.stringify({ schemaVersion: '1.0', command: 'graph', subcommand: 'build', error: message }, null, 2));
+    } else {
+      console.error(message);
+    }
+    return ExitCode.Failure;
+  }
+};
+
 export const runGraph = async (cwd: string, options: GraphOptions): Promise<number> => {
   const args = options.args ?? [];
   const subcommand = args.find((arg) => !arg.startsWith('-'));
   if (subcommand === 'impact') {
     return runGraphImpact(cwd, args, options);
+  }
+  if (subcommand === 'build') {
+    return runGraphBuild(cwd, args, options);
   }
   if (subcommand === 'boundaries' || subcommand === 'risks') {
     return runGraphReport(cwd, subcommand, args, options);

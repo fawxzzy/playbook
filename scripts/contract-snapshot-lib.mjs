@@ -82,6 +82,7 @@ export const commandContracts = [
   { file: 'graph-impact.snapshot.json', args: ['graph', 'impact', 'features', '--direction', 'both', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'graph' },
   { file: 'graph-boundaries.snapshot.json', args: ['graph', 'boundaries', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'graph' },
   { file: 'graph-risks.snapshot.json', args: ['graph', 'risks', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'graph' },
+  { file: 'graph-build.snapshot.json', args: ['graph', 'build', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'graph' },
   { file: 'explain-PB001.snapshot.json', args: ['explain', 'PB001', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'explain' },
   { file: 'explain-architecture.snapshot.json', args: ['explain', 'architecture', '--json'], setupArgs: [['index', '--json']], schemaCommand: 'explain' },
   { file: 'verify.snapshot.json', args: ['verify', '--json'], schemaCommand: 'verify' },

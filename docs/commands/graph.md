@@ -139,3 +139,31 @@ The JSON schema for all four outputs is `pnpm playbook schema graph --json`.
 The graph views are module-level only: nothing maps files to commands, contracts, tests or docs (no impact index), there is no semantic node/edge layer and no incremental graph update, and `explain` and `query` do not use these views. `graph boundaries` never enforces. Those pieces are deferred beyond the current card; see [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md).
 
 See also: [`repository-graph-contract.md`](../contracts/repository-graph-contract.md), [`index.md`](./index.md), [`explain.md`](./explain.md), [`query.md`](./query.md).
+
+## `graph build`
+
+Derive the semantic architecture graph and write `.playbook/arch-graph.v2.json` (kind `playbook-arch-graph`, schema `2.0`).
+
+- `pnpm playbook graph build [--json]`
+- Requires `.playbook/repo-graph.json` and `.playbook/repo-index.json` (run `pnpm playbook index` first); fails with a non-zero exit when either is missing or invalid. Writes only the one artifact, with no timestamp, so identical inputs give identical bytes.
+- Content-hash invalidation: when the existing artifact is valid and its `inputs.digest` matches the current inputs, nothing is written and `status` is `unchanged`; otherwise `created` or `updated`. A changed input rebuilds the whole graph (SCM-diff partial rebuilds are deferred).
+- `explain <module>`, `explain architecture` and `query architecture` add an optional `semanticNeighborhood` when the artifact is present and valid, and are otherwise unchanged.
+- Node and edge derivation, ordering and limits: [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md#graph-build-and-the-semantic-graph-shipped-fourth-slice).
+
+```json
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "build",
+  "status": "created",
+  "artifact": ".playbook/arch-graph.v2.json",
+  "graph": {
+    "schemaVersion": "2.0",
+    "kind": "playbook-arch-graph",
+    "inputs": { "repoGraphSchemaVersion": "1.1", "scannedFiles": 0, "digest": "..." },
+    "stats": { "nodeCount": 0, "edgeCount": 0, "nodeKinds": {}, "edgeKinds": {} }
+  }
+}
+```
+
+On failure, `--json` prints `{ "schemaVersion": "1.0", "command": "graph", "subcommand": "build", "error": "..." }`.

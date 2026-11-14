@@ -1,4 +1,4 @@
-import { readGraphBoundaries, readGraphImpact, readGraphRisks, readRepositoryGraph, summarizeRepositoryGraph } from '@zachariahredfield/playbook-engine';
+import { readGraphBoundaries, readGraphImpact, readGraphRisks, readRepositoryGraph, summarizeRepositoryGraph, writeArchitectureGraph } from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
 const printText = (result) => {
     console.log('Repository Knowledge Graph');
@@ -229,11 +229,51 @@ const runGraphReport = async (cwd, subcommand, args, options) => {
         return ExitCode.Failure;
     }
 };
+// `graph build`: derive the semantic architecture graph and write .playbook/arch-graph.v2.json (only when inputs changed).
+const runGraphBuild = async (cwd, args, options) => {
+    try {
+        const extra = args.filter((arg) => arg !== 'build' && arg !== '--json' && arg !== '--quiet');
+        if (extra.length > 0) {
+            throw new Error(`playbook graph build: unexpected argument "${extra[0]}". Usage: playbook graph build [--json]`);
+        }
+        const result = writeArchitectureGraph(cwd);
+        const { graph } = result;
+        if (options.format === 'json') {
+            console.log(JSON.stringify({
+                schemaVersion: '1.0',
+                command: 'graph',
+                subcommand: 'build',
+                status: result.status,
+                artifact: result.path,
+                graph: { schemaVersion: graph.schemaVersion, kind: graph.kind, inputs: graph.inputs, stats: graph.stats }
+            }, null, 2));
+            return ExitCode.Success;
+        }
+        if (!options.quiet) {
+            console.log(`Architecture graph ${result.status}: ${result.path}`);
+            console.log(`Nodes: ${graph.stats.nodeCount}; edges: ${graph.stats.edgeCount}; scanned files: ${graph.inputs.scannedFiles}`);
+        }
+        return ExitCode.Success;
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (options.format === 'json') {
+            console.log(JSON.stringify({ schemaVersion: '1.0', command: 'graph', subcommand: 'build', error: message }, null, 2));
+        }
+        else {
+            console.error(message);
+        }
+        return ExitCode.Failure;
+    }
+};
 export const runGraph = async (cwd, options) => {
     const args = options.args ?? [];
     const subcommand = args.find((arg) => !arg.startsWith('-'));
     if (subcommand === 'impact') {
         return runGraphImpact(cwd, args, options);
+    }
+    if (subcommand === 'build') {
+        return runGraphBuild(cwd, args, options);
     }
     if (subcommand === 'boundaries' || subcommand === 'risks') {
         return runGraphReport(cwd, subcommand, args, options);
