@@ -30,6 +30,8 @@ pnpm playbook release sync --fix --json --out .playbook/release-plan.json
 pnpm playbook apply --from-plan .playbook/release-plan.json
 ```
 
+`--out <path>` defaults to `.playbook/release-plan.json` for both subcommands, and `--base <ref>` selects the git base ref used for diff resolution. `release plan` always writes the artifact and exits `0` on success.
+
 ## `release sync`
 
 `pnpm playbook release sync` is the deterministic release-sync guard. It always computes a fresh release plan, checks drift between expected version/changelog updates and current repo state, and then:
@@ -37,6 +39,8 @@ pnpm playbook apply --from-plan .playbook/release-plan.json
 - `--check`: proposal-only, read-only guard mode; exits non-zero with actionable tasks when drift exists so hooks and CI can detect drift without mutating the checkout.
 - `--fix`: explicit drift-fix mode that computes the plan and applies it through the existing `apply --from-plan` mutation boundary.
 - default mode: applies the reviewed `.playbook/release-plan.json` through `playbook apply --from-plan`, then re-checks for drift.
+
+`--check` and `--fix` cannot be combined (the command fails). In every mode `release sync` exits non-zero when drift remains after the run (or, in `--check` mode, whenever drift exists), and exits `0` when the repo is aligned.
 
 This enforces the rule **Compute → Apply → Verify** and prevents recurring CI failures caused by committed code changes without mirrored release updates.
 

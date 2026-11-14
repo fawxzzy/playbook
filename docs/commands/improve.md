@@ -16,12 +16,12 @@ pnpm playbook improve approve <proposal_id> --json
 ## Subcommands
 
 - `improve` — generate candidates, ranked next-best-improvement analysis, and write deterministic artifacts.
-- `improve opportunities` — report the highest-leverage next improvement target plus a ranked secondary queue.
-- `improve commands` — emit deterministic command-surface improvement recommendations.
-- `improve apply-safe` — apply auto-safe proposals only.
-- `improve approve <proposal_id>` — apply explicit human approval for governance-gated candidates.
+- `improve opportunities` — report the highest-leverage next improvement target plus a ranked secondary queue (read-only; writes no improve artifact).
+- `improve commands` — emit deterministic command-surface improvement recommendations (read-only; writes no improve artifact).
+- `improve apply-safe` — regenerate the candidate artifacts and record the `auto_safe` candidates as applied in `.playbook/improvement-actions.json`, listing conversational and governance-tier candidates as pending; it does not edit any other repository file.
+- `improve approve <proposal_id>` — record explicit human approval for a governance-tier candidate in `.playbook/improvement-approvals.json`. A missing id, an unknown id, or a non-governance-tier candidate fails with a JSON failure envelope and exit `1`.
 
-All improve surfaces support side-effect-free `--help` and deterministic JSON failure envelopes for missing/invalid approval inputs.
+All improve surfaces support `--help` (no improve artifacts are written) and deterministic JSON failure envelopes for missing/invalid approval inputs.
 
 ## Inputs
 
@@ -38,9 +38,19 @@ All improve surfaces support side-effect-free `--help` and deterministic JSON fa
 
 ## Output artifacts
 
+Written by `improve` and `improve apply-safe`:
+
 - `.playbook/improvement-candidates.json`
 - `.playbook/router-recommendations.json`
 - `.playbook/command-improvements.json`
+- `.playbook/knowledge-candidates.json`
+- `.playbook/knowledge-promotions.json`
+- `.playbook/learning-clusters.json`
+
+Also written by one subcommand each:
+
+- `.playbook/improvement-actions.json` (`improve apply-safe`)
+- `.playbook/improvement-approvals.json` (`improve approve`)
 
 ## Categories
 
@@ -80,6 +90,8 @@ Candidates are emitted only when both thresholds are met:
 
 - `minimum_recurrence = 3`
 - `minimum_confidence = 0.6`
+
+`remediation_learning` candidates are the exception on recurrence: they need a minimum evidence count of 2 (and still the 0.6 confidence floor).
 
 ## Text summary sections
 

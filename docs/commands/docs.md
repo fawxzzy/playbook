@@ -25,7 +25,7 @@ pnpm playbook docs consolidate-plan --json
 
 ## CI behavior
 
-- `--ci` exits non-zero when any `error` findings are present.
+- With `--ci`, any `error` finding exits `3` (policy failure); without `--ci` the same condition exits `1`. No errors exits `0`.
 - `warning` findings are reported but non-blocking.
 
 ## Governance patterns

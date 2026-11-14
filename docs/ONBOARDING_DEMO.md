@@ -16,7 +16,7 @@ The demo repo is part of product adoption strategy:
 
 ## Current status
 
-`playbook-demo` is an active product artifact and is exposed directly through `pnpm playbook demo` (deterministic text/JSON onboarding contract).
+`playbook-demo` (https://github.com/fawxzzy/playbook-demo) is an active product artifact and is exposed directly through `pnpm playbook demo` (deterministic text/JSON onboarding contract). The command is read-only: it prints the clone URL, the workflow steps and the expected before/after outcome (`--json` emits `schemaVersion`, `repository`, `workflow`, `expectedInitialFindings`, `demonstrates` and `summary`) and does not clone or run anything itself. Its printed `verify` steps omit `--json`, and it omits `ask`, so it is a shorter form of the ladder below.
 
 ## Canonical serious-user ladder
 
@@ -35,6 +35,15 @@ pnpm playbook plan --json --out .playbook/plan.json
 pnpm playbook apply --from-plan .playbook/plan.json
 pnpm playbook verify --json
 ```
+
+The `pnpm playbook ...` form above is a root script of the Playbook repository (it is not published to npm yet), and the demo repository does not define a `playbook` script. Run the ladder from a built Playbook checkout (`pnpm install && pnpm build`) and point it at a local clone of the demo with the global `--repo` option, for example `pnpm playbook --repo ../playbook-demo verify --json`; `--out` and `--from-plan` paths then resolve inside the demo repository. See [README.md](../README.md), "Install status".
+
+What the demo repository itself provides (checked against `fawxzzy/playbook-demo` `main` and Playbook 0.66.0 on 2026-11-14):
+
+- It is an npm project with no dependencies (`package-lock.json`, no pnpm lockfile), so the `pnpm install` step printed by `pnpm playbook demo` has nothing to install. Its README documents `npx @fawxzzy/playbook ...` commands, which do not work yet because the Playbook packages are not published to npm.
+- It bundles a small CLI (`dist/cli.js`, run through `npm run verify`, `npm run plan` and `npm run apply`) that implements only `analyze`, `index`, `explain`, `rules`, `verify`, `plan`, `apply`, `diagram` and `doctor`. It has no `ai-context`, `ai-contract`, `context`, `query` or `ask`.
+- The fail-first before/after story comes from that bundled CLI: a fresh clone fails `verify` with four findings (PB002-PB005), `plan` lists four tasks, `apply` applies four safe remediations, and the final `verify` passes.
+- With the Playbook CLI from this repository (run as described above), `ai-context`, `ai-contract`, `context`, `index`, `query`, `explain` and `ask --repo-context` all run against the demo, but `verify` passes with warnings only and does not reproduce PB002-PB005. Use the bundled CLI for the remediation walkthrough and this repository CLI for the intelligence steps.
 
 `analyze` can still be used as a compatibility-friendly shortcut for lightweight stack inspection, but it is not the primary serious-user narrative.
 

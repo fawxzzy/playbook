@@ -11,7 +11,8 @@ Roadmap and planning docs may describe sequencing intent, but they are not comma
 
 - The canonical operator-facing command surface is `pnpm playbook <command>`.
 - Direct `node packages/cli/dist/main.js <command>` examples are internal/debug-oriented unless explicitly labeled otherwise.
-- `npx`/published-package command examples are not part of current operator guidance unless distribution docs explicitly say so.
+- `npx`/published-package command examples are not part of current operator guidance unless distribution docs explicitly say so. The packages are not published to npm yet (`npm view @fawxzzy/playbook` returns 404, checked 2026-11-14): `pnpm playbook <command>` is a root script of this repository (`scripts/run-playbook.mjs` runs the built `packages/cli/dist/main.js`, so `pnpm build` first), and consumer repositories use the repo-local `node_modules/.bin/playbook` from the GitHub release tarball described in [`../RELEASING.md`](../RELEASING.md).
+- The canonical command ladder, as declared in `docs/contracts/command-truth.json`, is `ai-context -> ai-contract -> context` (bootstrap), then `index -> query -> explain -> ask --repo-context`, then `verify -> plan -> apply -> verify` (remediation loop). `analyze` and `fix` are compatibility commands, not the primary serious-user path.
 
 ## Deterministic governance gates
 
@@ -151,7 +152,7 @@ Do not hand-edit entries inside the managed markers.
 - Telemetry learning note: `pnpm playbook telemetry learning-state --json` includes additive `learning_clusters` read-model fields for `cluster_count`, cluster rows (`cluster_type`, repeated signal summary, confidence, next review action), and a graph-informed sibling (`graph_informed.affected_modules`, `graph_informed.structural_spread`, `graph_informed.next_review_action`). Text mode remains compact/thin with brief highlights and no new execution/mutation path.
 - Telemetry higher-order synthesis note: `pnpm playbook telemetry learning-state --json` also carries additive `higher_order_synthesis` summary fields backed by canonical `.playbook/higher-order-synthesis.json` (proposal count, top proposal preview, confidence/lineage context) so operators can inspect synthesis-layer outputs from the existing telemetry surface without introducing a new execution path.
 - Telemetry policy-improvement note: `pnpm playbook telemetry learning --json` now also emits canonical `.playbook/policy-improvement.json`, a deterministic candidate-only runtime contract derived from existing outcome/learning/policy/remediation/review artifacts. It contains ranking/prioritization suggestions and blocker/confidence notes with explicit review-required and no-mutation flags.
-- AI bootstrap/context: [`ai-context`](ai-context.md), [`ai-contract`](ai-contract.md), [`ai`](ai.md), [`context`](overview.md)
+- AI bootstrap/context: [`ai-context`](ai-context.md), [`ai-contract`](ai-contract.md), [`ai`](ai.md), [`context`](context.md)
 - Runtime manifest note: `context` and `ai-context` consume `.playbook/runtime-manifests.json` as a read-only additive control-plane context surface for integrated subapps.
 - Module digest note: `index` now emits deterministic `.playbook/module-digests.json` from `.playbook/repo-index.json` + `.playbook/repo-graph.json` (+ optional ownership metadata) as the compact architecture context-transfer artifact consumed by `context`, `ai-context`, and module-scoped `ask`/`explain` flows.
 - Rule: Compact architecture context should come from deterministic module digests, not repeated broad scans.
@@ -164,6 +165,8 @@ Do not hand-edit entries inside the managed markers.
 - Pattern: `canonical sources -> shaped context -> .playbook/context snapshot -> deterministic invalidation/reuse`.
 - Failure Mode: Without cache lifecycle policy, context snapshots either drift stale or are recomputed wastefully on each read.
 - Governance and support: [`docs`](docs.md), [`audit`](audit.md), [`rules`](rules.md), [`doctor`](doctor.md), [`schema`](schema.md), [`contracts`](contracts.md), [`release`](release.md), [`ignore`](ignore.md), [`diagram`](diagram.md), [`route`](route.md), [`memory`](memory.md), [`patterns`](patterns.md), [`story`](story.md), [`promote`](promote.md), [`observer`](observer.md), [`receipt`](receipt.md), [`learn`](learn.md), [`fix`](fix.md), [`upgrade`](upgrade.md), [`status`](status.md), [`analyze`](analyze.md)
+- Setup, release and graph tooling: [`init`](init.md), [`demo`](demo.md), [`commit`](commit.md), [`changelog`](changelog.md), [`security`](security.md), [`architecture`](architecture.md), [`graph`](graph.md), [`telemetry`](telemetry.md), [`improve`](improve.md), [`review-pr`](review-pr.md), [`session`](session.md), [`policy`](policy.md), [`agent`](agent.md), [`remediation-status`](remediation-status.md)
+- CLI contract philosophy (output modes, JSON envelope conventions): [`overview`](overview.md)
 - Pattern convergence note: `pnpm playbook patterns convergence --json` is the canonical read-only inspection surface for `.playbook/pattern-convergence.json`, with additive filters (`--intent`, `--constraint`, `--resolution`, `--min-confidence`) and compact text output for operator review.
 - CSIA overlay note: `pnpm playbook patterns csia --json` is the canonical read-only machine-readable overlay for CSIA mappings; it must not mutate doctrine or expand the Minimum Cognitive Core.
 - `status proof` is the canonical external-consumer bootstrap proof surface for proving runtime + CLI + docs/artifact + execution/governance readiness in one read-only flow. It now also reads existing parallel-work artifacts (`lane-state`, `worker-results`, `docs-consolidation-plan`, and guarded-apply outcomes) to emit one compact operator brief while keeping required automation truth in the canonical `proof` payload and deterministic additive detail in JSON, including failure-domain ownership fields (`failureDomains`, `primaryFailureDomain`, `domainBlockers`, `domainNextActions`) mapped to canonical domains (`contract_validation`, `runtime_execution`, `ci_bootstrap`, `sync_drift`, `governance_planning`) plus additive continuity/evidence summary fields under `continuity` and additive longitudinal read-model fields under `longitudinal_state` (unresolved risk summary, recurring cluster summary, verification lineage, lifecycle rollup).
@@ -195,6 +198,9 @@ Do not hand-edit entries inside the managed markers.
 - [`orchestrate`](orchestrate.md) (implemented v0 lane-contract artifact generation)
 - [`lanes`](lanes.md) (implemented deterministic lane-state tracking from workset plans)
 - [`workers`](workers.md) (implemented deterministic proposal-only worker assignment from lane-state readiness)
+- [`execute`](execute.md) (implemented execution supervisor over launch-authorized lanes, plus the `--worker-adapter` bridge into receipt ingestion)
+- [`cycle`](cycle.md) (implemented one-pass cycle orchestration over the hardened execution primitives)
+- [`rendezvous`](rendezvous.md) and [`interop`](interop.md) (implemented remediation-readiness manifest and bounded Playbook-to-Lifeline interop runtime)
 
 ## External repository targeting (`pnpm playbook --repo <path> <command>`)
 
@@ -532,7 +538,7 @@ Command boundary note:
 - Compaction review is implemented as a public `memory` subcommand surface (`pnpm playbook memory compaction`) that materializes deterministic `.playbook/memory/compaction-review.json` artifacts for operator inspection.
 - The current implemented slice includes canonicalization, deterministic bucketing (`discard | attach | merge | new_candidate`), and deterministic review artifacts layered on top of bucket decisions.
 - Review artifacts use canonical reason codes as the machine contract; human-readable rationale is derived deterministically from those codes.
-- Promotion workflows and long-lived pattern storage remain future roadmap work.
+- Compaction review itself only writes the review artifact. Human-reviewed promotion (`memory promote <candidate-id>`), `memory retire`, `memory supersede <knowledge-id> --by <successor-id>` and `memory prune` (preview by default, `--apply` to clean up) are implemented as separate `memory` subcommands.
 
 ## Repo-aware ask (`pnpm playbook ask --repo-context`)
 
@@ -636,7 +642,7 @@ Pattern: Module-scoped and diff-scoped reasoning should share the same underlyin
 
 Pattern: Change review workflows become much more trustworthy when blast radius is derived from indexed structure and actual changed files together.
 
-Failure Mode: Diff-aware reasoning becomes misleading when the tool silently expands from â€œchanged filesâ€ into full-repo inference without telling the user.
+Failure Mode: Diff-aware reasoning becomes misleading when the tool silently expands from “changed files” into full-repo inference without telling the user.
 
 In JSON mode, ask keeps the existing answer payload and includes deterministic provenance metadata in `context.sources` (for example `repo-index`, `module`, `diff`, `docs`, `rule-registry`, and `ai-contract`) plus `repoContext` hydration metadata. Provenance descriptors include only source metadata (paths/names/files), never raw repository file content.
 
@@ -692,30 +698,30 @@ Rule: Generated runtime artifacts should be gitignored unless intentionally comm
 Rule: Playbook remains local/private-first by default.
 Failure Mode: Recommitting regenerated artifacts on every run causes unnecessary repo-history growth and noisy diffs.
 
-Rule â€” Machine-Consumed Artifacts Must Be CLI-Written
+Rule — Machine-Consumed Artifacts Must Be CLI-Written
 If a CLI expects downstream commands to read generated JSON artifacts, those artifacts must be written by the CLI itself rather than relying on shell redirection.
 
-Pattern â€” First-Class Artifact Emission
+Pattern — First-Class Artifact Emission
 Structured runtime artifacts should be emitted through explicit flags with controlled encoding, directory creation, and content boundaries.
 
-Failure Mode â€” Shell Redirection Artifact Corruption
+Failure Mode — Shell Redirection Artifact Corruption
 When JSON artifacts are captured through script wrappers and shell redirection, banner text or encoding differences can silently corrupt machine-readable files.
 
-Failure Mode â€” Human-Readable Wrapper Leakage
+Failure Mode — Human-Readable Wrapper Leakage
 Operator-friendly wrapper output is acceptable on stdout, but it must never leak into persisted JSON artifacts that are intended for later programmatic reads.
 
-Rule â€” CI Summary Artifacts Are Pure JSON Contracts
+Rule — CI Summary Artifacts Are Pure JSON Contracts
 Artifacts consumed by CI summary/reporting (for example `.playbook/verify.json`, `.playbook/release-plan.json`, `.playbook/test-triage.json`, `.playbook/remediation-status.json`) must be written through dedicated JSON-only paths such as `--out` or direct file writes, never via redirected wrapper stdout.
 
 Human-facing text surfaces should prefer compact briefs that answer decision/status, affected surfaces, blockers, and next action, while `.playbook/*` artifacts and `--json` preserve machine detail for automation.
 
-Failure Mode â€” Opaque JSON Parse Crash
+Failure Mode — Opaque JSON Parse Crash
 When corrupted runtime artifacts are parsed without a guardrail, later commands fail far from the original write site, making the real bug harder to diagnose.
 
-Pattern â€” Artifact Consumers Treat Prior JSON as Untrusted Input
+Pattern — Artifact Consumers Treat Prior JSON as Untrusted Input
 Commands that consume prior runtime artifacts should treat those files as untrusted inputs and degrade gracefully when artifacts are missing or malformed.
 
-Failure Mode â€” Hidden Optional Artifact Dependency Crash
+Failure Mode — Hidden Optional Artifact Dependency Crash
 A secondary command like index can fail because of a hidden dependency on stale or corrupted `.playbook/*.json` artifacts produced by an earlier workflow step.
 
 `.playbookignore` support is available for repository intelligence scans (`pnpm playbook index` and related repository scans). The file uses `.gitignore`-style syntax and should be used to exclude high-churn directories.
@@ -724,8 +730,8 @@ Recommended bootstrap flow:
 
 ```bash
 pnpm playbook pilot --repo "<target-repo>"
-pnpm playbook ignore suggest --repo "<target-repo>" --json
-pnpm playbook ignore apply --repo "<target-repo>" --safe-defaults
+pnpm playbook --repo "<target-repo>" ignore suggest --json
+pnpm playbook --repo "<target-repo>" ignore apply --safe-defaults
 ```
 
 `ignore suggest` reports ranked recommendations, safety level, rationale, expected scan impact, and whether each entry is already covered. `ignore apply --safe-defaults` writes only `safe-default` entries into a deterministic managed block and leaves lower-confidence recommendations in review-only output.

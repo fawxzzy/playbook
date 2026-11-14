@@ -7,17 +7,15 @@ Diagnose repository health by aggregating verify, risk, docs, architecture-audit
 ```bash
 pnpm playbook doctor
 pnpm playbook doctor --json
-pnpm playbook doctor --ai
-pnpm playbook doctor --fix --dry-run
-pnpm playbook doctor --fix --yes
+pnpm playbook doctor --quiet
 ```
 
 ## Options
 
-- `--ai`: include AI-readiness diagnostics in doctor output.
-- `--fix`: enable deterministic doctor fix planning/apply mode.
-- `--dry-run`: preview doctor fixes without writing changes.
-- `--yes`: apply eligible doctor fixes without confirmation.
+- `--ai`: listed in `--help` as including AI-readiness diagnostics; the flag is parsed but not yet consumed, so the output is currently unchanged.
+- `--fix`: listed in `--help` as enabling deterministic doctor fix planning/apply mode; currently accepted but ignored (the fix registry in `packages/cli/src/lib/doctorFixes.ts` is not wired into the command), so no files are written.
+- `--dry-run`: listed in `--help` for previewing doctor fixes; currently ignored together with `--fix`.
+- `--yes`: listed in `--help` for applying eligible doctor fixes without confirmation; currently ignored together with `--fix`.
 - `--json` / `--format json`: machine-readable output.
 - `--quiet`: suppress success output in text mode.
 

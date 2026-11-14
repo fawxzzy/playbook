@@ -1,4 +1,4 @@
-# `playbook policy evaluate`
+# `pnpm playbook policy evaluate`
 
 Evaluate improvement proposals against governed runtime evidence in a deterministic, read-only control-plane layer.
 
@@ -14,6 +14,7 @@ pnpm playbook policy evaluate --json
 - This command never executes remediation.
 - This command never mutates improve proposals.
 - This command classifies proposals into policy decisions only.
+- Its only write is the evaluation artifact `.playbook/policy-evaluation.json`, written on every successful run (text and `--json` mode).
 
 ## Inputs
 
@@ -22,7 +23,7 @@ pnpm playbook policy evaluate --json
 
 ## Output
 
-The command emits deterministic policy evaluations with fields:
+The command emits a deterministic `policy-evaluation` artifact (`schemaVersion`, `kind`, `generatedAt`, `proposalOnly`, `nonAutonomous`, `sourceArtifacts`, `summary`, `evaluations`) with `evaluations` sorted by `proposal_id`. Each evaluation has the fields:
 
 - `proposal_id`
 - `decision` (`safe` | `requires_review` | `blocked`)

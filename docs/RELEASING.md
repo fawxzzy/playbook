@@ -24,14 +24,16 @@ Current status:
 
 ## 2) Publish from CI on a version tag
 
-Tag pushes (`v*`) trigger `.github/workflows/publish-npm.yml`, which publishes the public Playbook package (`@fawxzzy/playbook`) and the internal runtime distribution set used by the CLI wrapper/fallback path.
+Tag pushes (`v*`) trigger `.github/workflows/publish-npm.yml`, which attempts to publish the public Playbook package (`@fawxzzy/playbook`) and the internal runtime distribution set used by the CLI wrapper/fallback path, then packs and attaches the fallback tarball to the GitHub release. The npm publish steps only emit a warning when they fail, so the fallback tarball upload always continues.
+
+Current distribution status (checked 2026-11-14): nothing is published to npm (`npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404). The GitHub release fallback tarball is the only install path for consumers; the latest GitHub release is `v0.54.1`, older than the packages on `main` (the version in `packages/cli/package.json`). Inside this repository, use `pnpm install && pnpm build && pnpm playbook <command>`.
 
 ## 3) Deterministic fallback artifact on each release
 
 The publish workflow now packs `packages/cli-wrapper` and uploads a deterministic release asset for CI fallback consumers:
 
 - Asset filename: `playbook-cli-<version>.tgz`
-- Example for first fixed release `v0.1.8`: `playbook-cli-0.1.8.tgz`
+- Example for release `v0.54.1` (the latest GitHub release as of 2026-11-14): `playbook-cli-0.54.1.tgz`
 - Release URL shape: `https://github.com/fawxzzy/playbook/releases/download/v<version>/playbook-cli-<version>.tgz`
 
 The workflow enforces `tag version == packages/cli-wrapper package.json version` before uploading the tarball so pinned fallback URLs remain immutable and real.
@@ -43,7 +45,7 @@ Before upload, the release job now runs `node scripts/pack-release-fallback-asse
 Consumer repositories must pin `PLAYBOOK_OFFICIAL_FALLBACK_SPEC` to the exact deterministic URL:
 
 ```bash
-PLAYBOOK_OFFICIAL_FALLBACK_SPEC=@https://github.com/fawxzzy/playbook/releases/download/v0.1.8/playbook-cli-0.1.8.tgz
+PLAYBOOK_OFFICIAL_FALLBACK_SPEC=https://github.com/fawxzzy/playbook/releases/download/v0.54.1/playbook-cli-0.54.1.tgz
 ```
 
 This keeps producer (release asset) and consumer (fallback URL) ownership boundaries explicit and prevents URL/version/filename drift.
@@ -53,13 +55,13 @@ This keeps producer (release asset) and consumer (fallback URL) ownership bounda
 From this repository, run:
 
 ```bash
-pnpm release:fallback:proof --version 0.1.8 --json
+pnpm release:fallback:proof --version 0.54.1 --json
 ```
 
 Optional consumer smoke validation (for real downstream proof):
 
 ```bash
-pnpm release:fallback:proof --version 0.1.8 --consumer-repo /path/to/FawxzzyFitness --json
+pnpm release:fallback:proof --version 0.54.1 --consumer-repo /path/to/FawxzzyFitness --json
 ```
 
 Use `--asset-path dist/release/playbook-cli-<version>.tgz` to prove a locally packed release artifact before upload, and add `--consumer-repo <path>` for a clean external consumer proof.
@@ -69,8 +71,8 @@ When `--consumer-repo` is provided, the command performs the clean-environment s
 1. `npm install`
 2. package acquisition attempt (intentional miss)
 3. fallback acquisition from the published tarball URL
-4. prerequisite generation (`npx @fawxzzy/playbook index --json`)
-5. canonical ladder (`verify -> plan -> apply`)
+4. prerequisite generation (`playbook index --json`, using the repo-local binary installed from the fallback tarball)
+5. canonical ladder (`verify -> plan --out .playbook/plan.json -> apply --from-plan .playbook/plan.json`)
 6. required artifact assertions (`.playbook/repo-graph.json`, `.playbook/plan.json`)
 
 Fallback proof now reports artifact failures with deterministic categories:
@@ -96,10 +98,11 @@ Example remediation for a consumer repo:
 ```bash
 cd /path/to/FawxzzyFitness
 npm install
-npx @fawxzzy/playbook index --json
-npx @fawxzzy/playbook verify --json
-npx @fawxzzy/playbook plan --json
-npx @fawxzzy/playbook apply --json
+npm install --no-save https://github.com/fawxzzy/playbook/releases/download/v<version>/playbook-cli-<version>.tgz
+node_modules/.bin/playbook index --json
+node_modules/.bin/playbook verify --json
+node_modules/.bin/playbook plan --json --out .playbook/plan.json
+node_modules/.bin/playbook apply --from-plan .playbook/plan.json --json
 ```
 
 ## 6) Push the release tag
@@ -107,8 +110,8 @@ npx @fawxzzy/playbook apply --json
 Create and push a git tag that matches the released version:
 
 ```bash
-git tag v0.1.8
-git push origin v0.1.8
+git tag v<version>
+git push origin v<version>
 ```
 
 ## 5.2) Proof invariants

@@ -24,20 +24,27 @@ Structured domains such as `risk`, `impact`, `docs-coverage`, `rule-owners`, and
 
 ## Global options (all top-level commands)
 
+- `--repo <path>`: target repository root for command execution (default: the current directory)
 - `--ci`: deterministic CI mode with minimized output (quiet unless errors)
-- `--format <text|json>`: explicit output format
+- `--format <text|json>`: explicit output format (`verify` also accepts `sarif`)
 - `--json`: alias for `--format=json`
+- `--out <path>`: write JSON output artifacts (raw SARIF for `verify --format sarif`)
 - `--quiet`: suppress success output in text mode
 - `--explain`: include rationale/remediation context in text mode where supported
+- `--policy`: enable policy enforcement mode for `verify`
+- `--help`, `--version`: print help or the version and exit `0` (known issue: `--version` prints a hard-coded `0.1.2`, not the package version; read the package version from `packages/cli/package.json`)
+
+Exit codes are documented in [exit-codes.md](./exit-codes.md).
 
 
 ## Runtime observability contract
 
-Every top-level Playbook command now emits deterministic runtime observability artifacts under the target repository:
+Every top-level Playbook command except the report-only `learn doctrine` emits deterministic runtime observability artifacts under the target repository:
 
 - `.playbook/runtime/current/coverage.json`
 - `.playbook/runtime/current/telemetry.json`
-- `.playbook/runtime/cycles/<cycle_id>/manifest.json`
+- `.playbook/runtime/current/ignore-recommendations.json`
+- `.playbook/runtime/cycles/<cycle_id>/manifest.json` (each cycle directory also holds `coverage.json`, `telemetry.json` and `ignore-recommendations.json`)
 - `.playbook/runtime/history/command-stats.json`
 - `.playbook/runtime/history/coverage-trend.json`
 - `.playbook/runtime/history/analyzer-version-history.json`

@@ -63,6 +63,8 @@ pnpm install
 pnpm -r build
 ```
 
+Requires Node 22 or newer and pnpm 10.23.0 (`engines` and `packageManager` in the root `package.json`). `pnpm playbook <command>` is a root script of this repository (`scripts/run-playbook.mjs` runs `packages/cli/dist/main.js`), so it needs the build above; consumer repositories do not have it unless they define it. The Playbook packages are not yet published to npm (checked 2026-11-14), so there is no `npm install` or `npx` path for them; `docs/RELEASING.md` describes the GitHub release tarball used for consumer installs.
+
 ## Required validation before PR
 
 ```bash
@@ -74,13 +76,15 @@ pnpm agents:check
 node scripts/validate-roadmap-contract.mjs
 ```
 
+`pnpm verify:local` already chains `pnpm lint`, `pnpm check:tests`, `pnpm build`, `pnpm check:cli-wrapper-runtime`, `pnpm test`, `pnpm smoke:ci`, `pnpm agents:update`, `pnpm agents:check`, `pnpm playbook docs audit --ci --json` and `node scripts/validate-roadmap-contract.mjs` (`agents:update` regenerates managed sections such as those in `AGENTS.md`). The lighter `pnpm verify` runs `pnpm lint && pnpm check:tests && pnpm test && pnpm smoke:ci`. `pnpm test` itself runs the esbuild preflight, `pnpm contracts:check` and the root script tests before `pnpm -r test` (see `docs/TESTING.md`).
+
 For pull request metadata validation in CI contexts, use:
 
 ```bash
 node scripts/validate-roadmap-contract.mjs --ci --enforce-pr-feature-id
 ```
 
-The reusable Playbook CI action enforces this PR `feature_id` rule in `pull_request` workflows using deterministic precedence: PR title, then PR body, then `.playbook/pr-metadata.json` (`featureIds`). GitHub is an optional provider transport here, not the source of verification truth.
+The reusable Playbook CI action (`.github/actions/playbook-ci`) runs this check on every `ci` run, `pull_request` or `push`. A roadmap `feature_id` in the PR title or body satisfies it; otherwise `.playbook/pr-metadata.json` (`featureIds`) is accepted with a warning, and with neither the check fails. Outside `pull_request` events there is no PR title or body, so only `.playbook/pr-metadata.json` can satisfy it. GitHub is an optional provider transport here, not the source of verification truth.
 
 Optional sync surface: run `pnpm pr:sync-metadata` to project `.playbook/pr-metadata.json` into GitHub PR title/body when token permissions allow. The sync helper degrades with warnings and is not required for validator success.
 
@@ -198,6 +202,7 @@ Behavior:
 - `pnpm playbook commit` runs release sync, stages all repo changes, and executes `git commit` with pass-through flags (for example `-m`).
 - `.husky/pre-commit` is warning-only for release drift (no mutation).
 - `.husky/pre-push` remains fail-closed and blocks push when drift still exists.
+- The hooks are active once `git config core.hooksPath .husky` has run: `pnpm install` does it through the `prepare` script (`scripts/prepare.mjs`), and `pnpm hooks:install` sets it manually.
 
 Rule: Release governance must be applied before CI, not discovered by CI.
 Rule: Release sync must occur before commit snapshot is created.
@@ -272,7 +277,7 @@ Run the repository smoke test:
 node scripts/smoke-test.mjs
 ```
 
-The smoke test validates command execution, template generation, and verify behavior.
+`pnpm smoke` (or `pnpm smoke:ci`, which is the same script) builds every package first; running the script directly needs an existing build (`packages/cli/dist/main.js`). The smoke test runs the built CLI in a temporary project and validates command execution (`init`, `analyze`, `index`, `diagram`, `ask`, `query`, `verify`, `plan`, `apply`, `status`, `rules`, `explain`, `doctor`, `upgrade`, `fix`), template generation, and JSON output contracts. Installing packed tarballs is a separate check (`pnpm pack:smoke`, see `docs/TESTING.md`).
 
 ## CI sidecar reporting behavior
 
@@ -310,15 +315,15 @@ The engine must remain deterministic, modular, and testable.
 
 ### Adding verify rules
 
-Rules live in `packages/engine/src/verify/rules/` and should implement the Playbook rule contract with deterministic behavior and clear output.
+Rules live in `packages/engine/src/verify/rules/` and should implement the Playbook rule contract (the `Rule` type in `packages/engine/src/execution/types.ts`) with deterministic behavior and clear output. Register each rule in `packages/engine/src/rules/coreRules.ts`; the CLI-side explanation and remediation text for a rule id lives under `packages/cli/src/rules/verify/` and is listed in `packages/cli/src/lib/loadVerifyRules.ts`. `pnpm check:tests` requires a matching `packages/engine/test/<rule-file-name>.test.ts` for each newly added rule file.
 
 ### Adding analyze detectors
 
-Detectors live in `packages/engine/src/analyze/detectors/` and should rely on stable filesystem signals rather than heavy parsing.
+Detectors live in `packages/engine/src/analyze/detectors/`, are registered in `packages/engine/src/analyze/index.ts`, and should rely on stable filesystem signals rather than heavy parsing.
 
 ## Template updates
 
-Templates used by `pnpm playbook init` live in `templates/repo/` and are promoted into the installable CLI template payload via the template sync/copy shipping flow.
+Templates used by `pnpm playbook init` live in `templates/repo/` and are promoted into the installable CLI template payload via the template sync/copy shipping flow: `pnpm sync:templates` mirrors `templates/repo/` into the tracked `packages/cli/templates/repo/` (root `pnpm build` runs it first; `pnpm -r build` alone does not), and the CLI build copies the templates into `packages/cli/dist/templates/repo`.
 
 Baseline scaffold outputs include:
 
@@ -379,7 +384,7 @@ Required sections are intentionally compact:
 - `## Tradeoffs / Failure Modes`
 - `## Review Triggers`
 
-`pnpm playbook docs audit --json` enforces these sections only for `docs/architecture/decisions/*.md` via stable finding id `docs.architecture-rubric.required-sections`.
+`pnpm playbook docs audit --json` enforces these sections only for `docs/architecture/decisions/*.md` via stable finding id `docs.architecture-rubric.required-sections` (error level). The audit checks every section above except `## Options Considered`, which the rubric and the decision template include but the audit does not check.
 
 For deterministic extraction, write `## Review Triggers` entries in compact trigger form: `- [trigger_id] when <observable condition> -> <required review action>`.
 

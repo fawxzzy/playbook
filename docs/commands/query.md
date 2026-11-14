@@ -34,6 +34,9 @@ Base fields (read from `.playbook/repo-index.json`):
 - `framework`
 - `language`
 - `modules`
+- `workspace`
+- `tests`
+- `configs`
 - `database`
 - `rules`
 
@@ -96,9 +99,12 @@ Run lookup query:
   "command": "query",
   "type": "run",
   "run": {
-    "id": "run_abc123",
-    "frozen": false,
-    "steps": []
+    "schemaVersion": "1.0",
+    "kind": "orchestration-execution-run-state",
+    "run_id": "pb-exec-abc123def456",
+    "status": "running",
+    "eligible_lanes": [],
+    "lanes": {}
   }
 }
 ```
