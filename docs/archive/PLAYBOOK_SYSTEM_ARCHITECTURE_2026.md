@@ -147,7 +147,7 @@ Database: Supabase
 Styling: Tailwind
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/EXAMPLES.md:27](EXAMPLES.md#block-27).
+> See also canonical block: [docs/EXAMPLES.md:27](../EXAMPLES.md#block-27).
 
 Analyzer may generate suggestions for:
 
@@ -209,7 +209,7 @@ Output:
 }
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/PLAYBOOK_AGENT_GUIDE.md:219](PLAYBOOK_AGENT_GUIDE.md#block-219).
+> See also canonical block: [docs/PLAYBOOK_AGENT_GUIDE.md:219](../PLAYBOOK_AGENT_GUIDE.md#block-219).
 
 This enables:
 
@@ -265,7 +265,7 @@ playbook.config.json (legacy) or .playbook/config.json (modern)
 Additional repository docs (for example `docs/PROJECT_GOVERNANCE.md`, `docs/ARCHITECTURE.md`, and `docs/PLAYBOOK_CHECKLIST.md`) are optional and can be managed per repository policy.
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/PLAYBOOK_CONTRIBUTION_MODEL.md:188](PLAYBOOK_CONTRIBUTION_MODEL.md#block-188).
+> See also canonical block: [docs/PLAYBOOK_CONTRIBUTION_MODEL.md:188](../PLAYBOOK_CONTRIBUTION_MODEL.md#block-188).
 
 Templates are synced into the CLI package.
 

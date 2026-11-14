@@ -443,6 +443,14 @@ runs:
         echo "+ node packages/cli/dist/main.js docs audit --ci --json"
         node packages/cli/dist/main.js docs audit --ci --json
 
+    - name: Check relative markdown links (dead-link gate)
+      if: inputs.execution-path == 'ci'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        echo "+ pnpm check:doc-links"
+        pnpm check:doc-links
+
     - name: Fail when primary tests failed
       if: inputs.execution-path == 'ci' && always() && steps.run-tests.outputs.test-exit-code != '0'
       shell: bash
