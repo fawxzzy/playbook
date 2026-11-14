@@ -17,6 +17,7 @@ import { computeRouterAccuracyMetric } from '../telemetry/routerAccuracy.js';
 import type { LaneRuntime, LaneRuntimeState } from '@zachariahredfield/playbook-core';
 import {
   computeLaunchPlanFingerprint,
+  launchPlanFingerprintMatches,
   deriveOrchestrationRunId,
   readOrchestrationExecutionRun,
   type OrchestrationExecutionRunState,
@@ -107,7 +108,7 @@ const reconcileOrchestrationRunState = (
     prior = null;
   }
 
-  if (prior && prior.source_launch_plan_fingerprint !== launchFingerprint) {
+  if (prior && !launchPlanFingerprintMatches(prior.source_launch_plan_fingerprint, launchPlan)) {
     prior = null;
   }
 

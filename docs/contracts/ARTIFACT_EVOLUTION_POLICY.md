@@ -48,6 +48,14 @@ Playbook uses semantic version intent for artifact schemas:
 - changing ID conventions relied on by downstream consumers
 - changing deterministic ordering assumptions without migration guidance
 
+## Locale-independent ordering for hashed values
+
+Any sort whose result feeds a hash, digest, fingerprint or checksum must order strings by UTF-16 code unit (`compareCodeUnits` in `packages/engine/src/util/compareCodeUnits.ts`), not with `localeCompare`. `localeCompare` depends on the process locale and the ICU build, so the same input can hash differently on two machines. `localeCompare` stays correct for text shown to people.
+
+Enforced today for the values Playbook recomputes and compares, each of which also accepts the value an older version produced with locale-collation key order so nothing already stored or pinned breaks: the plan digest and change-scope bundle, the artifact envelope checksum, the Fitness contract fingerprint (`expectedFingerprint`), the launch-plan fingerprint in orchestration run state, and the Atlas knowledge-candidate admission digests. Promotion receipt ids use the same ordering; they are stored and never recomputed, so there is no older value to accept.
+
+Open item `ART-DET-001` (not enforced, deliberately): the key-sorting canonicalizers that feed persisted identifiers still use `localeCompare`: `packages/core/src/knowledge/knowledge-id.ts`, `packages/core/src/contracts/memory.ts`, `packages/engine/src/memory/admission.ts`, `packages/engine/src/memory/events.ts`, `packages/engine/src/memory/index.ts`, `packages/engine/src/extract/patternCandidates.ts`, `packages/engine/src/runtimeCompiler/runtimeCompiler.ts` and `packages/engine/src/orchestration/workerResults.ts`. Switching them changes ids that are already stored in consumer `.playbook` artifacts whenever sibling keys collate differently (a real pair exists: `scoreVersion` and `scoredAt` in the salience envelope), which is an identifier-convention change under the compatibility model above. It needs a versioned migration (or a dual-read period per artifact family) and is not a drop-in fix.
+
 ## Regeneration and freshness expectations
 
 - `pnpm playbook index` is the canonical producer for `.playbook/repo-index.json` and `.playbook/repo-graph.json`.
