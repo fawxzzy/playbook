@@ -580,8 +580,51 @@ const cliSchemas: Record<CliSchemaCommand, JsonSchema> = {
         properties: {
           schemaVersion: { const: '1.0' },
           command: { const: 'graph' },
-          subcommand: { enum: ['impact', 'boundaries', 'risks'] },
+          subcommand: { enum: ['impact', 'boundaries', 'risks', 'build'] },
           error: { type: 'string' }
+        }
+      },
+      // `graph build`: writes .playbook/arch-graph.v2.json (kind playbook-arch-graph, schema 2.0)
+      {
+        type: 'object',
+        additionalProperties: false,
+        required: ['schemaVersion', 'command', 'subcommand', 'status', 'artifact', 'graph'],
+        properties: {
+          schemaVersion: { const: '1.0' },
+          command: { const: 'graph' },
+          subcommand: { const: 'build' },
+          status: { enum: ['created', 'updated', 'unchanged'] },
+          artifact: { const: '.playbook/arch-graph.v2.json' },
+          graph: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['schemaVersion', 'kind', 'inputs', 'stats'],
+            properties: {
+              schemaVersion: { const: '2.0' },
+              kind: { const: 'playbook-arch-graph' },
+              inputs: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['repoGraphSchemaVersion', 'scannedFiles', 'digest'],
+                properties: {
+                  repoGraphSchemaVersion: { type: 'string' },
+                  scannedFiles: { type: 'integer' },
+                  digest: { type: 'string' }
+                }
+              },
+              stats: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['nodeCount', 'edgeCount', 'nodeKinds', 'edgeKinds'],
+                properties: {
+                  nodeCount: { type: 'integer' },
+                  edgeCount: { type: 'integer' },
+                  nodeKinds: { type: 'object' },
+                  edgeKinds: { type: 'object' }
+                }
+              }
+            }
+          }
         }
       },
       // `graph impact <module|file-path>`
