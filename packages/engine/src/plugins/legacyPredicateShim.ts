@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { isPackageName } from './pluginIdentity.js';
 import type { PlaybookRule, PluginRuleFailureRef } from './pluginTypes.js';
 
 /**
@@ -51,7 +52,7 @@ const readLegacyPluginNames = (repoRoot: string): string[] => {
     ...Object.keys(pkg.peerDependencies ?? {})
   ];
 
-  return [...new Set(names)].filter((name) => LEGACY_PLUGIN_NAME.test(name));
+  return [...new Set(names)].filter((name) => LEGACY_PLUGIN_NAME.test(name) && isPackageName(name));
 };
 
 const adaptLegacyRule = (rule: LegacyRule): PlaybookRule | undefined => {

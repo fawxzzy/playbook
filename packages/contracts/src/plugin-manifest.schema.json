@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.dev/schemas/plugin-manifest.schema.json",
+  "title": "Playbook Plugin Manifest (Plugin Contract v1)",
+  "description": "Serializable descriptor of a Playbook plugin: the identity and declared surface the loader validates before a plugin is registered. Executable members (rule check/matchesFailure/fix, detector detect) are functions and are validated structurally by the loader, not by this schema. See docs/contracts/PLUGIN_CONTRACT_V1.md.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "contractVersion": { "const": 1, "description": "Absent means 1. Any other value makes the loader skip the plugin with a notice." },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "description"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "explanation": { "type": "string" },
+          "remediation": { "type": "array", "items": { "type": "string" } },
+          "policy": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": { "id": { "type": "string" }, "description": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "detectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "label"],
+        "properties": { "id": { "type": "string", "minLength": 1 }, "label": { "type": "string" } }
+      }
+    }
+  },
+  "$defs": {
+    "pluginSpecifier": {
+      "description": "A playbook.config.json `plugins` entry: a package name (optionally scoped, optional sub-path) or a ./ path whose real path stays inside the repository. Absolute paths, drive paths, backslashes, `..` segments, URL schemes and Node built-ins are rejected before anything is resolved.",
+      "type": "string",
+      "minLength": 1,
+      "not": { "pattern": "(^/|^[A-Za-z]:|\\\\|(^|/)\\.\\.(/|$)|^[A-Za-z][A-Za-z0-9+.-]*:)" }
+    }
+  }
+}

@@ -134,7 +134,8 @@ describe('runContracts', () => {
         { id: 'change-scope', version: '1.0', path: 'packages/contracts/src/change-scope.schema.json' },
         { id: 'control-plane', version: '1.0', path: 'packages/contracts/src/control-plane.schema.json' },
         { id: 'multi-repo-control-plane-read-interface', version: '1.0', path: 'packages/contracts/src/multi-repo-control-plane-read-interface.schema.json' },
-        { id: 'workspace-governance', version: '1.0', path: 'packages/contracts/src/workspace-governance.schema.json' }
+        { id: 'workspace-governance', version: '1.0', path: 'packages/contracts/src/workspace-governance.schema.json' },
+        { id: 'plugin-manifest', version: '1.0', path: 'packages/contracts/src/plugin-manifest.schema.json' }
       ]
     });
 

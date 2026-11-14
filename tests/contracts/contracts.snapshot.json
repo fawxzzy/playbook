@@ -477,6 +477,11 @@
         "id": "workspace-governance",
         "version": "1.0",
         "path": "packages/contracts/src/workspace-governance.schema.json"
+      },
+      {
+        "id": "plugin-manifest",
+        "version": "1.0",
+        "path": "packages/contracts/src/plugin-manifest.schema.json"
       }
     ]
   }
