@@ -1,5 +1,7 @@
 # V1 Boundary Refactor Plan
 
+> Status (2026-11-14): this started as the plan; the analyze ownership slice and Plugin Contract v1 shipped under `PB-V05-PACKAGE-BOUNDARIES-001` (`implemented-hardening` in `docs/roadmap/ROADMAP.json`). The "target", "action items" and "implementation proposal" sections are the original plan; the status sections further down are current.
+
 ## Objective
 
 Eliminate boundary drift between CLI, core, and engine by making CLI commands thin wrappers around one canonical engine implementation per command.
