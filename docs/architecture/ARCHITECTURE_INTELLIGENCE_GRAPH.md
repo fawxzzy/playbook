@@ -1,6 +1,6 @@
 # Architecture Intelligence Graph
 
-Status: **second slice (design + current-state audit + `graph impact`)**. Card: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`. The normative contract is [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md); the shipped artifact contract is [`repository-graph-contract.md`](../contracts/repository-graph-contract.md).
+Status: **third slice (graph impact, boundaries and risks shipped; `analyze-pr` consumes the graph; semantic layer deferred)**. Card: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`. The normative contract is [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md); the shipped artifact contract is [`repository-graph-contract.md`](../contracts/repository-graph-contract.md).
 
 ## Purpose
 
@@ -22,17 +22,19 @@ repo-index.json  --index-->  repo-graph.json (playbook-repo-graph 1.1)
 - `graph` is a read-only summary of the artifact. `explain` and `query` attach a per-node neighborhood (incoming/outgoing edges).
 - `graph impact <module|file-path>` (second slice) traverses `depends_on` edges to return transitive dependents and/or dependencies with depth, edge kinds, the shortest path, and a bounded result (`truncated`). It reads the artifact only (plus the index workspace paths, best effort, to map files to modules) and fails closed when the graph is missing or the target is unknown. Contract: [`graph impact`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md#graph-impact-shipped-second-slice).
 - Role inference is computed from `depends_on` in/out degree only; it is not stored in the artifact.
-- `analyze-pr` does not read the graph. Its boundary list comes from path prefixes (`src/`, `docs/`, `.playbook/`, `.github/`, and similar), and `query impact` / `query risk` are index-derived.
+- `graph boundaries` (third slice) classifies each module dependency edge against the role matrix that the repository index already declares, and only observes when nothing is declared. It never enforces. Contract: [`graph boundaries`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md#graph-boundaries-shipped-third-slice).
+- `graph risks` (third slice) ranks modules by a documented structural score (fan-in, fan-out, transitive dependents, hub score, cycle size) and lists dependency cycles. Contract: [`graph risks`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md#graph-risks-shipped-third-slice).
+- `analyze-pr` reads the graph for one additive section, `graphImpact` (changed files to owning modules to transitive dependents), and reports `available: false` with a reason when the graph is missing or invalid. Its existing fields are unchanged: the boundary list still comes from path prefixes (`src/`, `docs/`, `.playbook/`, `.github/`, and similar) and `impact` / `risk` are still index-derived. `query impact` / `query risk` and `explain` do not use the new views.
 
-## Target design (not shipped)
+## Deferred design (not shipped, beyond this card)
 
 The semantic layer is additive on repo-graph 1.x (see the contract for the versioning rule):
 
 1. **Richer entities.** Packages, files, commands, contracts, tests, and docs as nodes, with edges such as `owns`, `tests`, `documents`, and `imports`, each derived from existing index, roadmap, and contract metadata.
 2. **Impact index.** A deterministic map from a changed file or module to the commands, contracts, tests, and docs it reaches, keyed by existing graph node ids.
-3. **Graph subcommands.** `graph boundaries` and `graph risks` as read-only views over the above. (`graph impact` shipped in the second slice as a module-level view; extending it to commands, contracts, tests and docs depends on the impact index.)
+3. **Graph subcommands.** Shipped as module-level views: `graph impact`, `graph boundaries`, `graph risks`. Extending them to commands, contracts, tests and docs depends on the impact index.
 4. **Consumers.**
-   - `analyze-pr`: replace path-prefix boundary heuristics with impact-index lookups for the changed files (`SCM context` stays the input), keeping the current JSON envelope additive.
+   - `analyze-pr`: the additive `graphImpact` section shipped. Replacing the path-prefix boundary heuristics and the index-derived impact with impact-index lookups is deferred (`SCM context` stays the input; the JSON envelope stays additive).
    - `explain`: extend the neighborhood with the new entity kinds and the impact path that led to them.
    - `query`: serve `impact` and `risk` from graph traversal, with the index remaining the fallback when the graph artifact is absent.
 5. **Incremental updates.** File-hash invalidation plus SCM diff deltas, so regeneration cost scales with the change.
@@ -55,4 +57,4 @@ The semantic layer is additive on repo-graph 1.x (see the contract for the versi
 
 ## Verification
 
-Automated pins today: the v1.1 compatibility contract test at `tests/contracts/architecture-graph.contract.test.ts` (which also pins the `graph impact` result shape and the shipped / unshipped lists), `packages/engine/test/graphImpact.test.ts` (diamond, cycle, depth limit, unknown target, file-to-module resolution, ordering, truncation, fail-closed reads) and `packages/cli/src/commands/graph.test.ts`. Boundary detection, graph-backed risk scoring, and graph-backed `analyze-pr` have no implementation and therefore no tests yet.
+Automated pins today: the compatibility contract test at `tests/contracts/architecture-graph.contract.test.ts` (run in CI through `packages/engine/test/architectureGraphContract.test.ts`; it pins the v1.1 surface, the shipped / deferred lists and schema validity of the new outputs), `packages/engine/test/graphImpact.test.ts`, `graphBoundaries.test.ts`, `graphRisks.test.ts`, `analyzePrGraphImpact.test.ts`, `packages/cli/src/commands/graph.test.ts`, and the `graph-impact`, `graph-boundaries` and `graph-risks` contract snapshots. The semantic layer, the impact index, a v2 artifact and incremental invalidation have no implementation and therefore no tests.

@@ -237,6 +237,12 @@ export type { RiskAwareContextSummary, RiskAwareModuleContext, RiskContextTier, 
 export type { ModuleContextDigest } from './context/moduleContext.js';
 export type { ModuleDigest, ModuleDigestsArtifact } from './context/moduleDigests.js';
 export { computeGraphImpact, readGraphImpact, resolveGraphImpactTarget, GRAPH_IMPACT_SCHEMA_VERSION, GRAPH_IMPACT_DEFAULT_LIMIT, GRAPH_IMPACT_MAX_LIMIT } from './graph/graphImpact.js';
+export { computeChangedFilesGraphImpact, readChangedFilesGraphImpact, CHANGED_FILES_GRAPH_IMPACT_SCHEMA_VERSION, CHANGED_FILES_GRAPH_IMPACT_LIMIT } from './graph/graphImpact.js';
+export type { ChangedFilesGraphImpact } from './graph/graphImpact.js';
+export { computeGraphBoundaries, readGraphBoundaries, readDeclaredBoundaryRules, parseDeclaredBoundaryRules, GRAPH_BOUNDARIES_SCHEMA_VERSION } from './graph/graphBoundaries.js';
+export type { GraphBoundariesOptions, GraphBoundariesReport, GraphBoundariesResult, GraphBoundaryEdge, DeclaredBoundaryRules } from './graph/graphBoundaries.js';
+export { computeGraphRisks, readGraphRisks, GRAPH_RISKS_SCHEMA_VERSION, GRAPH_RISK_FORMULA } from './graph/graphRisks.js';
+export type { GraphRiskEntry, GraphRisksOptions, GraphRisksReport, GraphRisksResult } from './graph/graphRisks.js';
 export type { GraphImpactDirection, GraphImpactEntry, GraphImpactOptions, GraphImpactReport, GraphImpactResult, GraphImpactTarget } from './graph/graphImpact.js';
 export type { RepositoryGraph, RepositoryGraphNode, RepositoryGraphEdge, RepositoryGraphSummary, GraphNeighborhoodSummary } from './graph/repoGraph.js';
 

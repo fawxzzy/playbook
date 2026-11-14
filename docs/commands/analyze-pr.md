@@ -20,6 +20,15 @@ Structured pull-request intelligence from local git diff + indexed repository in
 
 The output includes deterministic PR analysis (changed files, affected modules, downstream impact, boundary touches, docs guidance, and merge guidance).
 
+### Graph impact (`graphImpact`, JSON only)
+
+`--json` output also carries an additive top-level `graphImpact` section derived from `.playbook/repo-graph.json`:
+
+- With a valid graph: `{ "available": true, "schemaVersion": "1.0", "graphSchemaVersion": "1.1", "limit": 50, "truncated": false, "totals": { "changedModules", "affectedModules", "unmappedFiles" }, "changedModules": [{ "module", "changedFileCount", "totalDependents", "dependents": [{ "module", "depth" }] }], "affectedModules": [] }`. Changed files map to their owning module (`src/<module>/...` or the workspace path in the repository index); each changed module lists its transitive dependents ordered by depth, then name. Lists are capped at 50 entries; `truncated` and `totals` report what was cut.
+- Without one (missing, wrong kind, unsupported version): `{ "available": false, "reason": "..." }`. The command result is otherwise identical.
+
+`graphImpact` does not replace anything: `impact`, `architecture.boundariesTouched`, `risk` and every other field are computed exactly as before, the exit code does not depend on it, and the `text`, `github-comment` and `github-review` formats do not render it. See [`ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`](../contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md#analyze-pr-graph-consumption-shipped-third-slice).
+
 ### Options
 
 - `--base <ref>`: explicit diff base

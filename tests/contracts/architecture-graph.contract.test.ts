@@ -2,7 +2,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { computeGraphImpact, GRAPH_IMPACT_SCHEMA_VERSION } from '../../packages/engine/src/graph/graphImpact.js';
+import { computeGraphBoundaries, parseDeclaredBoundaryRules } from '../../packages/engine/src/graph/graphBoundaries.js';
+import {
+  computeChangedFilesGraphImpact,
+  computeGraphImpact,
+  GRAPH_IMPACT_SCHEMA_VERSION
+} from '../../packages/engine/src/graph/graphImpact.js';
+import { computeGraphRisks } from '../../packages/engine/src/graph/graphRisks.js';
+import { getCliSchema } from '../../packages/engine/src/schema/cliSchemas.js';
+// The same validator `pnpm contracts:check` uses for the committed command snapshots.
+import { validateAgainstSchema } from '../../scripts/contract-snapshot-lib.mjs';
 import {
   REPOSITORY_GRAPH_RELATIVE_PATH,
   REPOSITORY_GRAPH_SCHEMA_VERSION,
@@ -13,7 +22,9 @@ import {
 import type { RepositoryIndex } from '../../packages/engine/src/indexer/repoIndexer.js';
 
 // Compatibility pin for PB-V07-ARCH-INTELLIGENCE-GRAPH-001 (first slice: repo-graph v1.1 surface and contract docs;
-// second slice: `graph impact`). It intentionally does not test unshipped semantic-graph behavior.
+// second slice: `graph impact`; third slice: `graph boundaries`, `graph risks`, analyze-pr `graphImpact`, output schemas).
+// It intentionally does not test the deferred semantic-graph pieces, which do not exist.
+// Run in CI through packages/engine/test/architectureGraphContract.test.ts.
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const readRepoFile = (relativePath: string): string => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -47,7 +58,7 @@ const parseDocumentedKinds = (doc: string, label: 'Node kinds' | 'Edge kinds'): 
     .sort();
 };
 
-describe('architecture intelligence graph contract (repo-graph v1.1 pin, graph impact shipped)', () => {
+describe('architecture intelligence graph contract (repo-graph v1.1 pin; impact, boundaries, risks and analyze-pr consumption shipped)', () => {
   it('ships the contract and architecture docs and cross-references the repo-graph contract', () => {
     for (const docPath of [CONTRACT_DOC, ARCHITECTURE_DOC, REPO_GRAPH_CONTRACT]) {
       expect(fs.existsSync(path.join(repoRoot, docPath)), `${docPath} must exist`).toBe(true);
@@ -65,15 +76,31 @@ describe('architecture intelligence graph contract (repo-graph v1.1 pin, graph i
   it('keeps the status marker and the shipped / unshipped lists honest', () => {
     const contractDoc = readRepoFile(CONTRACT_DOC);
 
-    expect(contractDoc).toMatch(/Status: \*\*second slice/);
-    const notShippedSection = contractDoc.slice(contractDoc.indexOf('Not shipped (each is a future slice'), contractDoc.indexOf('Until those ship'));
-    expect(notShippedSection.length).toBeGreaterThan(0);
-    for (const unshipped of ['.playbook/arch-graph.v2.json', 'graph boundaries', 'graph risks', 'impact index', '`analyze-pr` consuming the graph']) {
-      expect(notShippedSection, `unshipped piece "${unshipped}" must be listed as not shipped`).toContain(unshipped);
+    expect(contractDoc).toMatch(/Status: \*\*third slice/);
+    const deferredStart = contractDoc.indexOf('Not shipped, and deferred beyond this card');
+    const deferredEnd = contractDoc.indexOf('Honest limits of what did ship');
+    expect(deferredStart).toBeGreaterThan(0);
+    expect(deferredEnd).toBeGreaterThan(deferredStart);
+    const deferredSection = contractDoc.slice(deferredStart, deferredEnd);
+    const shippedSection = contractDoc.slice(0, deferredStart);
+
+    // Still unshipped, and explicitly deferred beyond this card.
+    for (const deferred of ['semantic node/edge layer', '.playbook/arch-graph.v2.json', 'impact index', 'Incremental (file-hash plus SCM-diff) graph invalidation']) {
+      expect(deferredSection, `deferred piece "${deferred}" must be listed as not shipped`).toContain(deferred);
     }
-    // `graph impact` shipped in the second slice: it must be described as shipped, and must not be listed as unshipped.
-    expect(notShippedSection).not.toContain('graph impact');
-    expect(contractDoc.slice(0, contractDoc.indexOf('Not shipped (each is a future slice'))).toContain('graph impact');
+    // Shipped: these must be described as shipped and must not appear in the deferred list.
+    for (const shipped of ['graph impact', 'graph boundaries', 'graph risks']) {
+      expect(shippedSection, `shipped piece "${shipped}" must be described as shipped`).toContain(shipped);
+      expect(deferredSection, `shipped piece "${shipped}" must not be listed as deferred`).not.toContain(shipped);
+    }
+    expect(shippedSection).toContain('`analyze-pr` consumes the graph');
+    expect(deferredSection).not.toContain('analyze-pr');
+
+    // What the shipped views still do not do must stay stated, not implied.
+    const limitsSection = contractDoc.slice(deferredEnd, contractDoc.indexOf('## `graph impact`'));
+    expect(limitsSection).toContain('`explain` and `query` are unchanged');
+    expect(limitsSection).toContain('It is not met for `explain` and `query`');
+    expect(limitsSection).toContain('nothing is enforced');
     // Shipped-state guard: if one of these appears, the contract doc's Status section must be updated together with this test.
     expect(fs.existsSync(path.join(repoRoot, '.playbook', 'arch-graph.v2.json'))).toBe(false);
   });
@@ -168,6 +195,65 @@ describe('architecture intelligence graph contract (repo-graph v1.1 pin, graph i
     expect(result.dependents).toEqual([{ module: 'workouts', depth: 1, edgeKinds: ['depends_on'], path: ['auth', 'workouts'] }]);
     expect(result.dependencies).toEqual([]);
     expect(result.truncated).toBe(false);
+  });
+
+  it('validates the impact, boundaries and risks outputs against the registered graph schema', () => {
+    const graph = generateRepositoryGraph(sampleIndex, new Date('2026-01-01T00:00:00.000Z'));
+    const graphRef = { schemaVersion: graph.schemaVersion, generatedAt: graph.generatedAt };
+    const schema = getCliSchema('graph');
+    const envelope = (subcommand: string, result: { schemaVersion: string }) => {
+      const { schemaVersion, ...rest } = result;
+      return { schemaVersion, command: 'graph', subcommand, ...rest, graph: graphRef };
+    };
+    const declared = parseDeclaredBoundaryRules({
+      architectureRoleInference: {
+        classifierVersion: 'role-heuristic-v1',
+        policyEnforcement: 'none',
+        dependencyMatrix: { interface: ['foundation'], foundation: ['foundation'] },
+        nodes: [
+          { workspace: 'auth', inferredRole: 'foundation' },
+          { workspace: 'workouts', inferredRole: 'interface' }
+        ]
+      }
+    });
+
+    const payloads = [
+      envelope('impact', computeGraphImpact(graph, 'auth', { direction: 'both' })),
+      envelope('boundaries', computeGraphBoundaries(graph, { declared })),
+      envelope('boundaries', computeGraphBoundaries(graph)),
+      envelope('risks', computeGraphRisks(graph)),
+      { schemaVersion: '1.0', command: 'graph', subcommand: 'risks', error: 'playbook graph risks: missing repository graph' }
+    ];
+    for (const payload of payloads) {
+      expect(validateAgainstSchema(payload, schema), JSON.stringify(payload).slice(0, 120)).toBe(true);
+    }
+
+    // The schema is not vacuous: unknown fields and wrong subcommands are rejected.
+    expect(validateAgainstSchema({ ...payloads[3], unexpected: true }, schema)).toBe(false);
+    expect(validateAgainstSchema({ ...payloads[3], subcommand: 'hotspots' }, schema)).toBe(false);
+  });
+
+  it('validates the analyze-pr graphImpact section against the registered analyze-pr schema', () => {
+    const graph = generateRepositoryGraph(sampleIndex, new Date('2026-01-01T00:00:00.000Z'));
+    const analyzePrSchema = getCliSchema('analyze-pr') as { oneOf: Array<{ properties?: Record<string, unknown>; required?: string[] }> };
+    const success = analyzePrSchema.oneOf.find((candidate) => candidate.properties && 'changedFiles' in candidate.properties);
+    const graphImpactSchema = success?.properties?.graphImpact;
+
+    expect(graphImpactSchema, 'analyze-pr schema must declare graphImpact').toBeDefined();
+    // Additive: older artifacts without the field still validate.
+    expect(success?.required).not.toContain('graphImpact');
+
+    const available = computeChangedFilesGraphImpact(graph, ['src/auth/index.ts', 'README.md']);
+    expect(available).toMatchObject({
+      available: true,
+      changedModules: [{ module: 'auth', changedFileCount: 1, totalDependents: 1, dependents: [{ module: 'workouts', depth: 1 }] }],
+      affectedModules: ['auth', 'workouts'],
+      totals: { changedModules: 1, affectedModules: 2, unmappedFiles: 1 }
+    });
+    expect(validateAgainstSchema(available, graphImpactSchema)).toBe(true);
+    expect(validateAgainstSchema({ available: false, reason: 'missing graph' }, graphImpactSchema)).toBe(true);
+    expect(validateAgainstSchema({ available: false }, graphImpactSchema)).toBe(false);
+    expect(validateAgainstSchema({ ...available, extra: 1 }, graphImpactSchema)).toBe(false);
   });
 
   it('documents the exact-version reader behavior: reads 1.1, rejects other versions until the reader is updated', () => {

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "impact",
+  "target": {
+    "input": "features",
+    "resolvedAs": "module",
+    "module": "features"
+  },
+  "direction": "both",
+  "depthLimit": null,
+  "limit": 200,
+  "truncated": false,
+  "totals": {
+    "dependents": 0,
+    "dependencies": 0
+  },
+  "dependents": [],
+  "dependencies": [],
+  "graph": {
+    "schemaVersion": "1.1"
+  }
+}

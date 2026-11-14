@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "boundaries",
+  "enforced": false,
+  "rules": {
+    "declared": false,
+    "source": "none",
+    "reason": "the repository index declares no module roles (no workspace packages were indexed)",
+    "classifierVersion": null,
+    "policyEnforcement": null,
+    "dependencyMatrix": null
+  },
+  "roles": [
+    {
+      "module": "features",
+      "role": "adapter",
+      "source": "graph-inferred"
+    }
+  ],
+  "summary": {
+    "modules": 1,
+    "edges": 0,
+    "allowed": 0,
+    "violations": 0,
+    "unclassified": 0,
+    "observed": 0
+  },
+  "limit": 200,
+  "truncated": false,
+  "totals": {
+    "violations": 0,
+    "observations": 0
+  },
+  "violations": [],
+  "observations": [],
+  "graph": {
+    "schemaVersion": "1.1"
+  }
+}
