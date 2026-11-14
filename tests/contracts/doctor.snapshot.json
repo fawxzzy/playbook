@@ -220,7 +220,16 @@
       "contract": [
         "tests/contracts/*.snapshot.json",
         ".playbook/demo-artifacts/**",
-        "docs/*diagram*.md"
+        "docs/*diagram*.md",
+        ".playbook/architecture/subsystems.json",
+        ".playbook/changelog-config.json",
+        ".playbook/version-policy.json",
+        ".playbook/managed-surfaces.json",
+        ".playbook/.gitignore",
+        ".playbook/pr-metadata.json",
+        ".playbook/functors/registry.json",
+        ".playbook/memory/atlas-knowledge-candidates.json",
+        ".playbook/memory/atlas-knowledge-candidate-intake-receipts/*.json"
       ]
     },
     "findings": [],

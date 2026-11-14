@@ -95,10 +95,32 @@ export type MemoryDiagnosticsReport = {
   suggestions: MemoryDiagnosticSuggestion[];
 };
 
+// Committed governance config and contract files under .playbook/. Playbook reads each of these from the
+// repository (they are inputs, not run output), so a committed copy is intentional and must not be reported
+// as stray runtime output. `*` matches within one path segment. Keep this list in step with the readers.
+const COMMITTED_CONTRACT_ARTIFACTS = [
+  '.playbook/architecture/subsystems.json', // subsystem registry: core architecture/loadArchitecture.ts, cli repoIndex.ts
+  '.playbook/changelog-config.json', // engine release/changelog/configLoader.ts (default --config path)
+  '.playbook/version-policy.json', // engine release/index.ts; seeded into consumer repos by the upgrade migration
+  '.playbook/managed-surfaces.json', // managed-surface manifest seeded by `init`, read by `upgrade`
+  '.playbook/.gitignore', // seeded by `init` to keep runtime output out of git; committed by design
+  '.playbook/pr-metadata.json', // repo-owned PR metadata used by the roadmap feature-id gate
+  '.playbook/functors/registry.json', // documented RunCycle functor registry path (docs/contracts/RUN_CYCLE.md)
+  '.playbook/memory/atlas-knowledge-candidates.json', // `knowledge atlas-admit` review queue kept as owner-intake evidence
+  '.playbook/memory/atlas-knowledge-candidate-intake-receipts/*.json'
+] as const;
+
+const globToRegExp = (pattern: string): RegExp => {
+  const escaped = pattern.replace(/[.+?^$|()[\]{}\\]/g, '\\$&');
+  return new RegExp(`^${escaped.replace(/\*/g, '[^/]*')}$`);
+};
+
+const COMMITTED_CONTRACT_MATCHERS = COMMITTED_CONTRACT_ARTIFACTS.map((pattern) => globToRegExp(pattern));
+
 const ARTIFACT_CLASSIFICATION: ArtifactClassificationModel = {
   runtime: ['.playbook/repo-index.json', '.playbook/plan.json', '.playbook/verify.json', '.playbook/session-cleanup*.json', '.playbook/cache/**'],
   automation: ['.playbook/ci-plan*.json', '.playbook/ci-verify*.json', '.github/artifacts/**'],
-  contract: ['tests/contracts/*.snapshot.json', '.playbook/demo-artifacts/**', 'docs/*diagram*.md']
+  contract: ['tests/contracts/*.snapshot.json', '.playbook/demo-artifacts/**', 'docs/*diagram*.md', ...COMMITTED_CONTRACT_ARTIFACTS]
 };
 
 const LARGE_JSON_THRESHOLD_BYTES = 500_000;
@@ -383,6 +405,10 @@ const runGitLines = (repoRoot: string, args: string[]): string[] => {
 
 const classifyArtifact = (relativePath: string): ArtifactClass => {
   const normalized = relativePath.split(path.sep).join('/');
+  if (COMMITTED_CONTRACT_MATCHERS.some((matcher) => matcher.test(normalized))) {
+    return 'contract';
+  }
+
   if (normalized.startsWith('.playbook/') && !normalized.startsWith('.playbook/demo-artifacts/')) {
     if (normalized.startsWith('.playbook/ci-')) {
       return 'automation';
@@ -445,8 +471,11 @@ const collectArtifactHygiene = (repoRoot: string): ArtifactHygieneReport => {
     return acc;
   }, new Map());
 
+  // Only files that are still committed can be "avoided": a path that appears in history but is no longer
+  // tracked was already fixed, and committed contract/config files are expected to evolve.
+  const trackedSet = new Set(trackedFiles);
   for (const [file, count] of [...changeFrequency.entries()].sort((a, b) => b[1] - a[1])) {
-    if (count >= FREQUENT_ARTIFACT_MODIFICATION_THRESHOLD) {
+    if (count >= FREQUENT_ARTIFACT_MODIFICATION_THRESHOLD && trackedSet.has(file) && classifyArtifact(file) !== 'contract') {
       findings.push({
         type: 'frequently-modified-generated-artifact',
         path: file,
