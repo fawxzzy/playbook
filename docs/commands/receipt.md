@@ -1,4 +1,4 @@
-# `playbook receipt`
+# `pnpm playbook receipt`
 
 Ingest explicit execution results into the canonical adoption control loop:
 
@@ -15,6 +15,10 @@ pnpm playbook receipt ingest ./execution-results.json --json
 pnpm playbook receipt replay --json
 pnpm playbook receipt replay --input .playbook/execution-outcome-input.json --json
 ```
+
+`replay` also accepts `--file <path>` as an alias of `--input <path>`; with neither it replays `.playbook/execution-outcome-input.json`. `ingest` also accepts `--file <path>` in place of the positional file.
+
+Exit codes: `ingest` exits `0` only when the staged updated-state candidate is validated and promoted (`promotion.promoted` is true) and `1` when it is blocked or the input is invalid; `replay` exits `1` when the classification is `mismatch` and `0` otherwise.
 
 ## Input contract
 
@@ -54,7 +58,7 @@ The ingest command accepts a JSON array of deterministic execution results.
 
 ## Output
 
-`playbook receipt ingest --json` returns:
+`pnpm playbook receipt ingest --json` returns (abridged; the payload also carries `schemaVersion`, `command`, `mode`, `execution_outcome_input`, `promotion`, `story_transition`, `lifecycle_candidates`, and `written_artifacts`):
 
 ```json
 {
@@ -67,7 +71,7 @@ The ingest command accepts a JSON array of deterministic execution results.
 }
 ```
 
-`playbook receipt replay --json` returns deterministic JSON-first replay evidence:
+`pnpm playbook receipt replay --json` returns deterministic JSON-first replay evidence:
 
 ```json
 {
@@ -96,6 +100,7 @@ Replay classification is limited to deterministic evidence already present in ca
 ## Artifacts
 
 - `.playbook/execution-outcome-input.json`
+- `.playbook/execution-receipt.json`
 - `.playbook/execution-updated-state.json`
 - `.playbook/staged/workflow-status-updated/execution-updated-state.json`
 - `.playbook/memory/lifecycle-candidates.json`

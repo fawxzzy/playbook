@@ -4,16 +4,17 @@ Deterministic adoption/readiness summary for governed Playbook usage.
 
 ## Modes
 
-- `pnpm playbook status proof --json`: deterministic external-consumer bootstrap proof that validates bootstrap/runtime readiness and emits one compact parallel-work brief sourced from `lane-state`, `worker-results`, `docs-consolidation-plan`, and `policy-apply-result`. Protected-doc governance authority still comes from `verify`/`verify --policy`, not from status text alone.
+- `pnpm playbook status proof --json`: deterministic external-consumer bootstrap proof that validates runtime, CLI resolution, initialization, required docs/artifacts, execution state, and governance contract readiness end to end, and emits one compact parallel-work brief sourced from `lane-state`, `worker-results`, `docs-consolidation-plan`, and `policy-apply-result`. Protected-doc governance authority still comes from `verify`/`verify --policy`, not from status text alone.
 - `pnpm playbook status --json`: repo-level status/adoption summary.
 - `pnpm playbook status fleet --json`: fleet-level aggregate readiness summary using connected Observer repos.
 - `pnpm playbook status queue --json`: deterministic read-only adoption work-queue from fleet readiness.
 - `pnpm playbook status execute --json`: deterministic Codex-ready execution-plan packaging derived from the queue.
 - `pnpm playbook status receipt --json`: canonical planned-vs-actual execution receipt derived from queue/plan context plus explicit ingested execution outcomes from `.playbook/execution-outcome-input.json`.
 - `pnpm playbook status updated --json`: reconciled updated adoption state derived from prior state plus the canonical execution receipt; writes `.playbook/execution-updated-state.json` through the shared workflow-promotion contract and returns `next_queue`, which is derived downstream from updated-state only.
-- `pnpm playbook status proof --json`: deterministic external-consumer bootstrap proof that validates runtime, CLI resolution, initialization, required docs/artifacts, execution state, and governance contract readiness end to end.
 
 If no Observer registry exists, fleet mode falls back to the current repository as a single-repo fleet.
+
+Exit codes: repo-level `status` exits `0` when verify passes and `3` (policy failure) when it does not; `status fleet`, `queue`, `execute`, and `receipt` exit `0`; `status updated` exits `1` when the updated-state promotion is blocked; `status proof` exits `0` by default (report mode) and, with `--proof-gate`, exits `1` when the proof is not ok.
 
 ## Interpretation layer
 
@@ -293,12 +294,12 @@ Playbook notes:
 
 ## Bootstrap proof (`status proof`)
 
-`pnpm playbook status proof --json` is the first-class external-consumer bootstrap proof flow. It is read-only and deterministic: it does not write repo artifacts, and it classifies the first failing bootstrap stage before returning the single highest-priority next action.
+`pnpm playbook status proof --json` is the first-class external-consumer bootstrap proof flow. It is deterministic and does not write governed bootstrap artifacts (its only write is a refresh of the derived `.playbook/control-plane.json` snapshot that it reports as `control_plane`), and it classifies the first failing bootstrap stage before returning the single highest-priority next action.
 
 Stages are evaluated in order:
 
 1. `runtime`: Node/pnpm availability
-2. `cli`: local Playbook CLI resolution via `pnpm exec playbook --version`
+2. `cli`: local Playbook CLI resolution, trying the currently running CLI (`--version`) first, then `pnpm exec playbook --version` and `pnpm playbook --version`
 3. `initialization`: Playbook config/bootstrap presence
 4. `docs`: required bootstrap docs (`ARCHITECTURE`, `CHANGELOG`, `PLAYBOOK_CHECKLIST`, `PLAYBOOK_NOTES`)
 5. `artifacts`: `.playbook/repo-index.json`, `.playbook/repo-graph.json`, `.playbook/plan.json`

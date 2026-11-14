@@ -95,6 +95,15 @@ Pattern refs currently supported by the CLI are:
 
 - `global/pattern-candidates/<candidate-id>`
 
+Pattern lifecycle transitions on an already-promoted global pattern use their own targets, which take a `<pattern-id>` instead of a candidate ref:
+
+```text
+playbook promote pattern-retire|pattern-demote|pattern-recall <pattern-id> --reason <text> --json
+playbook promote pattern-supersede <pattern-id> --by <successor-pattern-id> --reason <text> --json
+```
+
+The command exits `1` when the usage is invalid, when a promotion errors, or when the promotion outcome is `conflict`; otherwise it exits `0`.
+
 ## Promotion receipts
 
 `pnpm playbook promote ... --json` writes `.playbook/promotion-receipts.json` in the mutated scope so promotion remains auditable through a deterministic receipt log.

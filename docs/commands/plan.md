@@ -28,7 +28,7 @@ Generate a deterministic remediation task plan from current verify findings.
 - JSON output includes `schemaVersion`, `command`, `ok`, `exitCode`, `verify`, `remediation`, and `tasks`.
 - `pnpm playbook apply --from-plan <artifact>` consumes this contract.
 - Task objects keep stable fields (`id`, `ruleId`, `file`, `action`, `autoFix`) for deterministic automation, plus `changeLevel` (`1 | 2 | 3`). `changeLevel` is additive: it does not affect task ids or ordering.
-- `apply` rejects Level 3 auto-fix tasks. Treat `changeLevel: 3` tasks as advisory: they need human review and are not auto-applied.
+- `apply` rejects Level 3 auto-fix tasks by default. Treat `changeLevel: 3` tasks as advisory: they need human review and are not auto-applied unless an operator explicitly authorizes them with `pnpm playbook apply --from-plan <artifact> --allow-level 3 --reason "<text>"` (both flags required; the reason is recorded).
 
 ## JSON example
 

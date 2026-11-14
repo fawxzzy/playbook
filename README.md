@@ -2,7 +2,7 @@
 
 Deterministic repo runtime and trust layer for humans and AI agents.
 
-![CI](https://github.com/fawxzzy/playbook/actions/workflows/ci.yml/badge.svg) [![Playbook Diagrams Check](https://github.com/fawxzzy/playbook/actions/workflows/playbook-diagrams-check.yml/badge.svg)](https://github.com/fawxzzy/playbook/actions/workflows/playbook-diagrams-check.yml) ![Version](https://img.shields.io/badge/version-v0.1.8-blue)
+![CI](https://github.com/fawxzzy/playbook/actions/workflows/ci.yml/badge.svg) [![Playbook Diagrams Check](https://github.com/fawxzzy/playbook/actions/workflows/playbook-diagrams-check.yml/badge.svg)](https://github.com/fawxzzy/playbook/actions/workflows/playbook-diagrams-check.yml) ![Version](https://img.shields.io/github/package-json/v/fawxzzy/playbook?filename=packages%2Fcli%2Fpackage.json&label=version)
 [![Architecture](https://img.shields.io/badge/architecture-auto--generated%20by%20playbook-blueviolet?style=flat-square&logo=mermaid)](docs/ARCHITECTURE_DIAGRAMS.md)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
@@ -133,8 +133,8 @@ Safe bootstrap flow:
 
 ```
 pnpm playbook pilot --repo "<target-repo-path>" --json
-pnpm playbook ignore suggest --repo "<target-repo-path>" --json
-pnpm playbook ignore apply --repo "<target-repo-path>" --safe-defaults
+pnpm playbook --repo "<target-repo-path>" ignore suggest --json
+pnpm playbook --repo "<target-repo-path>" ignore apply --safe-defaults
 ```
 
 `ignore suggest` reads ranked runtime recommendations and reports which entries are already covered. `ignore apply --safe-defaults` writes only `safe-default` entries into a deterministic managed block and leaves `review-first` recommendations as manual review items.
@@ -143,7 +143,14 @@ pnpm playbook ignore apply --repo "<target-repo-path>" --safe-defaults
 
 ## Quick Start (canonical ladder)
 
-Playbook operator workflows assume a **repo-local CLI install** (for example `node_modules/.bin/playbook` via `pnpm playbook ...`), so clean machines and CI do not depend on PATH-global Playbook binaries.
+### Install status
+
+The Playbook packages are **not published to npm yet**: `npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404 (checked 2026-11-14), so `npx @fawxzzy/playbook ...` and `npm install @fawxzzy/playbook` do not work today. The working paths are:
+
+- **A checkout of this repository** (every `pnpm playbook` example below assumes this): `pnpm install && pnpm build`, then `pnpm playbook <command>`. `pnpm playbook` is a root script (`scripts/run-playbook.mjs` runs the built `packages/cli/dist/main.js`) that exists only in this repository; use `--repo <path>` to point it at another local repository.
+- **A consumer repository**: the GitHub release tarball `playbook-cli-<version>.tgz` (see [docs/RELEASING.md](docs/RELEASING.md)), which provides a repo-local `node_modules/.bin/playbook` binary after `npm install --no-save <tarball url>`. The latest GitHub release as of 2026-11-14 is `v0.54.1`, older than the packages on `main` (0.66.0).
+
+Playbook operator workflows assume a **repo-local CLI** (for example `node_modules/.bin/playbook`; inside this repository, `pnpm playbook ...`), so clean machines and CI do not depend on PATH-global Playbook binaries.
 
 ### Command truth
 
@@ -219,9 +226,11 @@ pnpm playbook --repo "$TARGET_REPO_PATH" query modules --json
 
 This keeps `pnpm playbook <command>` as the canonical invocation while letting operators target external repositories deterministically from a single working checkout.
 
+`--repo` is a global option and must come before the command name (`pnpm playbook --repo <path> <command>`). After the command name only `pilot` and `diagram` read their own `--repo`; every other command ignores it and runs against the current directory.
+
 ### Consumer repository runtime resolution contract
 
-Consumer repositories should resolve Playbook using this deterministic order:
+Consumer repositories should resolve Playbook using this deterministic order (this is a contract for the consumer repository's own launcher, see [docs/CONSUMER_INTEGRATION_CONTRACT.md](docs/CONSUMER_INTEGRATION_CONTRACT.md); the Playbook CLI itself does not read `PLAYBOOK_BIN`):
 
 1. `PLAYBOOK_BIN` override (explicit operator/CI choice).
 2. Repo-local installed CLI (`node_modules/.bin/playbook`, typically via `pnpm playbook ...`).
@@ -246,13 +255,7 @@ Canonical command:
 pnpm playbook pilot --repo "./target-repo"
 ```
 
-Optional convenience alias:
-
-```bash
-pnpm playbook pilot --repo "./target-repo"
-```
-
-Optional convenience alias:
+Optional convenience alias (root script `pilot`, which runs `pnpm playbook pilot --repo <path>`):
 
 ```bash
 pnpm pilot "./target-repo"
@@ -289,8 +292,8 @@ External onboarding contract (minimal):
 Recommended follow-up after `pilot`:
 
 ```bash
-pnpm playbook ignore suggest --repo "./target-repo" --json
-pnpm playbook ignore apply --repo "./target-repo" --safe-defaults
+pnpm playbook --repo "./target-repo" ignore suggest --json
+pnpm playbook --repo "./target-repo" ignore apply --safe-defaults
 ```
 
 Rule - Apply Only Trusted Ignore Recommendations.
@@ -306,19 +309,17 @@ Failure Mode - Non-Idempotent Ignore Management.
 `pnpm playbook verify` and `pnpm playbook plan` provide deterministic, reviewable output for both humans and AI agents. For complete walkthrough output, use the official demo repository:
 
 ```bash
-git clone https://github.com/fawxzzy/playbook-demo
-cd playbook-demo
-npm install
-pnpm playbook ai-context --json
-pnpm playbook index --json
-pnpm playbook verify --json
-# bash/zsh
-pnpm playbook plan --json --out .playbook/plan.json
-# PowerShell-safe
-pnpm playbook plan --json --out .playbook/plan.json
-pnpm playbook apply --from-plan .playbook/plan.json
-pnpm playbook verify --json
+git clone https://github.com/fawxzzy/playbook-demo ../playbook-demo
+# run from a built checkout of this repository (pnpm install && pnpm build); the demo repository has no `playbook` script of its own
+pnpm playbook --repo ../playbook-demo ai-context --json
+pnpm playbook --repo ../playbook-demo index --json
+pnpm playbook --repo ../playbook-demo verify --json
+pnpm playbook --repo ../playbook-demo plan --json --out .playbook/plan.json
+pnpm playbook --repo ../playbook-demo apply --from-plan .playbook/plan.json
+pnpm playbook --repo ../playbook-demo verify --json
 ```
+
+With `--repo`, `--out` and `--from-plan` paths resolve inside the target repository, so `.playbook/plan.json` lands in `../playbook-demo/.playbook/`.
 
 ## CLI Commands
 
@@ -359,7 +360,7 @@ Run `pnpm playbook index` to generate deterministic machine-readable repository 
 
 Complexity Through Compression: Playbook reduces repository complexity by extracting small deterministic artifacts (index -> graph -> module digests) and reusing them across query/explain/ask surfaces rather than repeatedly rescanning broad repository state.
 
-Use `pnpm playbook schema` to retrieve the JSON Schema contracts for command outputs (`rules`, `explain`, `index`, `graph`, `verify`, `plan`, `context`, `ai-context`, `ai-contract`, `query`, `knowledge`, `docs`) so CI and agents can validate payloads.
+Use `pnpm playbook schema` to retrieve the JSON Schema contracts for command outputs (`rules`, `explain`, `index`, `graph`, `verify`, `plan`, `context`, `ai-contract`, `analyze-pr`, `ai-propose`, `doctor`, `docs`, `contracts`, `ignore`, `query`, `knowledge`, `learn`, `ai-context`, `test-fix-plan`, `remediation-status`, `test-autofix`, `test-triage`; `pnpm playbook schema --help` prints the list) so CI and agents can validate payloads.
 
 ## Playbook Context
 
@@ -620,12 +621,12 @@ Other documentation such as `docs/PROJECT_GOVERNANCE.md` may be present dependin
 
 ## CLI command contract patterns
 
-- Pattern: CLI Command Contract â€” Playbook CLI commands that produce JSON must maintain stable output contracts so AI agents and automation can rely on deterministic fields.
-- Pattern: CLI Snapshot Contract Testing â€” `packages/cli/test/cliContracts.test.ts` snapshots deterministic JSON payloads for `rules --json`, `explain <target> --json`, `index --json`, `verify --json`, and `plan --json` into `tests/contracts/*.snapshot.json`; run `pnpm test:update-snapshots` only when contract changes are intentional.
-- Pattern: CLI Smoke Testing â€” All CLI commands should be exercised by an automated smoke test to prevent runtime regressions.
-- Rule: CLI Business Logic Location â€” CLI commands must remain thin wrappers around engine functionality.
-- Pattern: Demo Alignment â€” The Playbook core repository must guarantee that commands used by the demo repository remain stable and testable.
-- Pattern: Cross-Repo Pattern Learning â€” `pnpm playbook patterns cross-repo|portability|generalized|repo-delta` provides deterministic portability scoring from `.playbook/cross-repo-patterns.json` without introducing autonomous doctrine mutation.
+- Pattern: CLI Command Contract — Playbook CLI commands that produce JSON must maintain stable output contracts so AI agents and automation can rely on deterministic fields.
+- Pattern: CLI Snapshot Contract Testing — `packages/cli/test/cliContracts.test.ts` snapshots deterministic JSON payloads for `rules --json`, `explain <target> --json`, `index --json`, `verify --json`, and `plan --json` into `tests/contracts/*.snapshot.json`; run `pnpm test:update-snapshots` only when contract changes are intentional.
+- Pattern: CLI Smoke Testing — All CLI commands should be exercised by an automated smoke test to prevent runtime regressions.
+- Rule: CLI Business Logic Location — CLI commands must remain thin wrappers around engine functionality.
+- Pattern: Demo Alignment — The Playbook core repository must guarantee that commands used by the demo repository remain stable and testable.
+- Pattern: Cross-Repo Pattern Learning — `pnpm playbook patterns cross-repo|portability|generalized|repo-delta` provides deterministic portability scoring from `.playbook/cross-repo-patterns.json` without introducing autonomous doctrine mutation.
 
 ## Architecture
 
@@ -638,13 +639,13 @@ pnpm -r build
 pnpm playbook diagram --repo . --out docs/ARCHITECTURE_DIAGRAMS.md
 ```
 
-For consumer-installed usage, run:
+For consumer-installed usage (the repo-local binary from the release tarball, see Install status), run:
 
 ```bash
-pnpm playbook diagram
+node_modules/.bin/playbook diagram
 ```
 
-Package-first runtime parity note: `@fawxzzy/playbook-cli` is now a thin entrypoint package that delegates directly to `@fawxzzy/playbook` runtime implementation, so consumer repos receive the same semantic `.playbook/*` artifacts (for example `findings.json`, `plan.json`, and `repo-graph.json`) instead of log-only shim behavior.
+Package-first runtime parity note: `@fawxzzy/playbook-cli` (`packages/cli-wrapper`) is a thin entrypoint package whose `bin/playbook.js` spawns a vendored copy of the CLI runtime (`runtime/main.js`, generated from the `packages/cli` build by the `prepack` step, `scripts/prepare-cli-wrapper-runtime.mjs`) rather than depending on `@fawxzzy/playbook` at runtime, so consumer repos receive the same semantic `.playbook/*` artifacts (for example `findings.json`, `plan.json`, and `repo-graph.json`) instead of log-only shim behavior.
 
 Or view architecture docs here:
 
@@ -667,15 +668,17 @@ Rule: CI should enforce deterministic product/governance correctness and roadmap
 
 Failure Mode: If delivery workflow rules (roadmap linkage and docs governance) are documented but not enforced in CI, roadmap drift accelerates.
 
-The action runs from checked-out repository source (it installs with the workspace lockfile, builds the CLI, and invokes `node packages/cli/dist/main.js`). It does **not** require `npm install -g` or a published npm package.
+The action runs from checked-out repository source (it installs with the workspace lockfile, builds the CLI with `pnpm -r build`, and invokes `node packages/cli/dist/main.js`). It does **not** require `npm install -g` or a published npm package, and it only works in a checkout of this repository's source tree (it needs `scripts/assert-install-env.mjs` and the workspace packages); there is no published `playbook/action@v1` to reference from other repositories.
 
-The action lives at `./.github/action.yml` in this repository and accepts:
+The action lives at `./.github/action.yml` in this repository (referenced as `uses: ./.github`, as in `.github/workflows/playbook-action-example.yml`) and accepts:
 
 - `mode`: `verify | plan | apply`
 - `plan-artifact`: required for `mode: apply`
+- `plan-artifact-name`: optional artifact name used to upload the plan in `mode: plan`, defaults to `playbook-plan`
 - `repo-path`: optional, defaults to `.`
 - `node-version`: optional, defaults to `22`
 - `verify-args`: optional, defaults to `--ci`
+- `playbook-version`: deprecated and ignored (reserved for future published-package support)
 
 ### Optional maintenance workflow
 
@@ -730,8 +733,8 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: playbook/action@v1
+      - uses: actions/checkout@v6
+      - uses: ./.github
         with:
           mode: verify
 ```
@@ -746,8 +749,8 @@ jobs:
   plan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: playbook/action@v1
+      - uses: actions/checkout@v6
+      - uses: ./.github
         with:
           mode: plan
           plan-artifact-name: playbook-plan
@@ -763,16 +766,16 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
           name: playbook-plan
           path: .playbook
-      - uses: playbook/action@v1
+      - uses: ./.github
         with:
           mode: apply
           plan-artifact: .playbook/plan.json
-      - uses: playbook/action@v1
+      - uses: ./.github
         with:
           mode: verify
 ```

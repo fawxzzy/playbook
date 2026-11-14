@@ -74,6 +74,8 @@ pnpm playbook context --json
 
 Inside the Playbook repo, prefer local built CLI entrypoints over globally installed or published CLI binaries so validation reflects the current branch.
 
+`pnpm playbook <command>` is a root script of this repository (`scripts/run-playbook.mjs` runs the built `packages/cli/dist/main.js`, so build first). It does not exist in other repositories, and the packages are not published to npm yet (`npm view @fawxzzy/playbook` returns 404); see `docs/RELEASING.md` for the consumer install path.
+
 ## Command authority
 
 When command coverage exists, prefer Playbook command outputs over ad-hoc repository inference.

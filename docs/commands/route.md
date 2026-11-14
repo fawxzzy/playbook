@@ -1,4 +1,4 @@
-# `playbook route`
+# `pnpm playbook route`
 
 Classify a task into a deterministic task family, resolve a task-execution-profile, and emit a deterministic proposal-only execution plan artifact.
 
@@ -39,7 +39,7 @@ Routing returns command metadata plus an `executionPlan` payload and a normalize
 Execution plan fields include:
 
 - `schemaVersion`, `kind`, `generatedAt`, `proposalOnly`
-- `pattern_context` (read-only advisory matches from promoted patterns when routing from a story)
+- `story_reference` and `pattern_context` (present when routing from a story; `pattern_context` carries read-only advisory matches from promoted patterns)
 - `task_family`, `route_id`
 - `rule_packs`, `required_validations`, `optional_validations`
 - `parallel_lanes`, `mutation_allowed`, `missing_prerequisites`
@@ -61,7 +61,7 @@ It then resolves a matching built-in task-execution-profile to populate rule pac
 
 ### Conservative fallback behavior
 
-- If no matching profile exists, route output is `unsupported` with explicit `missing_prerequisites`.
+- If no matching profile exists, route output is `unsupported` with explicit `missing_prerequisites`, and the command exits `1` (the plan artifact is still written).
 - If multiple family signals match, the router chooses the conservative family (highest safety-first priority) and emits an explicit warning.
 - `mutation_allowed` remains `false` for this phase (proposal-only routing).
 

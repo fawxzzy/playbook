@@ -38,13 +38,16 @@ pnpm playbook review-pr --base main --json
     "safe": 0,
     "requires_review": 0,
     "blocked": 0
-  }
+  },
+  "scm": null
 }
 ```
 
-Text output is concise and summary-oriented.
+`scm` is `null` when no SCM context was collected; otherwise it is `{ "detached_head", "shallow_clone", "dirty_working_tree", "rename_count" }`.
 
-Every `review-pr` run also persists the same governed payload to `.playbook/pr-review.json` for auditability and downstream control-plane reuse.
+Text output is concise and summary-oriented. `--format github-comment` renders the same summary as a Markdown table for PR comments.
+
+Every `review-pr` run also persists the same governed payload to `.playbook/pr-review.json` for auditability and downstream control-plane reuse, and writes the derived `.playbook/pr-review-loop.json` artifact next to it.
 
 ## Read-only behavior
 

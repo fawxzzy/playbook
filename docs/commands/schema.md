@@ -29,7 +29,13 @@ pnpm playbook schema contracts --json
 - `query`
 - `learn`
 - `ai-context`
+- `ai-propose`
+- `knowledge`
+- `test-triage`
+- `test-fix-plan`
+- `test-autofix`
+- `remediation-status`
 
 Without a target, the command prints the full schema registry payload.
 
-Unknown targets fail with a deterministic error and usage guidance.
+Unknown targets fail with a deterministic error and usage guidance (exit code `1`).

@@ -4,17 +4,19 @@ Inspect deterministic telemetry artifacts and learning summaries.
 
 ## Subcommands
 
-- `playbook telemetry outcomes`
-- `playbook telemetry process`
-- `playbook telemetry learning-state`
-- `playbook telemetry learning`
-- `playbook telemetry summary`
-- `playbook telemetry cycle [--detect-regressions]`
-- `playbook telemetry commands`
+- `pnpm playbook telemetry outcomes` (reads `.playbook/outcome-telemetry.json`)
+- `pnpm playbook telemetry process` (reads `.playbook/process-telemetry.json`)
+- `pnpm playbook telemetry learning-state` (compacted deterministic learning snapshot derived from outcome/process telemetry and optional task-execution-profile, repo-graph, and higher-order-synthesis artifacts)
+- `pnpm playbook telemetry learning` (compacts cross-run learning signals and writes `.playbook/learning-compaction.json`, `.playbook/higher-order-synthesis.json`, and `.playbook/policy-improvement.json`)
+- `pnpm playbook telemetry summary` (combined outcome/process summary)
+- `pnpm playbook telemetry cycle [--detect-regressions]`
+- `pnpm playbook telemetry commands`
+
+`outcomes`, `process`, `summary`, and `commands` fail with exit code `1` when their required telemetry artifact is missing; an unsupported subcommand also exits `1`, and running `telemetry` with no subcommand prints the help and exits `1`.
 
 ## `telemetry commands`
 
-`playbook telemetry commands` reads `.playbook/telemetry/command-quality.json` and emits deterministic summaries for:
+`pnpm playbook telemetry commands` reads `.playbook/telemetry/command-quality.json` and emits deterministic summaries for:
 
 - `verify`
 - `route`
@@ -45,7 +47,7 @@ JSON mode emits a stable parseable artifact:
 
 ## `telemetry cycle`
 
-`playbook telemetry cycle` summarizes governed cycle runtime evidence by reading:
+`pnpm playbook telemetry cycle` summarizes governed cycle runtime evidence by reading:
 
 - `.playbook/cycle-history.json` (required evidence source for history-based metrics)
 - `.playbook/cycle-state.json` (optional latest-cycle snapshot)

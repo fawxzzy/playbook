@@ -13,14 +13,21 @@ This keeps architecture reasoning explicit and reproducible for agents working i
 
 ## Release & Distribution
 
+### Install status: not published to npm yet
+
+The scoped packages `@fawxzzy/playbook` (the CLI) and `@fawxzzy/playbook-cli` (the wrapper) are **not published to npm**: `npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404 (checked 2026-11-14). No `npx @fawxzzy/playbook ...` or `npm install @fawxzzy/playbook` form works today. The working paths are:
+
+- **A checkout of this repository**: `pnpm install && pnpm build`, then `pnpm playbook <command>`. `pnpm playbook` is a root script of this repository (`scripts/run-playbook.mjs` runs the built `packages/cli/dist/main.js`); it does not exist in other repositories. Use `--repo <path>` to point it at another local repository.
+- **A consumer repository**: the GitHub release tarball `playbook-cli-<version>.tgz` (see [RELEASING.md](./RELEASING.md)). After `npm install --no-save <tarball url>` the repo-local binary is `node_modules/.bin/playbook`; run it from there, never through the unscoped `npx` form. The latest GitHub release as of 2026-11-14 is v0.54.1, older than the packages on `main` (0.66.0).
+
 ### Why `playbook` (unscoped) is not the npx target
 
 - WHAT: Treat unscoped `playbook` as unavailable for onboarding commands.
-- WHY: The unscoped npm package name is already taken, so `npx <unscoped package name> ...` cannot be the reliable install-free path.
+- WHY: The unscoped npm package name is already taken (by an unrelated package), so `npx <unscoped package name> ...` cannot be the reliable install-free path.
 
-### Preferred install-free bootstrap
+### Preferred bootstrap (from a built checkout)
 
-Use the scoped package entrypoint for the canonical serious-user ladder:
+Run the canonical serious-user ladder from a built checkout of this repository:
 
 ```bash
 pnpm playbook ai-context --json
@@ -33,10 +40,10 @@ pnpm playbook explain architecture --json
 
 `analyze` remains available for compatibility and lightweight stack inspection, but it is no longer the primary serious-user bootstrap path.
 
-Optional compatibility invocation (same scoped package):
+Intended scoped-package invocation after the first npm publish (does **not** work today, see Install status above):
 
 ```bash
-npx --yes -p @fawxzzy/pnpm playbook pnpm playbook ai-context --json
+npx --yes -p @fawxzzy/playbook playbook ai-context --json
 ```
 
 ### Publishing notes
@@ -46,6 +53,8 @@ npx --yes -p @fawxzzy/pnpm playbook pnpm playbook ai-context --json
 
 - WHAT: Do a manual first publish, then automate via a tag-triggered GitHub workflow.
 - WHY: Validates package metadata and distribution behavior once before CI automation takes ownership.
+
+Status: the tag-triggered workflow exists (`.github/workflows/publish-npm.yml`, tags `v*`; its npm publish steps only warn on failure and it always attaches the fallback tarball to the GitHub release), but nothing is on npm yet.
 
 ## Product state anchoring
 
@@ -59,6 +68,8 @@ Whenever command/workflow state changes, update:
 - command reference docs
 - demo docs/contracts
 - `docs/CHANGELOG.md`
+
+Canonical command ladder (declared in `docs/contracts/command-truth.json`): `ai-context`, `ai-contract`, `context`, `index`, `query`, `explain`, `ask`, `verify`, `plan`, `apply`. `analyze` and `fix` are compatibility commands.
 
 Current product-facing command/artifact surface:
 
@@ -76,7 +87,7 @@ If docs disagree with implementation, treat code as source of truth and realign 
 ## Internal CI command rule
 
 - Rule: Repo-internal CI must execute the built CLI directly, not through `npx`.
-- Pattern: Separate internal CLI execution (`pnpm playbook ...`) from consumer-install execution (`pnpm playbook ...`).
+- Pattern: Separate internal CLI execution (`pnpm playbook ...` from a built checkout, which runs `packages/cli/dist/main.js`) from consumer-install execution (the repo-local `node_modules/.bin/playbook` binary installed from the release tarball).
 - Failure Mode: `npx could not determine executable to run` indicates package/bin resolution failure, not necessarily a command implementation bug.
 
 ## Documentation governance validation
