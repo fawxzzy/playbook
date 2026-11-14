@@ -144,7 +144,12 @@ that id.
 
 ## Change policy
 
-Specifier or shape rules may only be tightened by a new `contractVersion`; the v1 rules above shipped as a fail-closed
-hardening (an absolute-path or malformed plugin that used to load or crash later now fails with a named error). Changing `PlaybookPlugin`, `PlaybookRule`, discovery rules or `contractVersion` handling requires a new
+The v1 specifier and shape rules above were tightened inside `contractVersion` 1 (fail-closed hardening, PB-V05-PACKAGE-BOUNDARIES-001
+hardening), and that is a behavior change for existing plugins, not a no-op: an absolute-path, drive-path, backslash,
+traversal or URL specifier, an escaping link, a plugin without a non-empty `name`, a rule without a string `description`, a
+detector without a string `label`, and a rule or detector without a non-empty `id` or executable `check`/`detect` now fail
+with a named `PluginContractError` (previously they loaded or failed later), and a duplicate listing or a second plugin that
+reuses a name is now skipped with a notice. Plugins that follow the rules above load unchanged. From here on, specifier or
+shape rules may only be tightened by a new `contractVersion`. Changing `PlaybookPlugin`, `PlaybookRule`, discovery rules or `contractVersion` handling requires a new
 `contractVersion`, an update to this document and the plugin tests above. Changing `rules --json` output follows
 `docs/contracts/COMMAND_CONTRACTS_V1.md`.

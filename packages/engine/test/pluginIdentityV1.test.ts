@@ -159,6 +159,46 @@ describe('Plugin Contract v1 identity: plugin shape', () => {
     expect(() => load(repo)).toThrow(/"name" must be a non-empty string/);
   });
 
+  it('requires a string description on every rule (fails if the description guard is removed)', () => {
+    const { repo } = makeRepo(['no-description']);
+    writePlugin(repo, 'no-description', `module.exports = { name: 'nd', rules: [{ id: 'nd.rule', check: () => ({ failures: [] }) }] };`);
+    expect(() => load(repo)).toThrow(/rules\[0\]\.description must be a string/);
+  });
+
+  it('requires a string label on every detector (fails if the label guard is removed)', () => {
+    const { repo } = makeRepo(['no-label']);
+    writePlugin(repo, 'no-label', `module.exports = { name: 'nl', detectors: [{ id: 'nl.detector', detect: () => [] }] };`);
+    expect(() => load(repo)).toThrow(/detectors\[0\]\.label must be a string/);
+  });
+
+  it('requires a non-empty string id on every rule (fails if the id guard is removed)', () => {
+    for (const id of ['', '7', 'null']) {
+      const literal = id === '' ? `''` : id;
+      const { repo } = makeRepo(['bad-id']);
+      writePlugin(repo, 'bad-id', `module.exports = { name: 'bi', rules: [{ id: ${literal}, description: 'd', check: () => ({ failures: [] }) }] };`);
+      expect(() => load(repo), id).toThrow(/rules\[0\]\.id must be a non-empty string/);
+    }
+  });
+
+  it('rejects a rule or detector entry that is not an object (fails if the object guard is removed)', () => {
+    for (const [key, entry] of [['rules', 'null'], ['rules', `'a-string'`], ['detectors', '42']] as const) {
+      const { repo } = makeRepo(['non-object-entry']);
+      writePlugin(repo, 'non-object-entry', `module.exports = { name: 'noe', ${key}: [${entry}] };`);
+      expect(() => load(repo), `${key} ${entry}`).toThrow(new RegExp(`${key}\\[0\\] must be an object`));
+    }
+  });
+
+  it('checks contractVersion before the shape: a v2 plugin with a malformed shape is skipped, not thrown', () => {
+    const { repo } = makeRepo(['future-bad']);
+    writePlugin(repo, 'future-bad', `module.exports = { name: '', contractVersion: 2, rules: [{ id: '' }] };`);
+    const catalog = load(repo);
+    expect(catalog.notices.join('\n')).toMatch(/Plugin skipped/);
+    // Same shape at the supported version must throw, proving only the version check kept the first case quiet.
+    const supported = makeRepo(['now-bad']);
+    writePlugin(supported.repo, 'now-bad', `module.exports = { name: '', contractVersion: 1, rules: [{ id: '' }] };`);
+    expect(() => load(supported.repo)).toThrow(/"name" must be a non-empty string/);
+  });
+
   it('skips non-v1 contract versions of every JSON type, never partially loading them', () => {
     for (const version of ['2', '"1"', '0', 'null', '1.5', 'true']) {
       const { repo } = makeRepo(['versioned']);
