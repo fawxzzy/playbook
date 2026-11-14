@@ -127,7 +127,7 @@ Database: Supabase
 Styling: Tailwind
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/EXAMPLES.md:27](EXAMPLES.md#block-27).
+> See also canonical block: [docs/EXAMPLES.md:27](../EXAMPLES.md#block-27).
 
 Detector results should include structured evidence and confidence metadata, and `pnpm playbook analyze --json` should expose:
 
@@ -252,7 +252,7 @@ Example output:
 }
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/PLAYBOOK_AGENT_GUIDE.md:219](PLAYBOOK_AGENT_GUIDE.md#block-219).
+> See also canonical block: [docs/PLAYBOOK_AGENT_GUIDE.md:219](../PLAYBOOK_AGENT_GUIDE.md#block-219).
 
 This output allows integration with:
 
