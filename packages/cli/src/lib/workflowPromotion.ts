@@ -51,11 +51,15 @@ export type PromotionReceiptLog = {
   receipts: PromotionReceipt[];
 };
 
+// UTF-16 code-unit order, never `localeCompare`: receipt ids and staged artifacts must come out identical on every
+// machine. Mirrors `compareCodeUnits` in the engine.
+const compareCodeUnits = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
+
 const canonicalize = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map((entry) => canonicalize(entry));
   if (value && typeof value === 'object') {
     const normalized: Record<string, unknown> = {};
-    for (const key of Object.keys(value as Record<string, unknown>).sort((a, b) => a.localeCompare(b))) {
+    for (const key of Object.keys(value as Record<string, unknown>).sort(compareCodeUnits)) {
       const entry = canonicalize((value as Record<string, unknown>)[key]);
       if (entry !== undefined) normalized[key] = entry;
     }

@@ -1119,6 +1119,7 @@ export {
   orchestrationExecutionRunPath,
   deriveOrchestrationRunId,
   computeLaunchPlanFingerprint,
+  launchPlanFingerprintMatches,
   readOrchestrationExecutionRun,
   writeOrchestrationExecutionRun,
   listOrchestrationExecutionRuns

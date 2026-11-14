@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { WORKER_LAUNCH_PLAN_RELATIVE_PATH, type WorkerLaunchPlanArtifact } from '../orchestration/workerLaunchPlan.js';
 import {
-  computeLaunchPlanFingerprint,
+  launchPlanFingerprintMatches,
   listOrchestrationExecutionRuns,
   type OrchestrationExecutionRunState
 } from './orchestrationRunState.js';
@@ -49,7 +49,6 @@ const writeArtifact = (repoRoot: string, artifact: ExecutionMergeGuardsArtifact)
 const evaluateRun = (repoRoot: string, run: OrchestrationExecutionRunState, launchPlan: WorkerLaunchPlanArtifact): MergeGuardRunEvaluation => {
   const launchLanes = [...launchPlan.lanes].sort((left, right) => left.lane_id.localeCompare(right.lane_id));
   const launchEligibleLaneIds = launchLanes.filter((lane) => lane.launchEligible).map((lane) => lane.lane_id);
-  const launchFingerprint = computeLaunchPlanFingerprint(launchPlan);
 
   const failedOrBlockedLaneRefs = uniqueSorted(
     Object.values(run.lanes)
@@ -100,7 +99,7 @@ const evaluateRun = (repoRoot: string, run: OrchestrationExecutionRunState, laun
   );
 
   const staleReasons: string[] = [];
-  if (run.source_launch_plan_fingerprint !== launchFingerprint) {
+  if (!launchPlanFingerprintMatches(run.source_launch_plan_fingerprint, launchPlan)) {
     staleReasons.push('run-state-launch-plan-fingerprint-mismatch');
   }
 

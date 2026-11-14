@@ -1,3 +1,4 @@
+import { compareCodeUnits } from '../util/compareCodeUnits.js';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -270,14 +271,18 @@ const ENGINE_SRC_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ENGINE_REPO_ROOT = path.resolve(ENGINE_SRC_DIR, '../../..');
 const FITNESS_CONTRACT_ARTIFACT_PATH = '.playbook/fitness-contract.json';
 
-const stableStringify = (value: unknown): string => {
+type KeyComparator = (left: string, right: string) => number;
+
+// Keys are ordered by UTF-16 code unit, never by `localeCompare`: `expectedFingerprint` is pinned in another
+// repository and compared here, so the fingerprint must be identical on every machine.
+const stableStringify = (value: unknown, compareKeys: KeyComparator = compareCodeUnits): string => {
   if (Array.isArray(value)) {
-    return `[${value.map((entry) => stableStringify(entry)).join(',')}]`;
+    return `[${value.map((entry) => stableStringify(entry, compareKeys)).join(',')}]`;
   }
   if (value && typeof value === 'object') {
     return `{${Object.keys(value as Record<string, unknown>)
-      .sort((a, b) => a.localeCompare(b))
-      .map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`)
+      .sort(compareKeys)
+      .map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key], compareKeys)}`)
       .join(',')}}`;
   }
   return JSON.stringify(value);
@@ -285,6 +290,16 @@ const stableStringify = (value: unknown): string => {
 
 const computeFitnessContractFingerprint = (payload: unknown): string =>
   createHash('sha256').update(stableStringify(payload)).digest('hex');
+
+/**
+ * Fingerprint as emitted by versions that ordered keys with `localeCompare`. Accepted (never emitted) when it is the
+ * pinned `expectedFingerprint`, so a pin taken with an older Playbook stays valid. It differs from the current
+ * fingerprint only when sibling keys order differently under locale collation.
+ */
+const computeLegacyLocaleFitnessContractFingerprint = (payload: unknown): string =>
+  createHash('sha256')
+    .update(stableStringify(payload, (left, right) => left.localeCompare(right)))
+    .digest('hex');
 
 const parseSourcePointer = (candidate: FitnessConfigContractSource | undefined): FitnessContractSourcePointer => {
   if (!candidate || typeof candidate !== 'object') {
@@ -447,7 +462,11 @@ export const loadFitnessContract = async (options?: {
   validateFitnessContractExactShape(payload);
 
   const fingerprint = computeFitnessContractFingerprint(payload);
-  if (sourcePointer.expectedFingerprint && sourcePointer.expectedFingerprint !== fingerprint) {
+  if (
+    sourcePointer.expectedFingerprint &&
+    sourcePointer.expectedFingerprint !== fingerprint &&
+    sourcePointer.expectedFingerprint !== computeLegacyLocaleFitnessContractFingerprint(payload)
+  ) {
     throw new Error(
       `Fitness contract drift detected. expectedFingerprint=${sourcePointer.expectedFingerprint} actualFingerprint=${fingerprint}.`
     );
