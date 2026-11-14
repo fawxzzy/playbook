@@ -165,7 +165,7 @@ export class FixExecutor {
     options: { repoRoot: string; dryRun: boolean; maxChangeLevel?: ChangeLevel; changeLevelReason?: string }
   ): Promise<FixExecutionResult> {
     const results: ApplyTaskResult[] = [];
-    const maxChangeLevel = options.maxChangeLevel ?? DEFAULT_MAX_APPLY_CHANGE_LEVEL;
+    const maxChangeLevel = options.maxChangeLevel === undefined ? DEFAULT_MAX_APPLY_CHANGE_LEVEL : options.maxChangeLevel;
     // Raising the ceiling above the default requires a recorded reason at every entry point, not just the CLI.
     assertCeilingAuthorized(maxChangeLevel, options.changeLevelReason);
     const pluginRuleIds = this.resolver.pluginRuleIds();

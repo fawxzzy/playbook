@@ -392,7 +392,7 @@ describe('runApply', () => {
       [{ reason: 'because' }, /must be provided together/],
       [{ allowLevel: '2', reason: 'because' }, /only accepts 3/],
       [{ allowLevel: 'three', reason: 'because' }, /only accepts 3/],
-      [{ allowLevel: '3', reason: '   ' }, /visible non-space/],
+      [{ allowLevel: '3', reason: '   ' }, /visible letter, number, punctuation, or symbol/],
       [{ allowLevel: '3', reason: 'x'.repeat(401) }, /at most 400/],
       [{ allowLevel: '3', reason: 'line one\nline two' }, /single line/],
       [{ allowLevel: '3', reason: 'looks fine\u202Egnp.exe' }, /single line/],

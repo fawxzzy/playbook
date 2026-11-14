@@ -230,15 +230,49 @@ describe('override reason (library entry points)', () => {
     ['line separator', 'a\u2028b'],
     ['paragraph separator', 'a\u2029b'],
     ['over the length limit', 'x'.repeat(401)],
-    ['not a string', 42 as unknown as string]
+    ['not a string', 42 as unknown as string],
+    ['Hangul filler U+3164 only', '\u3164\u3164'],
+    ['Hangul filler hiding in text', 'ok\u3164ok'],
+    ['Braille blank U+2800', 'ok\u2800ok'],
+    ['Hangul choseong filler', 'ok\u115Fok'],
+    ['halfwidth Hangul filler', 'ok\uFFA0ok'],
+    ['Khmer inherent vowel', 'ok\u17B4ok'],
+    ['combining grapheme joiner', 'ok\u034Fok'],
+    ['leading combining mark', '\u0301approved'],
+    ['combining mark after a space', 'approved \u0301now'],
+    ['only combining marks', '\u0301\u0302'],
+    ['private-use code point', 'ok\uE000ok'],
+    ['unassigned code point', 'ok\u0378ok'],
+    ['lone surrogate', 'ok\uD800ok'],
+    ['no letter, number, punctuation or symbol', '\u0308\u0308']
   ])('rejects %s', (_label, reason) => {
     expect(() => normalizeOverrideReason(reason)).toThrow();
   });
 
+  it.each(['café approved', 'cafe\u0301 approved', '承認済み: ticket 42', 'approved \u2705', 'Release owner approved (ticket #42) - ok!', '42'])(
+    'still accepts the legitimate reason %s',
+    (reason) => {
+      expect(normalizeOverrideReason(reason)).toBe(reason.trim());
+    }
+  );
+
   it('requires a valid reason whenever the ceiling is above Level 2, and nothing at or below it', () => {
     expect(() => assertCeilingAuthorized(2, undefined)).not.toThrow();
     expect(() => assertCeilingAuthorized(3, undefined)).toThrow(/requires a recorded reason/);
-    expect(() => assertCeilingAuthorized(3, '   ')).toThrow(/visible non-space/);
+    expect(() => assertCeilingAuthorized(3, '   ')).toThrow(/visible letter, number, punctuation, or symbol/);
     expect(() => assertCeilingAuthorized(3, 'approved')).not.toThrow();
+  });
+});
+
+describe('ceiling validity (fail closed)', () => {
+  it.each([Number.NaN, 2.5, 0, 4, -1, Infinity, '3', null])('rejects the invalid ceiling %s', (bad) => {
+    expect(() => assertCeilingAuthorized(bad as never, 'approved')).toThrow(/Invalid change-level ceiling/);
+    expect(() => enforceChangeLevelCeiling([{ id: 't', ruleId: 'notes.missing', file: null, autoFix: true }], bad as never)).toThrow(/Invalid change-level ceiling/);
+    expect(() => assertReportedWritesWithinCeiling(['docs/a.md'], bad as never)).toThrow(/Invalid change-level ceiling/);
+  });
+
+  it('NaN no longer silently disables the ceiling check', () => {
+    // `level > NaN` is always false, so before the guard a NaN ceiling let every Level 3 task through.
+    expect(() => enforceChangeLevelCeiling([{ id: 't', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', autoFix: true }], Number.NaN as never)).toThrow();
   });
 });

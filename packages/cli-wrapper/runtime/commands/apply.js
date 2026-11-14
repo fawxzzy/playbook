@@ -773,7 +773,6 @@ export const runApply = async (cwd, options) => {
         throw new Error(`Cannot execute apply flow: ${routeDecision.why}`);
     }
     const changeLevelOverride = parseChangeLevelOverride({ allowLevel: options.allowLevel, reason: options.reason });
-    const runId = resolveRunId(cwd, options.runId);
     const plan = options.fromPlan
         ? loadPlanFromFile(cwd, options.fromPlan, options)
         : (() => {
@@ -790,6 +789,11 @@ export const runApply = async (cwd, options) => {
                 remediation: buildPlanRemediation({ failureCount: failureFacts.failureCount, stepCount: tasks.length })
             };
         })();
+    // Reject before resolveRunId so a refused request creates no execution run.
+    if (changeLevelOverride && plan.maintenanceExecution) {
+        throw new Error('The --allow-level/--reason override cannot be used with maintenance-plan execution: maintenance tasks are a fixed reviewed command set at Level 2 and never need a Level 3 override.');
+    }
+    const runId = resolveRunId(cwd, options.runId);
     const applyPrecondition = remediationToApplyPrecondition(plan.remediation);
     if (applyPrecondition.action === 'fail') {
         throw new Error(`Cannot apply remediation: ${applyPrecondition.message}`);
@@ -841,9 +845,6 @@ export const runApply = async (cwd, options) => {
         }
     };
     if (plan.maintenanceExecution) {
-        if (changeLevelOverride) {
-            throw new Error('The --allow-level/--reason override cannot be used with maintenance-plan execution: maintenance tasks are a fixed reviewed command set at Level 2 and never need a Level 3 override.');
-        }
         // Maintenance tasks are marked autoFix:false in the artifact (apply's handler pipeline never runs them) but this
         // branch executes their commands, so they are validated as executable tasks before any command runs.
         validateSelectedTasks(selectedTasks.map((task) => ({ ...task, autoFix: true })));

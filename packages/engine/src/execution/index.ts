@@ -266,6 +266,7 @@ export const parsePlanArtifact = (payload: unknown): { tasks: PlanTask[] } => {
 
 export { RuleRunner } from './ruleRunner.js';
 export { PlanGenerator } from './planGenerator.js';
+export { BUILT_IN_WRITE_TARGETS } from './builtInTargets.js';
 export { FixExecutor, HandlerResolver } from './fixExecutor.js';
 export { defaultFixHandlers } from './defaultFixHandlers.js';
 export type { PlanTask, RuleFailure, Rule, FixHandler, ChangeLevel } from './types.js';

@@ -161,6 +161,16 @@ describe('computePlanArtifactDigest covers what a task writes', () => {
     expect(digest({ ...base, task_kind: 'release-package-version' })).not.toBe(original);
   });
 
+  it('covers provenance (handlers read it, for example the release version bump) but not the advisory block', () => {
+    const release = { ...base, ruleId: 'release.package-json.version', provenance: { package_name: '@scope/alpha', current_version: '1.2.3', next_version: '1.2.4' } };
+    const original = digest(release);
+    expect(digest({ ...release, provenance: { ...release.provenance, next_version: '9.9.9' } })).not.toBe(original);
+    expect(digest({ ...release, provenance: undefined })).not.toBe(original);
+    expect(digest({ ...release, provenance: null })).toBe(digest({ ...release, provenance: undefined }));
+    // advisory is ranking rationale that no handler reads; it is excluded on purpose, like changeLevel.
+    expect(digest({ ...release, advisory: { outcomeLearning: { rationale: 'ranked by promoted knowledge', confidence: 0.9 } } })).toBe(original);
+  });
+
   it('is independent of key order and of the additive changeLevel label', () => {
     const reordered = {
       preconditions: { planned_operation: 'replace-managed-block', approved_fragment_ids: ['f1'], target_file_fingerprint: 'abc', target_path: 'docs/a.md' },
@@ -188,5 +198,39 @@ describe('computePlanArtifactDigest covers what a task writes', () => {
     const b = { id: 'b', ruleId: 'r', file: null, action: 'b', autoFix: true };
     expect(computePlanArtifactDigest([a, b])).not.toBe(computePlanArtifactDigest([b, a]));
     expect(computePlanArtifactDigest([a])).not.toBe(computePlanArtifactDigest([a, b]));
+  });
+});
+
+describe('plugin tasks without a declared file stay fail-closed (TM-GAP-14 does not loosen enforcement)', () => {
+  it('still refuses a proposal-only scope for a plugin task that declares no file', () => {
+    const bundle = buildChangeScopeBundleFromPlan({ tasks: [{ id: 'task-plugin', ruleId: 'plugin.rule', file: null, action: 'plugin fix', autoFix: true }] });
+    expect(bundle.mutationScope.allowedFiles).toEqual([]);
+    expect(bundle.mutationScope.boundaryChecks).toContain('proposal-only-no-write-authority');
+    const scope = {
+      scopeId: bundle.scopeId,
+      source: bundle.source,
+      allowedFiles: bundle.mutationScope.allowedFiles,
+      patchSizeBudget: bundle.mutationScope.patchSizeBudget,
+      boundaryChecks: bundle.mutationScope.boundaryChecks
+    };
+
+    expect(() =>
+      enforceApplyChangeScope([{ id: 'task-plugin', ruleId: 'plugin.rule', file: null, action: 'plugin fix', autoFix: true }], scope)
+    ).toThrow(/required boundary checks are missing/);
+  });
+
+  it('gives the built-in notes.missing plan write authority for exactly its target file', () => {
+    const task = { id: 'task-notes', ruleId: 'notes.missing', file: 'docs/PLAYBOOK_NOTES.md', action: 'create playbook notes file', autoFix: true };
+    const bundle = buildChangeScopeBundleFromPlan({ tasks: [task] });
+    const scope = {
+      scopeId: bundle.scopeId,
+      source: bundle.source,
+      allowedFiles: bundle.mutationScope.allowedFiles,
+      patchSizeBudget: bundle.mutationScope.patchSizeBudget,
+      boundaryChecks: bundle.mutationScope.boundaryChecks
+    };
+
+    expect(() => enforceApplyChangeScope([task], scope)).not.toThrow();
+    expect(() => enforceApplyChangeScope([{ ...task, file: 'docs/OTHER.md' }], scope)).toThrow(/out-of-scope mutation/);
   });
 });

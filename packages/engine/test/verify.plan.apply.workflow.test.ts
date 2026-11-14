@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyExecutionPlan, FixExecutor, generateExecutionPlan, generatePlanContract, parsePlanArtifact, validateRemediationPlan, verifyRepo } from '../src/index.js';
+import { applyExecutionPlan, BUILT_IN_WRITE_TARGETS, FixExecutor, generateExecutionPlan, generatePlanContract, parsePlanArtifact, PlanGenerator, validateRemediationPlan, verifyRepo } from '../src/index.js';
 import { HandlerResolver } from '../src/execution/index.js';
 
 describe('verify -> plan -> apply -> verify workflow', () => {
@@ -21,7 +21,7 @@ describe('verify -> plan -> apply -> verify workflow', () => {
       {
         id: expect.any(String),
         ruleId: 'notes.missing',
-        file: null,
+        file: 'docs/PLAYBOOK_NOTES.md',
         action: 'create playbook notes file',
         autoFix: true,
         changeLevel: 1
@@ -205,7 +205,7 @@ describe('verify -> plan -> apply -> verify workflow', () => {
       const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-override-reason-required-'));
       const options = { dryRun: false, handlers: { 'plugin.workflow': writeWorkflowHandler } };
 
-      await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 3, reason: '' } })).rejects.toThrow(/visible non-space/);
+      await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 3, reason: '' } })).rejects.toThrow(/visible letter, number, punctuation, or symbol/);
       await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 3, reason: 'bidi\u202Eoverride' } })).rejects.toThrow(/single line/);
       await expect(applyExecutionPlan(root, [workflowTask], { ...options, changeLevelOverride: { allowLevel: 2 as never, reason: 'ok' } })).rejects.toThrow(/only allowLevel 3/);
       expect(() => validateRemediationPlan(root, [workflowTask], { maxChangeLevel: 3 })).toThrow(/requires a recorded reason/);
@@ -508,4 +508,59 @@ describe('verify -> plan -> apply -> verify workflow', () => {
     expect(execution.summary).toEqual({ applied: 1, skipped: 0, unsupported: 0, failed: 0 });
     expect(fs.existsSync(path.join(root, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(true);
   });
+});
+
+describe('built-in plan tasks declare the file their handler writes (TM-GAP-14)', () => {
+  it('declares docs/PLAYBOOK_NOTES.md for notes.missing and notes.empty and keeps task ids stable', () => {
+    const generator = new PlanGenerator();
+    const missing = generator.generate([{ id: 'notes.missing', message: 'm', fix: 'create playbook notes file' }]).tasks[0];
+    const empty = generator.generate([{ id: 'notes.empty', message: 'e', fix: 'write starter notes template' }]).tasks[0];
+
+    expect(missing).toMatchObject({ ruleId: 'notes.missing', file: 'docs/PLAYBOOK_NOTES.md', autoFix: true });
+    expect(empty).toMatchObject({ ruleId: 'notes.empty', file: 'docs/PLAYBOOK_NOTES.md', autoFix: true });
+    // The id seed is the finding, not the declared file, so previously reviewed task ids do not change.
+    expect(missing?.id).toBe('task-' + createHash('sha256').update('notes.missing||create playbook notes file|true').digest('hex').slice(0, 10) + '-1');
+  });
+
+  it('does not invent a file for plugin rules, non-fixable findings or findings that already carry evidence', () => {
+    const generator = new PlanGenerator();
+    const tasks = generator.generate([
+      { id: 'plugin.rule', message: 'p', fix: 'fix it' },
+      { id: 'notes.missing', message: 'manual only (no fix)' },
+      { id: 'notes.empty', message: 'e', fix: 'write starter notes template', evidence: 'docs/OTHER.md' }
+    ]).tasks;
+
+    expect(tasks.find((task) => task.ruleId === 'plugin.rule')?.file).toBeNull();
+    expect(tasks.find((task) => task.ruleId === 'notes.missing')?.file).toBeNull();
+    expect(tasks.find((task) => task.ruleId === 'notes.empty')?.file).toBe('docs/OTHER.md');
+  });
+
+  it.each(Object.entries(BUILT_IN_WRITE_TARGETS))('%s: the built-in handler reports writing exactly the declared target %s', async (ruleId, target) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-builtin-target-'));
+    fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+    if (ruleId === 'notes.empty') fs.writeFileSync(path.join(root, target), '');
+
+    const result = await applyExecutionPlan(root, [{ id: 'task-t', ruleId, file: target, action: 'fix', autoFix: true }], { dryRun: false });
+
+    expect(result.summary).toEqual({ applied: 1, skipped: 0, unsupported: 0, failed: 0 });
+    expect(fs.existsSync(path.join(root, target))).toBe(true);
+  });
+});
+
+describe('maxChangeLevel guard', () => {
+  const task = { id: 't', ruleId: 'plugin.docs', file: 'docs/a.md', action: 'fix', autoFix: true };
+
+  it.each([Number.NaN, 2.5, 0, 4, -1, Infinity, '3' as unknown as number, undefined as unknown as number, null as unknown as number])(
+    'fails closed for invalid ceiling %s in every entry point that takes one',
+    async (bad) => {
+      const root = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-bad-ceiling-'));
+      const handlers = { 'plugin.docs': async () => ({ status: 'applied' as const, filesChanged: ['docs/a.md'], summary: 'ok' }) };
+      // `undefined` means "use the default" for the optional parameter; only non-undefined values are checked.
+      if (bad !== undefined) {
+        expect(() => validateRemediationPlan(root, [task], { maxChangeLevel: bad as never, changeLevelReason: 'approved' })).toThrow(/Invalid change-level ceiling/);
+        const executor = new FixExecutor(new HandlerResolver({ builtIn: {}, plugin: handlers }));
+        await expect(executor.apply([task], { repoRoot: root, dryRun: false, maxChangeLevel: bad as never, changeLevelReason: 'approved' })).rejects.toThrow(/Invalid change-level ceiling/);
+      }
+    }
+  );
 });
