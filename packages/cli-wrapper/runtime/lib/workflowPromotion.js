@@ -3,12 +3,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { writeJsonArtifactAbsolute } from './jsonArtifact.js';
+// UTF-16 code-unit order, never `localeCompare`: receipt ids and staged artifacts must come out identical on every
+// machine. Mirrors `compareCodeUnits` in the engine.
+const compareCodeUnits = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
 const canonicalize = (value) => {
     if (Array.isArray(value))
         return value.map((entry) => canonicalize(entry));
     if (value && typeof value === 'object') {
         const normalized = {};
-        for (const key of Object.keys(value).sort((a, b) => a.localeCompare(b))) {
+        for (const key of Object.keys(value).sort(compareCodeUnits)) {
             const entry = canonicalize(value[key]);
             if (entry !== undefined)
                 normalized[key] = entry;
