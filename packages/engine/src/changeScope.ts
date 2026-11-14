@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import type { AnalyzePullRequestResult } from './pr/analyzePr.js';
 import type { WorkerLaunchPlanArtifact } from './orchestration/workerLaunchPlan.js';
 import type { AiProposal } from './ai/aiProposal.js';
+import { compareCodeUnits } from './util/compareCodeUnits.js';
 
 export const CHANGE_SCOPE_SCHEMA_VERSION = '1.0' as const;
 export const CHANGE_SCOPE_RELATIVE_PATH = '.playbook/change-scope.json' as const;
@@ -63,14 +64,18 @@ type PlanLikePayload = {
   tasks?: DigestableTask[];
 };
 
-/** JSON with sorted object keys; `undefined` is treated as `null` so absent and null fields hash identically. */
+/**
+ * JSON with object keys sorted by UTF-16 code unit (never `localeCompare`, which is locale/ICU dependent and would let
+ * a plan made on one machine hash differently on another); `undefined` is treated as `null` so absent and null
+ * fields hash identically.
+ */
 const canonicalJson = (value: unknown): string => {
   if (value === undefined || value === null) return 'null';
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
     return `{${Object.keys(record)
-      .sort((left, right) => left.localeCompare(right))
+      .sort(compareCodeUnits)
       .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
       .join(',')}}`;
   }
@@ -108,7 +113,8 @@ export const computePlanArtifactDigest = (tasks: ReadonlyArray<DigestableTask>):
     )
     .digest('hex')}`;
 
-const uniqueSorted = (values: readonly string[]): string[] => [...new Set(values)].filter(Boolean).sort((a, b) => a.localeCompare(b));
+// Code-unit order: these arrays are written to the change-scope artifact and seed `scopeId`, so the order must not depend on locale.
+const uniqueSorted = (values: readonly string[]): string[] => [...new Set(values)].filter(Boolean).sort(compareCodeUnits);
 
 const scoreToRisk = (score: number): ChangeScopeRiskLevel => {
   if (score >= 5) return 'high';
