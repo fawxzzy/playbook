@@ -7,6 +7,14 @@ coverage
 .playbook/*
 !.playbook/
 !.playbook/pr-metadata.json
+!.playbook/changelog-config.json
+!.playbook/version-policy.json
+!.playbook/architecture/
+.playbook/architecture/*
+!.playbook/architecture/subsystems.json
+!.playbook/functors/
+.playbook/functors/*
+!.playbook/functors/registry.json
 !.playbook/demo-artifacts/
 !.playbook/demo-artifacts/*.json
 !.playbook/memory/

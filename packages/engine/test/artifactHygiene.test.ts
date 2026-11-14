@@ -42,6 +42,62 @@ describe('artifact hygiene diagnostics', () => {
     expect(plan.tasks.map((task) => task.ruleId)).toContain('PB013');
   }, 20000);
 
+  it('treats committed governance config and contract files under .playbook as intentional, not runtime output', () => {
+    const repo = createRepo('playbook-artifact-hygiene-contract');
+    const committed = [
+      '.playbook/architecture/subsystems.json',
+      '.playbook/changelog-config.json',
+      '.playbook/version-policy.json',
+      '.playbook/managed-surfaces.json',
+      '.playbook/.gitignore',
+      '.playbook/pr-metadata.json',
+      '.playbook/functors/registry.json',
+      '.playbook/memory/atlas-knowledge-candidates.json',
+      '.playbook/memory/atlas-knowledge-candidate-intake-receipts/intake.v1.json'
+    ];
+    const stray = ['.playbook/plan.json', '.playbook/repo-index.json', '.playbook/memory/index.json', '.playbook/version-policy.backup.json'];
+    for (const file of [...committed, ...stray]) {
+      fs.mkdirSync(path.dirname(path.join(repo, file)), { recursive: true });
+      fs.writeFileSync(path.join(repo, file), JSON.stringify({ ok: true }, null, 2));
+    }
+    execSync('git add -f .', { cwd: repo });
+    execSync('git commit -m "seed"', { cwd: repo, stdio: 'ignore' });
+
+    const report = generateRepositoryHealth(repo);
+    const flagged = report.artifactHygiene.findings
+      .filter((finding) => finding.type === 'runtime-artifact-committed')
+      .map((finding) => finding.path)
+      .sort();
+
+    expect(flagged).toEqual([...stray].sort());
+    expect(report.artifactHygiene.classification.contract).toEqual(expect.arrayContaining(['.playbook/version-policy.json', '.playbook/architecture/subsystems.json']));
+  }, 20000);
+
+  it('only reports frequently modified generated artifacts that are still committed and not contract files', () => {
+    const repo = createRepo('playbook-artifact-hygiene-frequency');
+    fs.mkdirSync(path.join(repo, '.playbook', 'architecture'), { recursive: true });
+    const runtimeFile = path.join(repo, '.playbook', 'plan.json');
+    const removedFile = path.join(repo, '.playbook', 'release-plan.json');
+    const contractFile = path.join(repo, '.playbook', 'architecture', 'subsystems.json');
+
+    for (let i = 0; i < 5; i += 1) {
+      for (const file of [runtimeFile, removedFile, contractFile]) {
+        fs.writeFileSync(file, JSON.stringify({ revision: i }, null, 2));
+      }
+      execSync('git add -f .', { cwd: repo });
+      execSync(`git commit -m "revision ${i}"`, { cwd: repo, stdio: 'ignore' });
+    }
+    execSync('git rm -q --cached .playbook/release-plan.json', { cwd: repo });
+    execSync('git commit -m "untrack release plan"', { cwd: repo, stdio: 'ignore' });
+
+    const report = generateRepositoryHealth(repo);
+    const frequent = report.artifactHygiene.findings
+      .filter((finding) => finding.type === 'frequently-modified-generated-artifact')
+      .map((finding) => finding.path);
+
+    expect(frequent).toEqual(['.playbook/plan.json']);
+  }, 30000);
+
   it('flags missing .playbookignore on large repositories', () => {
     const repo = createRepo('playbook-artifact-hygiene-ignore');
     fs.mkdirSync(path.join(repo, 'src'), { recursive: true });
