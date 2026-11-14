@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_e09a6a168ea7",
+  "export_id": "pbe_playbook_roadmap_550379b7ef13",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:e09a6a168ea77aca70b6d1f506af9e3478282cd4b30c77b91bea597fcc7e5148",
+  "source_revision": "sha256:550379b7ef13ef4b0f844c5cae0670b85f7830346c1f2508acd550ba8a869c44",
   "generated_at": "2026-11-14T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:e09a6a168ea77aca70b6d1f506af9e3478282cd4b30c77b91bea597fcc7e5148",
+      "revision": "sha256:550379b7ef13ef4b0f844c5cae0670b85f7830346c1f2508acd550ba8a869c44",
       "observed_at": "2026-11-14T00:00:00.000Z"
     }
   ],
@@ -1048,16 +1048,16 @@
     {
       "idempotency_key": "pbk_playbook_pb-v1-demo-refresh-001_v1",
       "record_kind": "project-work",
-      "record_status": "active",
+      "record_status": "candidate",
       "record": {
         "contract_version": "atlas.card-record.v2",
         "card_id": "PB-V1-DEMO-REFRESH-001",
         "project_id": "playbook",
         "board_id": "discordos:project-feedback:playbook",
         "title": "PR-based playbook-demo refresh automation",
-        "description": "Refresh committed playbook-demo artifacts/docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
+        "description": "Deferred (owner decision 2026-11-14): the PR-based demo refresh is dropped from the v1 scope and planned for later, so it needs no refresh credential now. Original scope: refresh committed playbook-demo artifacts and docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
         "card_type": "feature",
-        "lifecycle": "in-progress",
+        "lifecycle": "intake",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -1067,7 +1067,7 @@
         "updated_at": "2026-11-14T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V1-DEMO-REFRESH-001",
         "extensions": {
-          "roadmap_status": "in-progress",
+          "roadmap_status": "planned-later",
           "roadmap_version": "v1.0"
         }
       },
@@ -1078,8 +1078,8 @@
         "source_updated_at": "2026-11-14T00:00:00.000Z"
       },
       "content": {
-        "summary": "Refresh committed playbook-demo artifacts/docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
-        "objective": "Refresh committed playbook-demo artifacts/docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
+        "summary": "Deferred (owner decision 2026-11-14): the PR-based demo refresh is dropped from the v1 scope and planned for later, so it needs no refresh credential now. Original scope: refresh committed playbook-demo artifacts and docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
+        "objective": "Deferred (owner decision 2026-11-14): the PR-based demo refresh is dropped from the v1 scope and planned for later, so it needs no refresh credential now. Original scope: refresh committed playbook-demo artifacts and docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
         "acceptance_criteria": [
           "Run: node scripts/demo-validate.mjs",
           "Run: node scripts/demo-refresh.mjs --dry-run --feature-id PB-V1-DEMO-REFRESH-001"
@@ -1113,7 +1113,7 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:e09a6a168ea77aca70b6d1f506af9e3478282cd4b30c77b91bea597fcc7e5148",
+    "source_digest": "sha256:550379b7ef13ef4b0f844c5cae0670b85f7830346c1f2508acd550ba8a869c44",
     "source_feature_count": 64,
     "exported_card_count": 15,
     "excluded_completed_statuses": [

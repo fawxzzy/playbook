@@ -393,7 +393,7 @@
       "feature_id": "PB-V1-DEMO-REFRESH-001",
       "version": "v1.0",
       "title": "PR-based playbook-demo refresh automation",
-      "goal": "Refresh committed playbook-demo artifacts/docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
+      "goal": "Deferred (owner decision 2026-11-14): the PR-based demo refresh is dropped from the v1 scope and planned for later, so it needs no refresh credential now. Original scope: refresh committed playbook-demo artifacts and docs with branch-accurate local CLI builds through dedicated maintenance workflows and PR-based delivery.",
       "commands": [],
       "contracts": [
         "docs/integration/PLAYBOOK_DEMO_COMPANION_CHANGES.md",
@@ -415,7 +415,7 @@
         "node scripts/demo-validate.mjs",
         "node scripts/demo-refresh.mjs --dry-run --feature-id PB-V1-DEMO-REFRESH-001"
       ],
-      "status": "in-progress",
+      "status": "planned-later",
       "package_ownership": [
         "@fawxzzy/playbook"
       ]
