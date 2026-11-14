@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_9035e45abb0d",
+  "export_id": "pbe_playbook_roadmap_7194e905caa3",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:9035e45abb0da20f749cbd46121a77cf4e4f38a3656bc4d23efc310434285a5a",
+  "source_revision": "sha256:7194e905caa30ec5d1317b3d4d5da14f3799b9a0d3836ead4ad2333a2c094330",
   "generated_at": "2026-11-14T00:00:00.000Z",
   "sources": [
     {
@@ -13,88 +13,11 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:9035e45abb0da20f749cbd46121a77cf4e4f38a3656bc4d23efc310434285a5a",
+      "revision": "sha256:7194e905caa30ec5d1317b3d4d5da14f3799b9a0d3836ead4ad2333a2c094330",
       "observed_at": "2026-11-14T00:00:00.000Z"
     }
   ],
   "cards": [
-    {
-      "idempotency_key": "pbk_playbook_pb-v04-plan-apply-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V04-PLAN-APPLY-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "Plan/apply trust-model hardening",
-        "description": "Strengthen apply safety boundaries and keep remediation derivation deterministic.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V03-INDEX-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-14T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V04-PLAN-APPLY-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v0.4"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V04-PLAN-APPLY-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-14T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Strengthen apply safety boundaries and keep remediation derivation deterministic.",
-        "objective": "Strengthen apply safety boundaries and keep remediation derivation deterministic.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook verify --json",
-          "Run: pnpm playbook plan --json"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook verify --json",
-          "pnpm playbook plan --json"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/architecture/REMEDIATION_TRUST_MODEL.md",
-          "repos/playbook/docs/commands/apply.md",
-          "repos/playbook/docs/commands/plan.md",
-          "repos/playbook/docs/contracts/security/change-level.json",
-          "repos/playbook/docs/contracts/verify-output.md",
-          "repos/playbook/packages/cli/src/commands/apply.changeLevel.integration.test.ts",
-          "repos/playbook/packages/cli/src/commands/apply.test.ts",
-          "repos/playbook/packages/engine/src/execution/changeLevel.test.ts",
-          "repos/playbook/packages/engine/test/verify.plan.apply.workflow.test.ts",
-          "repos/playbook/test/contracts/security/security-contracts.test.mjs",
-          "repos/playbook/test/security/security-regression.test.mjs"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "apply",
-          "plan",
-          "verify"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-core",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
     {
       "idempotency_key": "pbk_playbook_pb-v06-failure-taxonomy-001_v1",
       "record_kind": "project-work",
@@ -228,6 +151,8 @@
           "repos/playbook/docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md",
           "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
           "repos/playbook/docs/contracts/repository-graph-contract.md",
+          "repos/playbook/packages/cli/src/commands/graph.test.ts",
+          "repos/playbook/packages/engine/test/graphImpact.test.ts",
           "repos/playbook/tests/contracts/architecture-graph.contract.test.ts"
         ]
       },
@@ -1266,9 +1191,9 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:9035e45abb0da20f749cbd46121a77cf4e4f38a3656bc4d23efc310434285a5a",
+    "source_digest": "sha256:7194e905caa30ec5d1317b3d4d5da14f3799b9a0d3836ead4ad2333a2c094330",
     "source_feature_count": 64,
-    "exported_card_count": 17,
+    "exported_card_count": 16,
     "excluded_completed_statuses": [
       "complete",
       "completed",
