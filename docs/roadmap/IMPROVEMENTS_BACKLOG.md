@@ -71,6 +71,8 @@ Failure Mode: Agents operating outside the Playbook control plane create invisib
 
 ### 5) External consumer upgrade boundary manifest follow-on
 
+Status (2026-11-14): the manifest, managed-surface detection and protected-path refusal shipped under `PB-V09-EXTERNAL-CONSUMER-UPGRADE-BOUNDARY-001` (`implemented-hardening`; see `docs/commands/upgrade.md` and `docs/CONSUMER_INTEGRATION_CONTRACT.md`): `init` seeds `.playbook/managed-surfaces.json`, and `upgrade --apply` fails closed with review-required output for `repo_local_protected`, `explicit_migration_required` and unclassified paths. What stays open here is the narrow question of explicit migration hooks for repo-owned files; the bullets below keep the original framing.
+
 - Define the thinnest viable manifest or equivalent contract that distinguishes Playbook-managed paths from repo-local protected paths for external consumer repos.
 - Clarify the first migration-safe upgrade behaviors after doctrine is committed: managed-surface detection, protected-path refusal, and explicit migration hooks for repo-owned files.
 - Keep the consumer-repo local layer explicit, including repo-local `AGENT.md` as product truth rather than framework-owned doctrine.

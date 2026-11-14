@@ -557,11 +557,11 @@ Failure Mode: Upgrade flows that cannot distinguish managed from local files eve
 
 Failure Mode: Framework upgrades that overwrite repo-local product intent create silent regression in UX, architecture, and operator trust.
 
-Next planned same-app backend cutover slice: **Same-App Backend-Provider Migrations**.
+Same-app backend cutover doctrine: **Same-App Backend-Provider Migrations**. It is tracked as `PB-V09-SAME-APP-BACKEND-CUTOVER-001` (`implemented-hardening` in `docs/roadmap/ROADMAP.json`): the doctrine is documented here and has no command surface (the card lists no commands), so no cutover tooling exists.
 
-This slice is distinct from a new-app migration. The app boundary stays fixed while the backend/provider contract changes underneath it, so the migration has to preserve identity continuity and app-data continuity at the same time. The tracked follow-up now lives in `docs/roadmap/ROADMAP.json` as `PB-V09-SAME-APP-BACKEND-CUTOVER-001`.
+This slice is distinct from a new-app migration. The app boundary stays fixed while the backend/provider contract changes underneath it, so the migration has to preserve identity continuity and app-data continuity at the same time. The card in `docs/roadmap/ROADMAP.json` is `PB-V09-SAME-APP-BACKEND-CUTOVER-001`.
 
-Planned direction:
+Doctrine (what a same-app cutover plan must carry):
 
 - keep auth-provider/user-id continuity explicit in the cutover plan and receipts
 - require a deliberate legacy bridge strategy with a grace window and removal criteria
@@ -819,21 +819,22 @@ Canonical sequencing reference:
 
 ### 2) Active hardening (current build mode)
 
-- Trust/runtime hardening in flight: plan/apply trust model, package-boundary convergence, delivery-system gating, product-truth packaging, failure-intelligence codification, and v0.8 knowledge compaction foundations (`PB-V04-PLAN-APPLY-001`, `PB-V05-PACKAGE-BOUNDARIES-001`, `PB-V1-DELIVERY-SYSTEM-001`, `PB-V1-PRODUCT-TRUTH-PACKAGING-001`, `PB-V06-FAILURE-INTELLIGENCE-001`, `PB-V08-*`).
+- Shipped, hardening continues (`implemented-hardening` in `docs/roadmap/ROADMAP.json`, grouped there as `activeHardening`): the plan/apply trust model (`PB-V04-PLAN-APPLY-001`: change levels, a Level 2 `apply` ceiling and an explicit, recorded Level 3 override; see `docs/architecture/REMEDIATION_TRUST_MODEL.md`), package-boundary convergence with Plugin Contract v1 (`PB-V05-PACKAGE-BOUNDARIES-001`; see `docs/contracts/PLUGIN_CONTRACT_V1.md`), delivery-system gating (`PB-V1-DELIVERY-SYSTEM-001`), product-truth packaging (`PB-V1-PRODUCT-TRUTH-PACKAGING-001`), the test-failure intelligence loop (`PB-V06-FAILURE-INTELLIGENCE-001`, re-scoped to `test-triage` -> `test-fix-plan` -> `test-autofix` -> `remediation-status`), and the v0.8 knowledge compaction foundations (`PB-V08-*`, except `PB-V08-GRAPH-MEMORY-001`, which is `architecture-defined`).
+- Not shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `planned`; there is no `failure` command). `PB-V1-DEMO-REFRESH-001` is `in-progress`.
 
 ### 3) Next buildable slices (dependency-ready after active hardening)
 
-Near-term dependency chain:
+Near-term dependency chain (build-order intent from `ROADMAP.json` `implementationSequencing.nextBuildableSlicesInOrder`, not a gate; status as of the roadmap `updatedAt` date in brackets):
 
-1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`
-2. `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001`
-3. `PB-V09-SESSION-EVIDENCE-001` (implemented canonical runtime truth surface; hardening continues)
+1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`in-progress`: `graph impact`, `graph boundaries`, `graph risks` and the `analyze-pr` `graphImpact` section are shipped (module-level, read-only); the semantic node/edge layer and a persisted `.playbook/arch-graph.v2.json` are not]
+2. `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001` [`implemented`]
+3. `PB-V09-SESSION-EVIDENCE-001` [`implemented-hardening`] (implemented canonical runtime truth surface; hardening continues)
    - Runtime truth boundary: `.playbook/session.json` + `evidenceEnvelope` is the canonical continuity/provenance seam for downstream policy, approval, receipt, and memory interpretation.
    - Deterministic trust rule: missing/stale/contradictory required evidence remains fail-closed for trust-sensitive downstream actions.
-4. `PB-V09-CONTROL-PLANE-001` (depends on Session + Evidence runtime truth)
-5. `PB-V09-PR-REVIEW-LOOP-001`
-6. `PB-V09-LONGITUDINAL-STATE-001`
-7. `PB-V09-KNOWLEDGE-QUERY-INSPECTION-001`
+4. `PB-V09-CONTROL-PLANE-001` [`implemented-hardening`] (depends on Session + Evidence runtime truth)
+5. `PB-V09-PR-REVIEW-LOOP-001` [`implemented-hardening`]
+6. `PB-V09-LONGITUDINAL-STATE-001` [`implemented-hardening`]
+7. `PB-V09-KNOWLEDGE-QUERY-INSPECTION-001` [`implemented-hardening`]
 
 Tiny roadmap entry (visibility-first, low-distraction):
 
@@ -927,9 +928,9 @@ Pattern: Same runtime, different operational surfaces.
 - **Already exists today**
   - internal-first knowledge lifecycle framing, candidate/compacted/promoted/retired artifact modeling, and evidence-linked compaction foundations are already part of the roadmap and architecture direction.
 - **Partially defined**
-  - candidate extraction, deterministic bucketing, and pattern-card storage are in-progress as internal foundations.
+  - candidate extraction, deterministic bucketing, and pattern-card storage are shipped as internal foundations (`PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001`, `PB-V08-KNOWLEDGE-BUCKETING-001`, `PB-V08-PATTERN-CARD-STORAGE-001`, all `implemented-hardening`), and the `memory` command already covers replay, human-reviewed promotion, retirement, supersession and prune (`PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001`, `PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001`, `PB-V09-REPO-MEMORY-PROMOTION-PRUNE-001`, all `implemented-hardening`).
 - **Future work**
-  - durable knowledge persistence, promotion gates, retirement workflows, and replayable compaction/promotion artifacts.
+  - the persistence layer as a whole (`PB-V09-KNOWLEDGE-PERSISTENCE-001`, `architecture-defined`; no runtime is claimed for it beyond the shipped `memory` lifecycle commands above).
 - **Execution window**
   - inside the near-term window only for current deterministic compaction foundations; broader persistence/promotion runtime is outside the current 4-week plan.
 
@@ -967,9 +968,9 @@ Failure Mode - If workflow memory lives only in chat or human recall, the system
 - **Already exists today**
   - `verify`, remediation safety rules, CI validation, and docs/roadmap contract enforcement already function as local deterministic policy gates.
 - **Partially defined**
-  - approval/policy checkpoints around `apply` and future governance controls are documented as architecture direction.
+  - the `apply` change-level ceiling (Level 2) and the explicit, recorded Level 3 override (`apply --allow-level 3 --reason`) are implemented (`docs/architecture/REMEDIATION_TRUST_MODEL.md`); the override is a recorded declaration, not an authenticated approval (`TM-GAP-12`), and broader governance controls remain architecture direction.
 - **Future work**
-  - establish the canonical control-plane architecture in `docs/architecture/PLAYBOOK_CONTROL_PLANE_ARCHITECTURE.md` with explicit actor classes, execution modes, mutation scope levels, approval requirements, adapter boundaries, and locality/export policies.
+  - keep the canonical control-plane architecture in `docs/architecture/PLAYBOOK_CONTROL_PLANE_ARCHITECTURE.md` (card `PB-V09-CONTROL-PLANE-001`, `implemented-hardening`: `agent`, `session`, `policy`, `telemetry` surfaces, without expanding mutation authority) aligned with the runtime, with explicit actor classes, execution modes, mutation scope levels, approval requirements, adapter boundaries, and locality/export policies.
   - require fail-closed policy enforcement when evidence, approvals, or verification state is incomplete/ambiguous.
 - **Execution window**
   - outside the current near-term execution window except for active delivery-system and remediation-hardening work already committed elsewhere.
@@ -993,7 +994,7 @@ Failure Mode - If workflow memory lives only in chat or human recall, the system
   - deterministic artifacts provide point-in-time evidence (index/findings/plan/apply/verify outputs) and candidate knowledge lifecycle framing.
   - explicit memory lifecycle commands now support replayed candidate promotion into repo-local semantic memory plus deterministic prune workflows for stale/superseded/duplicate artifacts.
 - **Partially defined**
-  - canonical architecture truth is now defined in `docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md`; runtime adoption remains in-progress across artifacts and command surfaces.
+  - canonical architecture truth is now defined in `docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md`; the roadmap card `PB-V09-LONGITUDINAL-STATE-001` is `implemented-hardening` (`memory`, `learn`), and hardening across artifacts and command surfaces continues.
 - **Future work**
   - implement schema-governed repo-local longitudinal state (session/review timelines, recurring findings, remediation history, verification outcomes, approvals, recurring failure clusters, unresolved risks, candidate/promoted/superseded knowledge) as one queryable truth surface.
   - ensure review, remediation, verification, and promotion outputs resolve through provenance-preserving longitudinal contracts rather than implied aggregation.
@@ -1049,9 +1050,9 @@ Failure Mode: When roadmap docs lag implemented governed surfaces, operator unde
 - **Already exists today**
   - deterministic read-runtime intelligence surfaces (`index`, `query`, `ask`, `explain`) already establish contract-first inspection behavior for repository intelligence artifacts.
 - **Partially defined**
-  - repository memory inspection requirements exist directionally in longitudinal-state docs, but there is not yet a canonical architecture slice for deterministic memory query/inspection with provenance-preserving comparison/timeline/staleness views.
+  - the canonical architecture slice for deterministic memory query/inspection is defined in `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md`, and the read-only `knowledge` surfaces (`list`, `query`, `inspect`, `compare`, `timeline`, `provenance`, `supersession`, `stale`, `review`) plus `memory` inspection ship under `PB-V09-KNOWLEDGE-QUERY-INSPECTION-001` (`implemented-hardening`).
 - **Future work**
-  - formalize the canonical architecture in `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md`.
+  - keep `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md` and the `knowledge`/`memory` read contracts aligned as new memory classes are added.
   - define deterministic read-only inspection contracts for memory classes (session evidence, repo longitudinal memory, candidate knowledge, promoted governance, and promotable reusable patterns).
   - ensure candidate vs promoted distinction, provenance traceability, and stale/superseded inspection are explicit before broader automation consumption.
 - **Execution window**
@@ -1080,11 +1081,11 @@ Failure Mode: When roadmap docs lag implemented governed surfaces, operator unde
 #### 11. Outcome Feedback + Automation Runtime Learning
 
 - **Already exists today**
-  - directional architecture language already requires runtime monitoring, rollback readiness, and evidence-linked automation trust posture.
+  - directional architecture language already requires runtime monitoring, rollback readiness, and evidence-linked automation trust posture; the first read-only, candidate-only slice ships (`PB-V09-OUTCOME-FEEDBACK-LEARNING-001`, `implemented-hardening`: `.playbook/outcome-feedback.json`, `memory outcome-feedback`, `memory policy-improvement`).
 - **Partially defined**
-  - outcome classes, feedback artifact contracts, and candidate-learning boundaries are distributed across docs and not yet formalized as one canonical architecture slice.
+  - outcome classes, feedback artifact contracts, and candidate-learning boundaries are formalized in `docs/architecture/PLAYBOOK_OUTCOME_FEEDBACK_AND_AUTOMATION_RUNTIME_LEARNING.md`; taxonomy quality, confidence/attribution and provenance-completeness refinements remain open (`docs/roadmap/IMPROVEMENTS_BACKLOG.md` item 3).
 - **Future work**
-  - formalize the canonical architecture in `docs/architecture/PLAYBOOK_OUTCOME_FEEDBACK_AND_AUTOMATION_RUNTIME_LEARNING.md`.
+  - keep `docs/architecture/PLAYBOOK_OUTCOME_FEEDBACK_AND_AUTOMATION_RUNTIME_LEARNING.md` aligned with the `outcome-feedback` and `policy-improvement` artifacts.
   - define taxonomy-governed outcome classes, provenance-linked feedback artifacts, and repo-local confidence/trend update contracts.
   - require runtime-learning outputs to remain candidate knowledge until explicit human review promotes, demotes, or supersedes governance artifacts.
   - require rollback/deactivation and later regressions to become first-class learning signals with preserved lineage.
@@ -1288,13 +1289,13 @@ Priority hardening tracks:
    - require CI mismatch behavior to remain deterministic and actionable
 
 2. **SCM context abstraction**
-   - introduce shared SCM normalization module (`packages/core/src/scm/context.ts`)
+   - the shared SCM normalization module exists (`packages/core/src/scm/context.ts`, `collectScmContext`, consumed by `packages/engine/src/git/base.ts`)
    - align merge-base, detached HEAD, shallow clone, dirty tree, and rename behavior across command surfaces
    - add edge-case contract tests for PR vs push contexts
 
 3. **Remediation trust model enforcement**
-   - encode Level 0-3 change-scope boundaries into plan/apply contracts
-   - keep Level 3 cross-module/security-sensitive changes human-reviewed by default
+   - Level 1-3 change levels are encoded in plan/apply contracts (`docs/contracts/security/change-level.json`; Level 0 is read-only analysis and labels no task)
+   - Level 3 security-sensitive paths are rejected by `apply` unless `--allow-level 3 --reason` is passed (cross-module escalation is not classified yet: `TM-GAP-03`)
    - expand remediation safety telemetry for CI auditing
 
 4. **Ecosystem adapter boundaries**
@@ -1662,11 +1663,11 @@ Use a layered phase model so each phase compounds directly on the previous one:
        - define guardrails preventing direct concurrent edits to protected singleton docs during parallel execution.
        - connect this dependency path explicitly to future managed subagents / hooks orchestration.
      - Dependency path: `worker partitioning / overlap detection -> worker-local fragments / receipts -> final consolidation pass for singleton narrative docs -> managed subagents / hooks`.
-10. **Phase 10 â€” Repository Memory System**  
+10. **Phase 10 â€” Repository Memory System** (implemented, `PB-V09-REPO-MEMORY-FOUNDATION-001`; hardening continues)  
    Establish the temporal memory substrate (session/episodic evidence) while keeping repository structural intelligence (`index`/`graph`) as a distinct deterministic layer.
    - Worker assignment slice (implemented): deterministic proposal-only `worker-assignments` contract generation from lane-state readiness/dependency gates via `pnpm playbook workers` / `pnpm playbook workers assign`, including `.playbook/worker-assignments.json` and `.playbook/prompts/<lane_id>.md` outputs without worker launch or branch/PR automation.
    - Prompt-thin artifact-rich refinement (implemented): worker prompts now separate direct-edit ownership from fragment-only protected singleton docs so humans get bounded execution instructions while `.playbook` artifacts keep the full machine contract.
-11. **Phase 11 â€” Replay / Consolidation / Promotion**  
+11. **Phase 11 â€” Replay / Consolidation / Promotion** (implemented, `PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001`; hardening continues)  
     Add deterministic replay and consolidation pipelines with salience-gated, provenance-preserving promotion queues so fast episodic memory cannot become durable doctrine without review.
     - Recent implementation note: replay candidates now materialize at `.playbook/memory/replay-candidates.json` (compat-written to `.playbook/memory/candidates.json`) with explicit `candidateOnly`, `authority`, salience, and event provenance fields derived from memory index + append-only event evidence rather than opaque raw logs.
     - Recent implementation note: consolidation now emits `.playbook/memory/consolidation-candidates.json`, preserving replay and event provenance end-to-end, surfacing salience for review, and marking every promotion path as explicit `reviewRequired` with no auto-promotion behavior.
@@ -1677,21 +1678,21 @@ Use a layered phase model so each phase compounds directly on the previous one:
     - Failure Mode: Adjacent memory artifacts without a canonical replay/promotion contract create lifecycle drift and unclear promotion authority.
 12. **Phase 12 â€” Session + Evidence Layer** (implemented; runtime truth hardening continues)  
     Session envelope and evidence provenance contracts bind actor context, command lineage, approvals, and deterministic artifact references as a canonical runtime truth surface.
-13. **Phase 13 â€” Control Plane / Agent Runtime v1**  
+13. **Phase 13 â€” Control Plane / Agent Runtime v1** (implemented, `PB-V09-CONTROL-PLANE-001`; hardening continues)  
     First-class policy/approval/mutation-boundary architecture that gates privileged execution and keeps agents above (not inside) the deterministic substrate.
-14. **Phase 14 â€” Review + Execution Orchestration**  
+14. **Phase 14 â€” Review + Execution Orchestration** (`PB-V09-EXECUTION-ORCHESTRATION-001`, in progress)  
     Policy-gated orchestration that consumes repository intelligence + AI contracts + session/evidence + control-plane checks while preserving deterministic mutation workflow.
 15. **Phase 15 â€” Knowledge Query / Inspection Surfaces (Read Runtime) - implemented (hardening)**  
     Deterministic, provenance-preserving read-runtime inspection of repository memory and promoted knowledge so humans/CI can query, compare, and audit candidate/promoted/stale states before broader automation consumption.
-16. **Phase 16 â€” Automation Synthesis (Governed Knowledge Consumption)**  
-    Future controlled synthesis that consumes only promoted, inspectable, provenance-linked knowledge artifacts after `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md` (Phase 15) is in place. This phase explicitly excludes raw chat memory, unreviewed candidate knowledge, and undocumented inference as automation-grade input. Initial thin implementation slice is architecture/contracts/docs plus suggestion-generation contracts only (no autonomous mutation-heavy runtime behavior and no autonomous deployment/execution paths).
+16. **Phase 16 â€” Automation Synthesis (Governed Knowledge Consumption)** (implemented as a governed contract shell, `PB-V09-AUTOMATION-SYNTHESIS-001`; hardening continues)  
+    Controlled synthesis that consumes only promoted, inspectable, provenance-linked knowledge artifacts after `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md` (Phase 15) is in place. This phase explicitly excludes raw chat memory, unreviewed candidate knowledge, and undocumented inference as automation-grade input. Initial thin implementation slice is architecture/contracts/docs plus suggestion-generation contracts only (no autonomous mutation-heavy runtime behavior and no autonomous deployment/execution paths).
 
 Phase 16 allowed vs forbidden input examples:
 
 - Allowed: promoted knowledge from deterministic query/inspection surfaces with provenance/freshness metadata attached, used to produce reviewable suggestions.
 - Forbidden: raw transcripts, opaque prompt memory, or unreviewed candidate artifacts used directly for mutation-ready actions.
 
-17. **Phase 17 â€” Outcome Feedback + Automation Runtime Learning (Human-Reviewed)**  
+17. **Phase 17 â€” Outcome Feedback + Automation Runtime Learning (Human-Reviewed)** (implemented, `PB-V09-OUTCOME-FEEDBACK-LEARNING-001`; hardening continues)  
     Governed feedback loops that convert verified runtime outcomes, rollback/deactivation events, and later regressions into provenance-linked repo-local candidate learning artifacts (confidence, template suitability, trigger quality, rollback heuristics, stale-knowledge flags, and trend updates). Outputs remain candidate artifacts until explicit human-reviewed promotion/demotion/supersession.
     - Operator-visible read surface (implemented): `pnpm playbook memory outcome-feedback --json` now exposes the canonical `.playbook/outcome-feedback.json` artifact as a first-class read-only runtime surface with compact text mode and additive JSON fields for outcome class, confidence/trigger/stale-knowledge signals, trend updates, provenance refs, and deterministic next-review guidance.
     - Operator-visible read surface (implemented): `pnpm playbook memory policy-improvement --json` now exposes canonical `.playbook/policy-improvement.json` as a read-only runtime surface for deterministic ranking/prioritization candidate suggestions and repeated-blocker/confidence-trend review notes.
@@ -1701,11 +1702,11 @@ Phase 16 allowed vs forbidden input examples:
     - Pattern: outcome feedback -> learning signals -> policy improvement candidates -> human-reviewed promotion.
     - Failure Mode: Outcome feedback that exists only as an internal artifact never becomes an operator-visible learning loop.
     - Failure Mode: Treating outcome learning as direct policy mutation bypasses the same review boundaries the rest of the system already enforces.
-18. **Phase 18 â€” Governed Cross-Repo Pattern Promotion / Transfer**  
+18. **Phase 18 â€” Governed Cross-Repo Pattern Promotion / Transfer** (`PB-V09-MULTI-REPO-TRANSFER-001`, in progress)  
     Controlled compounding of reusable engineering knowledge across repositories through explicit, provenance-preserving, sanitization-verified, compatibility-gated transfer packages. Imported patterns are candidate inputs until locally reviewed; no hidden telemetry or automatic global sync.
-19. **Phase 19 â€” Governed Interface / API Surfaces for Multi-Repo Control Planes**  
+19. **Phase 19 â€” Governed Interface / API Surfaces for Multi-Repo Control Planes** (`PB-V09-GOVERNED-INTERFACE-API-001`, in progress)  
     Optional interface expansion that exposes validated server/API action surfaces over the same deterministic runtime, preserving per-repo policy/provenance boundaries while enabling coordinated multi-repo control-plane workflows.
-20. **Phase 20 â€” Workspace / Tenant Governance + Optional Hosted Deployment Model**  
+20. **Phase 20 â€” Workspace / Tenant Governance + Optional Hosted Deployment Model** (`PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`, in progress)  
     Optional workspace/tenant governance and deployment packaging layer over the same deterministic runtime, defining policy inheritance, per-repo accountability, and hosted/self-hosted parity without making cloud connectivity mandatory.
 21. **Phase 21 â€” Autonomous Maintenance (Policy-Gated)**  
     Recurring maintenance execution modes with approval and policy controls, layered after governed synthesis, outcome-feedback, cross-repo transfer, governed control-plane interface contracts, and workspace/tenant governance boundaries.
@@ -1734,7 +1735,7 @@ Roadmap contract alignment note (implemented): `docs/roadmap/ROADMAP.json` now c
 - Pattern: architecture/runtime truth -> roadmap contract alignment -> verification command binding.
 - Failure Mode: Implemented layers that remain “future-ish” in roadmap contracts cause planning drift and weaken proof of completion.
 
-1. **Repository Memory System (next major platform phase)**
+1. **Repository Memory System (shipped: `PB-V09-REPO-MEMORY-FOUNDATION-001`, `implemented-hardening`)**
    - Clarify that structural graph (`.playbook/repo-graph.json` and `.playbook/repo-index.json`) remains repository-shape intelligence, while temporal memory remains under `.playbook/memory/*`.
    - Positioned after graph/failure-intelligence maturity and before deeper agent-runtime expansion.
    - Formalizes **structural graph vs temporal memory** boundaries:
@@ -1744,7 +1745,7 @@ Roadmap contract alignment note (implemented): `docs/roadmap/ROADMAP.json` now c
      - fast episodic memory = revisable session/replay evidence
      - slow doctrine = promoted, reviewed, durable governance knowledge
 
-2. **Replay / Consolidation / Promotion (explicit phase)**
+2. **Replay / Consolidation / Promotion (shipped: `PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001`, `implemented-hardening`)**
    - Formalizes **replay -> consolidation -> salience gates -> human-reviewed promotion** as a first-class dependency layer.
    - Requires provenance-preserving retrieval and review queues before any doctrine promotion/demotion/supersession.
    - Keeps candidate generation high-recall while preventing low-signal promotion through explicit salience and approval gates.
@@ -1758,14 +1759,14 @@ Roadmap contract alignment note (implemented): `docs/roadmap/ROADMAP.json` now c
    - Keeps the dependency-ordered path explicit: `worker partitioning / overlap detection -> worker-local fragments / receipts -> workers submit -> proposal-only docs consolidate -> docs consolidate-plan -> drift-locked apply guards -> verify/CI protected-doc merge-guard enforcement -> managed subagents / hooks`.
    - Focuses future work on execution orchestration and policy gates without reclassifying already-implemented verify/CI enforcement as incomplete.
 
-4. **Control Plane / Agent Runtime v1**
+4. **Control Plane / Agent Runtime v1 (shipped: `PB-V09-CONTROL-PLANE-001`, `implemented-hardening`)**
    - Builds on memory + replay/consolidation + evidence + policy boundaries, not in parallel with them.
    - Builds on worker fragment consolidation for protected singleton docs so future managed subagents/hooks do not reopen shared narrative merge hotspots.
    - Keeps the architecture rule explicit: **agents sit on top of the deterministic substrate** (index/graph/verify/plan/apply/contracts), not inside or instead of it.
    - Preserves deterministic governance and human-review boundaries as mandatory runtime gates.
    - Future orchestration scope after deterministic lane contract generation includes: worker launch, merge guards, and orchestration state tracking.
 
-5. **Outcome Learning / Policy Improvement (human-reviewed)**
+5. **Outcome Learning / Policy Improvement (human-reviewed; shipped: `PB-V09-OUTCOME-LEARNING-001`, `implemented-hardening`)**
    - Converts reviewed outcomes into ranking/prioritization improvements, not mutation authority expansion.
    - Maintains promotion gates: learning outputs remain candidate artifacts until explicit human-reviewed promotion/demotion decisions.
 
