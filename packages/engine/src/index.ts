@@ -528,6 +528,8 @@ export { getCliSchemas, getCliSchema, isCliSchemaCommand, CLI_SCHEMA_COMMANDS } 
 export { buildFailureSignature, buildFailureSignatureSeed, normalizeAssertionShape } from './testAutofix/failureSignature.js';
 export { appendRemediationHistoryEntry, buildTriageClassifications, computeAutofixConfidence, createEmptyRemediationHistoryArtifact, evaluateRepeatRemediationPolicy, listPriorSuccessfulRepairClasses, listRepeatedFailedRepairAttempts, listRunsByFailureSignature, mergeRemediationHistoryArtifacts, nextRemediationHistoryRunId, normalizeRemediationHistoryArtifact } from './testAutofix/remediationHistory.js';
 export { buildRemediationStatusArtifact } from './testAutofix/remediationStatus.js';
+export { FAILURE_CATEGORIES, FAILURE_SOURCES, FAILURE_TAXONOMY_SCHEMA_VERSION, buildFailureIngestArtifact, buildFailureSuggestArtifact, buildTaxonomySignature, classifyFailure, classifyFailureText, parseFailureInput, validateFailureIngestArtifact } from './failure/failureTaxonomy.js';
+export type { ClassifiedFailure, FailureCategory, FailureIngestArtifact, FailureRecordInput, FailureSource, FailureSuggestArtifact, PreventionSuggestion } from './failure/failureTaxonomy.js';
 export { buildRendezvousManifest, evaluateRendezvousManifest } from './testAutofix/rendezvousManifest.js';
 export type { BuildRendezvousManifestInput, EvaluateRendezvousManifestOptions } from './testAutofix/rendezvousManifest.js';
 

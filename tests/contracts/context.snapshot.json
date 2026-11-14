@@ -46,6 +46,7 @@
       "test-fix-plan",
       "test-autofix",
       "remediation-status",
+      "failure",
       "rendezvous",
       "interop",
       "verify",

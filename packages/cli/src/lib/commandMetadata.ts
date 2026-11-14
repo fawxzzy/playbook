@@ -425,6 +425,20 @@ export const commandMetadata: CommandMetadata[] = [
     machineReadable: true,
   },
   {
+    name: "failure",
+    description:
+      "Classify failures from any source into a stable taxonomy and map them to prevention suggestions",
+    category: "Repository tools",
+    role: "remediation",
+    lifecycle: "canonical",
+    discoverability: "secondary",
+    onboardingPriority: null,
+    canonicalSequence: null,
+    productFacing: true,
+    exampleArgs: "failure ingest --input .playbook/failures/sample.json --json",
+    machineReadable: true,
+  },
+  {
     name: "rendezvous",
     description:
       "Create/status/release-dry-run artifact rendezvous readiness from canonical remediation artifacts",

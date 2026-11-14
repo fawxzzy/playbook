@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://playbook.local/contracts/failure-taxonomy.schema.json",
+  "title": "Playbook failure taxonomy artifact",
+  "description": "Output of `playbook failure ingest` (.playbook/failure-taxonomy.json). Contract: docs/contracts/FAILURE_INTELLIGENCE_CONTRACT.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "command", "inputPath", "total", "categories", "failures"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "playbook-failure-taxonomy" },
+    "command": { "const": "failure-ingest" },
+    "inputPath": { "type": "string" },
+    "total": { "type": "integer", "minimum": 0 },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "count"],
+        "properties": {
+          "category": { "$ref": "#/$defs/category" },
+          "count": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source", "category", "matchedRule", "signature", "message", "file", "evidence"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "source": { "enum": ["build", "ci", "lint", "manual", "runtime", "test", "verify"] },
+          "category": { "$ref": "#/$defs/category" },
+          "matchedRule": { "type": "string" },
+          "signature": { "type": "string", "pattern": "^failtax-[0-9a-f]{16}$" },
+          "message": { "type": "string" },
+          "file": { "type": ["string", "null"] },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "category": {
+      "enum": [
+        "build.type-error",
+        "build.compile-error",
+        "lint.violation",
+        "test.assertion",
+        "test.snapshot-mismatch",
+        "test.timeout",
+        "dependency.resolution",
+        "contract.schema-drift",
+        "config.invalid",
+        "filesystem.permission",
+        "network.unreachable",
+        "runtime.exception",
+        "unknown"
+      ]
+    }
+  }
+}

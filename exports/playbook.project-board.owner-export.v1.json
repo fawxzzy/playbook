@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_7194e905caa3",
+  "export_id": "pbe_playbook_roadmap_fd81c7bbe865",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:7194e905caa30ec5d1317b3d4d5da14f3799b9a0d3836ead4ad2333a2c094330",
+  "source_revision": "sha256:fd81c7bbe865a12eab8f27c521f36805908f4bd585ed21cac4d0dbf6cbc656ef",
   "generated_at": "2026-11-14T00:00:00.000Z",
   "sources": [
     {
@@ -13,7 +13,7 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:7194e905caa30ec5d1317b3d4d5da14f3799b9a0d3836ead4ad2333a2c094330",
+      "revision": "sha256:fd81c7bbe865a12eab8f27c521f36805908f4bd585ed21cac4d0dbf6cbc656ef",
       "observed_at": "2026-11-14T00:00:00.000Z"
     }
   ],
@@ -30,7 +30,7 @@
         "title": "General failure taxonomy, ingest and prevention mapping",
         "description": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
         "card_type": "feature",
-        "lifecycle": "planning",
+        "lifecycle": "in-progress",
         "priority": null,
         "owner": "playbook",
         "dependencies": [
@@ -40,7 +40,7 @@
         "updated_at": "2026-11-14T00:00:00.000Z",
         "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-TAXONOMY-001",
         "extensions": {
-          "roadmap_status": "planned",
+          "roadmap_status": "in-progress",
           "roadmap_version": "v0.6"
         }
       },
@@ -1191,7 +1191,7 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:7194e905caa30ec5d1317b3d4d5da14f3799b9a0d3836ead4ad2333a2c094330",
+    "source_digest": "sha256:fd81c7bbe865a12eab8f27c521f36805908f4bd585ed21cac4d0dbf6cbc656ef",
     "source_feature_count": 64,
     "exported_card_count": 16,
     "excluded_completed_statuses": [
