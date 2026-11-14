@@ -181,6 +181,7 @@ declare module "@zachariahredfield/playbook-engine" {
   export type BucketedCandidateEntry = any;
   export const readModuleContextDigest: (...args: any[]) => any;
   export const readRepositoryGraph: (...args: any[]) => any;
+  export const readGraphImpact: (...args: any[]) => any;
   export const summarizeRepositoryGraph: (...args: any[]) => any;
   export const REPOSITORY_GRAPH_RELATIVE_PATH: ".playbook/repo-graph.json";
   export const MODULE_CONTEXT_DIR_RELATIVE_PATH: ".playbook/context/modules";

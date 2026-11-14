@@ -1,8 +1,8 @@
 # Architecture Intelligence Graph Contract
 
-Status: **first slice (specification + compatibility pin only)**. Card: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`.
+Status: **second slice (specification + compatibility pin + `graph impact`)**. Card: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`.
 
-This contract specifies how Playbook's repository graph evolves into a semantic architecture graph that can back `explain`, `query`, and `analyze-pr` impact and risk reasoning. It does **not** ship the semantic layer. Read the [Status](#status-what-is-shipped-and-what-is-not) section before relying on anything here.
+This contract specifies how Playbook's repository graph evolves into a semantic architecture graph that can back `explain`, `query`, and `analyze-pr` impact and risk reasoning. It does **not** ship the semantic layer; only the read-only `graph impact` view over the existing module graph has shipped beyond the first slice. Read the [Status](#status-what-is-shipped-and-what-is-not) section before relying on anything here.
 
 Related contracts:
 
@@ -18,6 +18,7 @@ Shipped today (verifiable in source and `tests/contracts/graph.snapshot.json`):
 - `.playbook/repo-graph.json`, kind `playbook-repo-graph`, `schemaVersion` `1.1`, produced by `pnpm playbook index` (`packages/engine/src/graph/repoGraph.ts`).
 - Deterministic role inference over module `depends_on` edges (`packages/engine/src/graph/architectureRoleInference.ts`, [`ROLE_INFERENCE.md`](../architecture/ROLE_INFERENCE.md)), surfaced in the `graph` summary as `architectureRoleInference` (schema `1.0`).
 - Read surfaces: `pnpm playbook graph` (summary), `explain` and `query` (graph neighborhood for `module:*`, `rule:*`, and `repository:root`).
+- `pnpm playbook graph impact <module|file-path> [--depth N] [--direction dependents|dependencies|both] [--limit N] --json` (second slice, `packages/engine/src/graph/graphImpact.ts`): see [`graph impact`](#graph-impact-shipped-second-slice).
 
 Shipped kind sets (pinned by `tests/contracts/architecture-graph.contract.test.ts`):
 
@@ -28,13 +29,25 @@ Not shipped (each is a future slice of the same card; nothing below exists in th
 
 - A semantic node/edge layer (for example `package`, `file`, `command`, `contract`, `test`, `doc` nodes; `owns`, `tests`, `documents`, `imports` edges).
 - `.playbook/arch-graph.v2.json` or any other new persisted architecture-graph artifact, and a schema registered for it.
-- An impact index (changed file or module to affected commands, contracts, tests, docs).
-- `graph impact`, `graph boundaries`, and `graph risks` subcommands.
+- An impact index (changed file or module to affected commands, contracts, tests, docs). The module-to-module traversal that did ship is described below.
+- `graph boundaries` and `graph risks` subcommands.
 - Incremental (file-hash plus SCM-diff) graph invalidation.
 - `analyze-pr` consuming the graph. Today `analyze-pr` derives boundaries from changed-file path prefixes and treats `.playbook/repo-graph.json` only as an excluded runtime artifact; `query impact` and `query risk` derive from the repository index, not from graph edges.
 - Boundary-violation detection and graph-backed PR risk scoring.
 
-Until those ship, the card remains `planned` in the roadmap. This document must be updated, not reinterpreted, when a piece ships.
+Until those ship the card is not complete. This document must be updated, not reinterpreted, when a piece ships.
+
+## `graph impact` (shipped, second slice)
+
+Read-only traversal of the shipped graph; it adds no node or edge kind and does not change `.playbook/repo-graph.json` or the `graph` summary output.
+
+- Input: a module name (`auth` or `module:auth`) or a repo-relative file path. A file resolves to the module that owns it: the longest matching root among `src/<module>` and, when `.playbook/repo-index.json` exists, the workspace `path` recorded there for that module. Module nodes carry no paths, so a file outside those roots is an unknown target (fact: this is the same `src/<module>` convention `ask --diff-context` uses).
+- Traversal: `depends_on` edges between module nodes only. `dependents` follows edges in reverse (modules that depend on the target, transitively); `dependencies` follows them forward; `both` returns each list.
+- Output (`--json`, schema `1.0`): `{ schemaVersion, command: "graph", subcommand: "impact", target: { input, resolvedAs: "module"|"file", module, file? }, direction, depthLimit, limit, truncated, totals, dependents?, dependencies?, graph: { schemaVersion, generatedAt } }`. Each entry is `{ module, depth, edgeKinds, path }`, where `path` is the shortest path in traversal order from the target to the entry (ties broken by the lexicographically smallest module name at each hop), and `edgeKinds` lists the edge kind of each hop.
+- Ordering: entries sort by depth, then module name. The target never appears in its own results (cycles terminate).
+- Bounds: `--depth` is an integer of at least 1 (default: unlimited); each returned list is capped at `--limit` (default 200, maximum 1000). When any list is cut, `truncated` is `true` and `totals` still reports the full counts.
+- Fails closed (non-zero exit; `--json` prints `{ schemaVersion: "1.0", command: "graph", subcommand: "impact", error }`): graph artifact missing, wrong `kind`, or unsupported `schemaVersion` (the errors suggest `playbook index`), unknown target, malformed arguments.
+- Not covered: there is no registered JSON schema for the `graph impact` output yet (the `graph` schema covers only the summary), and it does not feed `analyze-pr`, `query`, or `explain`.
 
 ## Versioning decision: additive 1.x, not a breaking v2
 

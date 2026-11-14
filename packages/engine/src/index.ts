@@ -234,6 +234,8 @@ export type {
 export type { RiskAwareContextSummary, RiskAwareModuleContext, RiskContextTier, RiskContextDepth } from './context/riskAwareContext.js';
 export type { ModuleContextDigest } from './context/moduleContext.js';
 export type { ModuleDigest, ModuleDigestsArtifact } from './context/moduleDigests.js';
+export { computeGraphImpact, readGraphImpact, resolveGraphImpactTarget, GRAPH_IMPACT_SCHEMA_VERSION, GRAPH_IMPACT_DEFAULT_LIMIT, GRAPH_IMPACT_MAX_LIMIT } from './graph/graphImpact.js';
+export type { GraphImpactDirection, GraphImpactEntry, GraphImpactOptions, GraphImpactReport, GraphImpactResult, GraphImpactTarget } from './graph/graphImpact.js';
 export type { RepositoryGraph, RepositoryGraphNode, RepositoryGraphEdge, RepositoryGraphSummary, GraphNeighborhoodSummary } from './graph/repoGraph.js';
 
 export { queryRepositoryIndex, SUPPORTED_QUERY_FIELDS } from './query/repoQuery.js';

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { computeGraphImpact, GRAPH_IMPACT_SCHEMA_VERSION } from '../../packages/engine/src/graph/graphImpact.js';
 import {
   REPOSITORY_GRAPH_RELATIVE_PATH,
   REPOSITORY_GRAPH_SCHEMA_VERSION,
@@ -11,9 +12,8 @@ import {
 } from '../../packages/engine/src/graph/repoGraph.js';
 import type { RepositoryIndex } from '../../packages/engine/src/indexer/repoIndexer.js';
 
-// First-slice compatibility pin for PB-V07-ARCH-INTELLIGENCE-GRAPH-001.
-// It pins the shipped repo-graph v1.1 surface and the existence of the contract docs.
-// It intentionally does not test unshipped semantic-graph behavior.
+// Compatibility pin for PB-V07-ARCH-INTELLIGENCE-GRAPH-001 (first slice: repo-graph v1.1 surface and contract docs;
+// second slice: `graph impact`). It intentionally does not test unshipped semantic-graph behavior.
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const readRepoFile = (relativePath: string): string => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -47,7 +47,7 @@ const parseDocumentedKinds = (doc: string, label: 'Node kinds' | 'Edge kinds'): 
     .sort();
 };
 
-describe('architecture intelligence graph contract (first slice, repo-graph v1.1 pin)', () => {
+describe('architecture intelligence graph contract (repo-graph v1.1 pin, graph impact shipped)', () => {
   it('ships the contract and architecture docs and cross-references the repo-graph contract', () => {
     for (const docPath of [CONTRACT_DOC, ARCHITECTURE_DOC, REPO_GRAPH_CONTRACT]) {
       expect(fs.existsSync(path.join(repoRoot, docPath)), `${docPath} must exist`).toBe(true);
@@ -62,13 +62,18 @@ describe('architecture intelligence graph contract (first slice, repo-graph v1.1
     expect(architectureDoc).toContain('ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md');
   });
 
-  it('keeps the first-slice status marker and the list of unshipped pieces honest', () => {
+  it('keeps the status marker and the shipped / unshipped lists honest', () => {
     const contractDoc = readRepoFile(CONTRACT_DOC);
 
-    expect(contractDoc).toMatch(/Status: \*\*first slice/);
-    for (const unshipped of ['.playbook/arch-graph.v2.json', 'graph impact', 'graph boundaries', 'graph risks', 'impact index']) {
-      expect(contractDoc, `unshipped piece "${unshipped}" must be listed`).toContain(unshipped);
+    expect(contractDoc).toMatch(/Status: \*\*second slice/);
+    const notShippedSection = contractDoc.slice(contractDoc.indexOf('Not shipped (each is a future slice'), contractDoc.indexOf('Until those ship'));
+    expect(notShippedSection.length).toBeGreaterThan(0);
+    for (const unshipped of ['.playbook/arch-graph.v2.json', 'graph boundaries', 'graph risks', 'impact index', '`analyze-pr` consuming the graph']) {
+      expect(notShippedSection, `unshipped piece "${unshipped}" must be listed as not shipped`).toContain(unshipped);
     }
+    // `graph impact` shipped in the second slice: it must be described as shipped, and must not be listed as unshipped.
+    expect(notShippedSection).not.toContain('graph impact');
+    expect(contractDoc.slice(0, contractDoc.indexOf('Not shipped (each is a future slice'))).toContain('graph impact');
     // Shipped-state guard: if one of these appears, the contract doc's Status section must be updated together with this test.
     expect(fs.existsSync(path.join(repoRoot, '.playbook', 'arch-graph.v2.json'))).toBe(false);
   });
@@ -150,6 +155,19 @@ describe('architecture intelligence graph contract (first slice, repo-graph v1.1
       { module: 'auth', role: 'foundation', evidence: { incomingDependencies: 1, outgoingDependencies: 0, dependencyDirection: 'inbound' } },
       { module: 'workouts', role: 'interface', evidence: { incomingDependencies: 0, outgoingDependencies: 1, dependencyDirection: 'outbound' } }
     ]);
+  });
+
+  it('pins the graph impact result contract on a sample graph', () => {
+    const graph = generateRepositoryGraph(sampleIndex, new Date('2026-01-01T00:00:00.000Z'));
+    const result = computeGraphImpact(graph, 'auth', { direction: 'both' });
+
+    expect(GRAPH_IMPACT_SCHEMA_VERSION).toBe('1.0');
+    expect(Object.keys(result).sort()).toEqual(
+      ['dependencies', 'dependents', 'depthLimit', 'direction', 'limit', 'schemaVersion', 'target', 'totals', 'truncated']
+    );
+    expect(result.dependents).toEqual([{ module: 'workouts', depth: 1, edgeKinds: ['depends_on'], path: ['auth', 'workouts'] }]);
+    expect(result.dependencies).toEqual([]);
+    expect(result.truncated).toBe(false);
   });
 
   it('documents the exact-version reader behavior: reads 1.1, rejects other versions until the reader is updated', () => {
