@@ -826,7 +826,7 @@ Canonical sequencing reference:
 
 Near-term dependency chain (build-order intent from `ROADMAP.json` `implementationSequencing.nextBuildableSlicesInOrder`, not a gate; status as of the roadmap `updatedAt` date in brackets):
 
-1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`in-progress`: `graph impact` is shipped; `graph boundaries`, `graph risks` and a persisted semantic graph artifact are not]
+1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`in-progress`: `graph impact`, `graph boundaries`, `graph risks` and the `analyze-pr` `graphImpact` section are shipped (module-level, read-only); the semantic node/edge layer and a persisted `.playbook/arch-graph.v2.json` are not]
 2. `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001` [`implemented`]
 3. `PB-V09-SESSION-EVIDENCE-001` [`implemented-hardening`] (implemented canonical runtime truth surface; hardening continues)
    - Runtime truth boundary: `.playbook/session.json` + `evidenceEnvelope` is the canonical continuity/provenance seam for downstream policy, approval, receipt, and memory interpretation.
