@@ -1,3 +1,4 @@
+import { compareCodeUnits } from '../util/compareCodeUnits.js';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -37,16 +38,20 @@ export type OrchestrationExecutionRunState = {
 
 const executionRunsDirectory = (repoRoot: string): string => path.join(repoRoot, '.playbook', 'execution-runs');
 
-const canonicalize = (value: unknown): unknown => {
+type KeyComparator = (left: string, right: string) => number;
+
+// Keys are ordered by UTF-16 code unit, never by `localeCompare`: the launch-plan fingerprint is stored in the run
+// state and recomputed later (possibly on another machine) to decide whether the run is stale.
+const canonicalize = (value: unknown, compareKeys: KeyComparator = compareCodeUnits): unknown => {
   if (Array.isArray(value)) {
-    return value.map((entry) => canonicalize(entry));
+    return value.map((entry) => canonicalize(entry, compareKeys));
   }
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    const sortedKeys = Object.keys(record).sort((left, right) => left.localeCompare(right));
+    const sortedKeys = Object.keys(record).sort(compareKeys);
     const next: Record<string, unknown> = {};
     for (const key of sortedKeys) {
-      const normalized = canonicalize(record[key]);
+      const normalized = canonicalize(record[key], compareKeys);
       if (normalized !== undefined) {
         next[key] = normalized;
       }
@@ -76,6 +81,20 @@ const writeJsonAtomic = (artifactPath: string, value: unknown): void => {
 
 export const computeLaunchPlanFingerprint = (launchPlan: WorkerLaunchPlanArtifact): string =>
   createHash('sha256').update(deterministicStringify(launchPlan), 'utf8').digest('hex');
+
+/** Fingerprint as stored by versions that ordered keys with `localeCompare`. Compared against, never stored. */
+const computeLegacyLocaleLaunchPlanFingerprint = (launchPlan: WorkerLaunchPlanArtifact): string =>
+  createHash('sha256')
+    .update(`${JSON.stringify(canonicalize(launchPlan, (left, right) => left.localeCompare(right)), null, 2)}\n`, 'utf8')
+    .digest('hex');
+
+/**
+ * True when a fingerprint stored in run state belongs to this launch plan. Accepts the current code-unit fingerprint
+ * and the one an older version stored with locale-collation key order, so existing run state is not reported stale.
+ */
+export const launchPlanFingerprintMatches = (storedFingerprint: string, launchPlan: WorkerLaunchPlanArtifact): boolean =>
+  storedFingerprint === computeLaunchPlanFingerprint(launchPlan) ||
+  storedFingerprint === computeLegacyLocaleLaunchPlanFingerprint(launchPlan);
 
 export const deriveOrchestrationRunId = (launchPlan: WorkerLaunchPlanArtifact): string =>
   `pb-exec-${computeLaunchPlanFingerprint(launchPlan).slice(0, 12)}`;

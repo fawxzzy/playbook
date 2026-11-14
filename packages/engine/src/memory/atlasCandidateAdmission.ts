@@ -1,3 +1,4 @@
+import { compareCodeUnits } from '../util/compareCodeUnits.js';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -176,14 +177,21 @@ export class AtlasKnowledgeCandidateAdmissionError extends Error {
   }
 }
 
-const canonicalize = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map((entry) => canonicalize(entry));
+type KeyComparator = (left: string, right: string) => number;
+
+/** Key order used by versions that sorted with `localeCompare`; only ever used to recognise records they wrote. */
+const legacyLocaleKeyOrder: KeyComparator = (left, right) => left.localeCompare(right);
+
+// Keys are ordered by UTF-16 code unit, never by `localeCompare`: the digests below are stored in the queue and
+// recomputed on replay (possibly on another machine), so the order must not depend on locale or ICU version.
+const canonicalize = (value: unknown, compareKeys: KeyComparator = compareCodeUnits): unknown => {
+  if (Array.isArray(value)) return value.map((entry) => canonicalize(entry, compareKeys));
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
     return Object.fromEntries(
       Object.keys(record)
-        .sort((left, right) => left.localeCompare(right))
-        .map((key) => [key, canonicalize(record[key])])
+        .sort(compareKeys)
+        .map((key) => [key, canonicalize(record[key], compareKeys)])
     );
   }
   return value;
@@ -191,7 +199,15 @@ const canonicalize = (value: unknown): unknown => {
 
 const deterministicStringify = (value: unknown): string => `${JSON.stringify(canonicalize(value), null, 2)}\n`;
 const sha256 = (value: string | Buffer): string => createHash('sha256').update(value).digest('hex');
-const contentDigest = (value: unknown): string => sha256(JSON.stringify(canonicalize(value)));
+const contentDigest = (value: unknown, compareKeys: KeyComparator = compareCodeUnits): string =>
+  sha256(JSON.stringify(canonicalize(value, compareKeys)));
+/**
+ * True when a stored record equals the record built with the current code-unit digests or with the digests an older
+ * version computed under locale-collation key order. The two differ only when sibling keys (in practice inside the
+ * free-form `extensions` object) order differently under locale collation.
+ */
+const matchesEitherKeyOrder = (stored: unknown, build: (compareKeys: KeyComparator) => unknown): boolean =>
+  sameValue(stored, build(compareCodeUnits)) || sameValue(stored, build(legacyLocaleKeyOrder));
 const sameValue = (left: unknown, right: unknown): boolean => JSON.stringify(canonicalize(left)) === JSON.stringify(canonicalize(right));
 const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const toPortablePath = (value: string): string => value.replaceAll(path.sep, '/');
@@ -360,7 +376,8 @@ const buildReceipt = (
   candidate: AtlasKnowledgeCandidate,
   candidateRecordId: string,
   candidateContentSha256: string,
-  sourceArtifact: AtlasKnowledgeCandidateRecord['source_artifact']
+  sourceArtifact: AtlasKnowledgeCandidateRecord['source_artifact'],
+  compareKeys: KeyComparator = compareCodeUnits
 ): AtlasKnowledgeConsumerReceipt => {
   const receiptIdentity = {
     candidate_id: candidate.candidate_id,
@@ -375,7 +392,7 @@ const buildReceipt = (
   return {
     schema_version: '1.0',
     kind: 'playbook.atlas-knowledge-candidate.consumer-receipt.v1',
-    receipt_id: `playbook-akc-receipt-${contentDigest(receiptIdentity).slice(0, 24)}`,
+    receipt_id: `playbook-akc-receipt-${contentDigest(receiptIdentity, compareKeys).slice(0, 24)}`,
     candidate_id: candidate.candidate_id,
     candidate_record_id: candidateRecordId,
     candidate_content_sha256: candidateContentSha256,
@@ -400,9 +417,9 @@ const buildReceipt = (
   };
 };
 
-const buildLegacyRecord = (candidate: AtlasKnowledgeCandidate): Record<string, unknown> => {
-  const candidateContentSha256 = contentDigest(candidate);
-  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, candidate_content_sha256: candidateContentSha256 }).slice(0, 24)}`;
+const buildLegacyRecord = (candidate: AtlasKnowledgeCandidate, compareKeys: KeyComparator = compareCodeUnits): Record<string, unknown> => {
+  const candidateContentSha256 = contentDigest(candidate, compareKeys);
+  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, candidate_content_sha256: candidateContentSha256 }, compareKeys).slice(0, 24)}`;
   const receiptIdentity = {
     candidate_id: candidate.candidate_id,
     candidate_record_id: recordId,
@@ -424,7 +441,7 @@ const buildLegacyRecord = (candidate: AtlasKnowledgeCandidate): Record<string, u
     consumer_receipt: {
       schema_version: '1.0',
       kind: 'playbook.atlas-knowledge-candidate.consumer-receipt.v1',
-      receipt_id: `playbook-akc-receipt-${contentDigest(receiptIdentity).slice(0, 24)}`,
+      receipt_id: `playbook-akc-receipt-${contentDigest(receiptIdentity, compareKeys).slice(0, 24)}`,
       candidate_id: candidate.candidate_id,
       candidate_record_id: recordId,
       candidate_content_sha256: candidateContentSha256,
@@ -518,11 +535,12 @@ export const assertAtlasKnowledgeCandidateAdmission = (input: {
 
 const buildRecord = (
   candidate: AtlasKnowledgeCandidate,
-  sourceArtifact: AtlasKnowledgeCandidateRecord['source_artifact']
+  sourceArtifact: AtlasKnowledgeCandidateRecord['source_artifact'],
+  compareKeys: KeyComparator = compareCodeUnits
 ): AtlasKnowledgeCandidateRecord => {
-  const candidateContentSha256 = contentDigest(candidate);
-  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, source_artifact: sourceArtifact }).slice(0, 24)}`;
-  const receipt = buildReceipt(candidate, recordId, candidateContentSha256, sourceArtifact);
+  const candidateContentSha256 = contentDigest(candidate, compareKeys);
+  const recordId = `playbook-akc-${contentDigest({ candidate_id: candidate.candidate_id, source_artifact: sourceArtifact }, compareKeys).slice(0, 24)}`;
+  const receipt = buildReceipt(candidate, recordId, candidateContentSha256, sourceArtifact, compareKeys);
   return {
     record_id: recordId,
     external_candidate_id: candidate.candidate_id,
@@ -554,7 +572,7 @@ const validateExistingQueue = (queue: AtlasKnowledgeCandidateQueue): void => {
     const isEnrichedRecord = isRecord(record.source_artifact) || record.owner_disposition !== undefined;
     if (!isEnrichedRecord) {
       validateDestination(candidate);
-      if (candidate.review?.status !== 'candidate' || !sameValue(record, buildLegacyRecord(candidate))) {
+      if (candidate.review?.status !== 'candidate' || !matchesEitherKeyOrder(record, (compareKeys) => buildLegacyRecord(candidate, compareKeys))) {
         fail('KNOWLEDGE_IDENTITY_LOST', 'A legacy Playbook Atlas candidate record does not match the exact prior deterministic contract.');
       }
       continue;
@@ -625,7 +643,7 @@ export const admitAtlasKnowledgeCandidate = async (
       const nextQueue: AtlasKnowledgeCandidateQueue = {
         ...queue,
         candidates: [...queue.candidates, prospectiveRecord]
-          .sort((left, right) => left.external_candidate_id.localeCompare(right.external_candidate_id))
+          .sort((left, right) => compareCodeUnits(left.external_candidate_id, right.external_candidate_id))
       };
       return {
         status: 'admitted' as const,
@@ -638,12 +656,12 @@ export const admitAtlasKnowledgeCandidate = async (
     if (!sameValue(existing.candidate.provenance, candidate.provenance)) {
       fail('KNOWLEDGE_PROVENANCE_MISMATCH', `Replay changed provenance for Atlas candidate ${JSON.stringify(candidate.candidate_id)}.`);
     }
-    if (sameValue(existing, buildLegacyRecord(candidate))) {
+    if (matchesEitherKeyOrder(existing, (compareKeys) => buildLegacyRecord(candidate, compareKeys))) {
       const nextQueue: AtlasKnowledgeCandidateQueue = {
         ...queue,
         candidates: queue.candidates
           .map((queuedRecord) => queuedRecord.external_candidate_id === candidate.candidate_id ? prospectiveRecord : queuedRecord)
-          .sort((left, right) => left.external_candidate_id.localeCompare(right.external_candidate_id))
+          .sort((left, right) => compareCodeUnits(left.external_candidate_id, right.external_candidate_id))
       };
       return {
         status: 'upgraded' as const,
@@ -655,7 +673,8 @@ export const admitAtlasKnowledgeCandidate = async (
     if (!sameValue(existing.source_artifact, prospectiveRecord.source_artifact)) {
       fail('KNOWLEDGE_SOURCE_ARTIFACT_MISMATCH', `Replay changed the source path or exact bytes bound to Atlas candidate ${JSON.stringify(candidate.candidate_id)}.`);
     }
-    if (!sameValue(existing, prospectiveRecord)) {
+    // A record written by an older version (locale-collation digests) is the same admission; it is replayed as stored.
+    if (!matchesEitherKeyOrder(existing, (compareKeys) => buildRecord(candidate, sourceArtifact, compareKeys))) {
       fail('KNOWLEDGE_IDENTITY_LOST', `Replay changed the content bound to Atlas candidate identity ${JSON.stringify(candidate.candidate_id)}.`);
     }
     return {
