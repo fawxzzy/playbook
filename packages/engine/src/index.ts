@@ -29,6 +29,7 @@ export * from './sessions/index.js';
 export { runRuleExecution, generateExecutionPlan, generatePlanContract, applyExecutionPlan, parsePlanArtifact, selectPlanTasks, RuleRunner, PlanGenerator, FixExecutor } from './execution/index.js';
 export { readApplyChangeScope, enforceApplyChangeScope, assertApplyChangeScopeBinding } from './execution/index.js';
 export { BUILT_IN_WRITE_TARGETS } from './execution/index.js';
+export { compareCodeUnits } from './util/compareCodeUnits.js';
 export {
   CHANGE_LEVELS,
   DEFAULT_MAX_APPLY_CHANGE_LEVEL,
