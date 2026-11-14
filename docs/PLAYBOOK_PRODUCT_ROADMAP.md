@@ -2689,6 +2689,8 @@ Future enhancement:
 
 ## Feature: PB-V1-DEMO-REFRESH-001 â€” PR-based demo repository refresh automation
 
+Status: `planned-later` (owner decision 2026-11-14: the demo refresh is dropped from the v1 scope; the existing script and workflows stay as they are and nothing new is scheduled).
+
 Goal: keep committed demo artifacts/docs in `fawxzzy/playbook-demo` synchronized using the branch-accurate local Playbook CLI build without polluting correctness CI.
 
 Implementation surfaces:

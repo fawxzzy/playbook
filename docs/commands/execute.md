@@ -18,7 +18,7 @@ Prerequisites, all produced by earlier commands:
 
 Behavior:
 
-- Starts an execution run, then walks the launch-authorized lanes in order. Lanes already `completed` in a resumed run are reported in `resumed_lane_ids` and skipped.
+- Starts an execution run, then walks the launch-authorized lanes in order. Lanes already `completed` in a resumed run are reported in `resumed_lane_ids` and skipped. A run is resumed only when a run record exists under the run id derived from the current launch plan (code-unit ordered fingerprint); a stored fingerprint written by an older version with locale-collation key order is still accepted when it sits under that id, and otherwise a new run starts.
 - It does **not** launch workers. For every other authorized lane it records the lane as `running` and then records a worker result with `status: "completed"` and the summary `deterministic execution success (launch-authorized)`. Treat the run as lane-state bookkeeping and merge-guard evaluation over launch-authorized lanes, not as proof that any work was done.
 - Finalizes the run and evaluates the execution merge guard for it.
 - Exit `0` when the final execution status is `completed`; exit `1` otherwise (`RUNNING` or `FAILED`).
