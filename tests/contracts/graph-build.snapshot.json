@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "command": "graph",
+  "subcommand": "build",
+  "status": "created",
+  "artifact": ".playbook/arch-graph.v2.json",
+  "graph": {
+    "schemaVersion": "2.0",
+    "kind": "playbook-arch-graph",
+    "inputs": {
+      "repoGraphSchemaVersion": "1.1",
+      "scannedFiles": 1,
+      "digest": "6b4d5965ee0d7c0ff159a8db85330cff1f26f306fa892415178b5d96bfc2dfdd"
+    },
+    "stats": {
+      "nodeCount": 3,
+      "edgeCount": 2,
+      "nodeKinds": {
+        "doc": 1,
+        "module": 1,
+        "repository": 1
+      },
+      "edgeKinds": {
+        "contains": 2
+      }
+    }
+  }
+}

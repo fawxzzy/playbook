@@ -1,8 +1,8 @@
 # Architecture Intelligence Graph Contract
 
-Status: **third slice (graph impact, boundaries and risks shipped; `analyze-pr` consumes the graph; semantic layer deferred)**. Card: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`.
+Status: **fourth slice (graph impact, boundaries and risks shipped; `analyze-pr` consumes the graph; semantic layer and `graph build` shipped, `explain` and `query` consume it when present; impact index deferred)**. Card: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`.
 
-This contract specifies how Playbook's repository graph backs impact and risk reasoning. What ships is a set of read-only views over the existing module graph (`graph impact`, `graph boundaries`, `graph risks`) and a graph-derived `graphImpact` section in `analyze-pr`. It does **not** ship the semantic node/edge layer, and `explain` and `query` do not use the new views. Read the [Status](#status-what-is-shipped-and-what-is-not) section before relying on anything here.
+This contract specifies how Playbook's repository graph backs impact and risk reasoning. What ships is a set of read-only views over the existing module graph (`graph impact`, `graph boundaries`, `graph risks`) and a graph-derived `graphImpact` section in `analyze-pr`. The fourth slice adds a separate, persisted semantic architecture graph (`.playbook/arch-graph.v2.json`, built by `playbook graph build`) that `explain` and `query` read additively when present. It does **not** ship the impact index, and `analyze-pr`, `graph impact`, `graph boundaries` and `graph risks` still use only the module graph. Read the [Status](#status-what-is-shipped-and-what-is-not) section before relying on anything here.
 
 Related contracts:
 
@@ -22,27 +22,28 @@ Shipped today (verifiable in source and `tests/contracts/graph.snapshot.json`):
 - `pnpm playbook graph boundaries [--limit N] --json` (`packages/engine/src/graph/graphBoundaries.ts`): see [`graph boundaries`](#graph-boundaries-shipped-third-slice).
 - `pnpm playbook graph risks [--limit N] --json` (`packages/engine/src/graph/graphRisks.ts`): see [`graph risks`](#graph-risks-shipped-third-slice).
 - `analyze-pr` consumes the graph through an additive `graphImpact` section: see [`analyze-pr` graph consumption](#analyze-pr-graph-consumption-shipped-third-slice).
-- The `graph` JSON schema (`pnpm playbook schema graph --json`) covers the summary and the `impact`, `boundaries` and `risks` outputs; `tests/contracts/graph-impact.snapshot.json`, `graph-boundaries.snapshot.json` and `graph-risks.snapshot.json` pin them on the contract fixture.
+- `pnpm playbook graph build [--json]` (`packages/engine/src/graph/architectureGraph.ts`) writes `.playbook/arch-graph.v2.json`: see [`graph build` and the semantic graph](#graph-build-and-the-semantic-graph-shipped-fourth-slice). `explain` and `query` add an optional `semanticNeighborhood` when that artifact is present and valid.
+- The `graph` JSON schema (`pnpm playbook schema graph --json`) covers the summary and the `impact`, `boundaries`, `risks` and `build` outputs; `tests/contracts/graph-impact.snapshot.json`, `graph-boundaries.snapshot.json`, `graph-risks.snapshot.json` and `graph-build.snapshot.json` pin them on the contract fixture.
 
 Shipped kind sets (pinned by `tests/contracts/architecture-graph.contract.test.ts`):
 
 - Node kinds: `module`, `repository`, `rule`
 - Edge kinds: `contains`, `depends_on`, `governed_by`
+- Semantic graph (`.playbook/arch-graph.v2.json`, separate artifact): node types `command`, `contract`, `doc`, `file`, `module`, `package`, `repository`, `script`, `test`; edge types `contains`, `depends_on`, `documents`, `implements`, `owns`, `tests`
 
 Not shipped, and deferred beyond this card (nothing below exists in the CLI or engine; each needs its own roadmap decision):
 
-- A semantic node/edge layer (for example `package`, `file`, `command`, `contract`, `test`, `doc` nodes; `owns`, `tests`, `documents`, `imports` edges).
-- `.playbook/arch-graph.v2.json` or any other new persisted architecture-graph artifact, and a schema registered for it.
-- An impact index (changed file or module to affected commands, contracts, tests, docs). Every shipped view is module-to-module.
-- Incremental (file-hash plus SCM-diff) graph invalidation. The graph is regenerated in full by `pnpm playbook index`.
+- An impact index (changed file or module to affected commands, contracts, tests, docs). The semantic graph carries the relations such an index would traverse, but no command computes it yet; every shipped impact view is module-to-module.
+- SCM-diff partial rebuilds. Content-hash invalidation is shipped (see above), but a changed input still rebuilds the whole graph.
+- `imports` edges between source files, and any consumer other than `explain` and `query` reading the semantic graph.
 
 Honest limits of what did ship:
 
-- `explain` and `query` are unchanged. They still attach only the per-node graph neighborhood; `query impact` and `query risk` still derive from the repository index (and verify artifacts), not from graph traversal, and neither uses `graph boundaries` or `graph risks`.
+- `explain` and `query` keep every existing field. They gain only the optional `semanticNeighborhood` when a valid `.playbook/arch-graph.v2.json` exists; `query impact` and `query risk` still derive from the repository index (and verify artifacts), not from graph traversal, and neither uses `graph boundaries` or `graph risks`.
 - `analyze-pr` keeps its index-derived `impact`, its path-prefix `architecture.boundariesTouched` and its index-derived `risk` exactly as before. The graph adds a separate `graphImpact` section; it does not replace or re-score those fields, and there is no graph-backed PR risk score.
 - `graph boundaries` reports against rules that repository intelligence already declares. It is a report, not a gate: nothing is enforced.
 
-The card's goal ("powers explain/query/analyze-pr impact and risk reasoning") is met for `analyze-pr` impact and for graph structural risk and boundary reporting. It is not met for `explain` and `query`, which is stated here rather than implied. This document must be updated, not reinterpreted, when a piece ships.
+The card's goal ("powers explain/query/analyze-pr impact and risk reasoning") is met for `analyze-pr` impact and for graph structural risk and boundary reporting. For `explain` and `query` it is met only as an additive neighborhood view; impact and risk reasoning there is still index-derived, which is stated here rather than implied. This document must be updated, not reinterpreted, when a piece ships.
 
 ## `graph impact` (shipped, second slice)
 
@@ -91,6 +92,19 @@ Structural risk signals per module, computed from the graph's module `depends_on
 - Bounds: every list is capped at 50 entries; `truncated` is `true` when any list is cut and `totals` keeps the full counts.
 - The text, `github-comment` and `github-review` formats do not render `graphImpact`.
 - Fact about coverage: the committed `tests/contracts/analyze-pr.snapshot.json` is the error payload of a non-git fixture, so it does not show `graphImpact`. The field is covered by the `analyze-pr` JSON schema and by `packages/engine/test/analyzePrGraphImpact.test.ts`.
+
+## `graph build` and the semantic graph (shipped, fourth slice)
+
+A separate persisted artifact alongside `.playbook/repo-graph.json` (rule 3 under [Versioning decision](#versioning-decision-additive-1x-not-a-breaking-v2)); `repo-graph.json`, its reader and the `graph` summary are unchanged. Kind `playbook-arch-graph`, `schemaVersion` `2.0`, path `.playbook/arch-graph.v2.json` (a local artifact, like `repo-graph.json`; not committed).
+
+- Command: `pnpm playbook graph build [--json]`. Requires `.playbook/repo-graph.json` and `.playbook/repo-index.json` (run `pnpm playbook index` first); fails closed (non-zero exit, `{ schemaVersion: "1.0", command: "graph", subcommand: "build", error }`) when either is missing or invalid. It writes only `.playbook/arch-graph.v2.json`.
+- Artifact: `{ schemaVersion, kind, inputs: { repoGraphSchemaVersion, scannedFiles, digest }, nodes, edges, stats }`. Nodes are `{ id, kind, name, path?, sha256? }` with ids `<kind>:<name-or-path>`; edges are `{ kind, from, to }`. There is no timestamp, so identical inputs give byte-identical output.
+- Derivation (no heuristics beyond path and file-name rules): `module` nodes and `depends_on` edges come from the repo graph; `package` nodes and package `depends_on` edges from the index `workspace`; `script` nodes from the index `command-inventory`; `command` nodes from `docs/contracts/command-truth.json`; `contract` nodes from `docs/contracts/*.md`; `doc` nodes from other markdown under `docs/` (outside `docs/archive`) plus `README.md` and `AGENTS.md`; `test` nodes from `*.test|spec.[cm][jt]s[x]` files; `file` nodes for command implementations at `<workspace path>/src/commands/<command>.<ext>`. The scan skips `node_modules`, `.git`, `.playbook`, `dist`, `build`, `coverage`, `.next`, `.turbo`, `.vercel` and `archive`.
+- Edges: `contains` (repository to every non-file node), `owns` (a workspace package, and a module by the `src/<module>` convention, to the tests, docs and implementation files under its root), `implements` (implementation file to command), `documents` (`docs/commands/<name>.md` to `command:<name>`), `tests` (a test to its sibling implementation file when it is a node, otherwise to its owning module, otherwise its owning package).
+- Ordering: code-unit order, nodes by kind then id and edges by kind, from, then to; no locale or clock input. File content hashes strip carriage returns, so Windows and Linux checkouts agree.
+- Invalidation: `inputs.digest` hashes the repo-graph structure, the index fields used and every scanned file's path and content hash. When a valid existing artifact carries the same digest, `graph build` leaves it untouched and reports `status: "unchanged"`; otherwise it reports `created` or `updated`.
+- Readers (`explain`, `query`): validated structurally (kind, schemaVersion, nodes, edges, edge endpoints). A missing, unreadable or invalid artifact is ignored: output, ordering and exit codes are exactly what they were. When valid, `explain <module>`, `explain architecture` and `query architecture` add `semanticNeighborhood: { node, totals, truncated, outgoing, incoming, source: { schemaVersion, digest } }` (lists capped at 50). Readers do not recompute the digest, so a stale graph is served until `graph build` is rerun; this is stated, not hidden.
+- Schema: the `build` output is covered by the `graph` JSON schema and pinned by `tests/contracts/graph-build.snapshot.json`.
 
 ## Versioning decision: additive 1.x, not a breaking v2
 

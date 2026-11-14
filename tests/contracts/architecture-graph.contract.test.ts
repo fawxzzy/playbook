@@ -76,7 +76,7 @@ describe('architecture intelligence graph contract (repo-graph v1.1 pin; impact,
   it('keeps the status marker and the shipped / unshipped lists honest', () => {
     const contractDoc = readRepoFile(CONTRACT_DOC);
 
-    expect(contractDoc).toMatch(/Status: \*\*third slice/);
+    expect(contractDoc).toMatch(/Status: \*\*fourth slice/);
     const deferredStart = contractDoc.indexOf('Not shipped, and deferred beyond this card');
     const deferredEnd = contractDoc.indexOf('Honest limits of what did ship');
     expect(deferredStart).toBeGreaterThan(0);
@@ -85,11 +85,11 @@ describe('architecture intelligence graph contract (repo-graph v1.1 pin; impact,
     const shippedSection = contractDoc.slice(0, deferredStart);
 
     // Still unshipped, and explicitly deferred beyond this card.
-    for (const deferred of ['semantic node/edge layer', '.playbook/arch-graph.v2.json', 'impact index', 'Incremental (file-hash plus SCM-diff) graph invalidation']) {
+    for (const deferred of ['impact index', 'SCM-diff partial rebuilds', '`imports` edges']) {
       expect(deferredSection, `deferred piece "${deferred}" must be listed as not shipped`).toContain(deferred);
     }
     // Shipped: these must be described as shipped and must not appear in the deferred list.
-    for (const shipped of ['graph impact', 'graph boundaries', 'graph risks']) {
+    for (const shipped of ['graph impact', 'graph boundaries', 'graph risks', 'graph build', '.playbook/arch-graph.v2.json']) {
       expect(shippedSection, `shipped piece "${shipped}" must be described as shipped`).toContain(shipped);
       expect(deferredSection, `shipped piece "${shipped}" must not be listed as deferred`).not.toContain(shipped);
     }
@@ -98,11 +98,9 @@ describe('architecture intelligence graph contract (repo-graph v1.1 pin; impact,
 
     // What the shipped views still do not do must stay stated, not implied.
     const limitsSection = contractDoc.slice(deferredEnd, contractDoc.indexOf('## `graph impact`'));
-    expect(limitsSection).toContain('`explain` and `query` are unchanged');
-    expect(limitsSection).toContain('It is not met for `explain` and `query`');
+    expect(limitsSection).toContain('`explain` and `query` keep every existing field');
+    expect(limitsSection).toContain('it is met only as an additive neighborhood view');
     expect(limitsSection).toContain('nothing is enforced');
-    // Shipped-state guard: if one of these appears, the contract doc's Status section must be updated together with this test.
-    expect(fs.existsSync(path.join(repoRoot, '.playbook', 'arch-graph.v2.json'))).toBe(false);
   });
 
   it('pins the schema version and artifact path documented in the repo-graph contract', () => {

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { readArchitectureNeighborhood, type ArchitectureNeighborhood } from '../graph/architectureGraph.js';
 import { readRepositoryGraph, summarizeGraphNeighborhood, type GraphNeighborhoodSummary } from '../graph/repoGraph.js';
 import { explainArtifactFromArchitecture, explainCommandFromArchitecture, explainSubsystemFromArchitecture } from '../architecture/introspection.js';
 import { queryRepositoryIndex } from '../query/repoQuery.js';
@@ -88,6 +89,7 @@ export type ModuleExplanation = ExplainMemoryFields & {
   dependencies: string[];
   architecture: string;
   graphNeighborhood?: GraphNeighborhoodSummary;
+  semanticNeighborhood?: ArchitectureNeighborhood;
 };
 
 export type ArchitectureExplanation = ExplainMemoryFields & {
@@ -97,6 +99,7 @@ export type ArchitectureExplanation = ExplainMemoryFields & {
   structure: string;
   reasoning: string;
   graphNeighborhood?: GraphNeighborhoodSummary;
+  semanticNeighborhood?: ArchitectureNeighborhood;
 };
 
 export type SubsystemExplanation = ExplainMemoryFields & {
@@ -1063,6 +1066,7 @@ export const explainTarget = (projectRoot: string, target: string, options?: Exp
       dependencies: digest?.dependencies.direct ?? [],
       architecture: context.architecture,
       graphNeighborhood: readGraphNeighborhood(projectRoot, `module:${moduleName}`),
+      semanticNeighborhood: readArchitectureNeighborhood(projectRoot, `module:${moduleName}`),
       riskAwareShaping: digest ? shapeRiskAwareModuleContext(digest) : undefined
     }, { target: moduleName });
   }
@@ -1074,7 +1078,8 @@ export const explainTarget = (projectRoot: string, target: string, options?: Exp
       architecture: context.architecture,
       structure: architectureStructure(context.architecture),
       reasoning: architectureReasoning(context.architecture, context.framework, context.modules),
-      graphNeighborhood: readGraphNeighborhood(projectRoot, 'repository:root')
+      graphNeighborhood: readGraphNeighborhood(projectRoot, 'repository:root'),
+      semanticNeighborhood: readArchitectureNeighborhood(projectRoot, 'repository:root')
     }, { target: 'architecture' });
   }
 
