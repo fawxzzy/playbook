@@ -18,7 +18,7 @@ This keeps architecture reasoning explicit and reproducible for agents working i
 The scoped packages `@fawxzzy/playbook` (the CLI) and `@fawxzzy/playbook-cli` (the wrapper) are **not published to npm**: `npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404 (checked 2026-11-14). No `npx @fawxzzy/playbook ...` or `npm install @fawxzzy/playbook` form works today. The working paths are:
 
 - **A checkout of this repository**: `pnpm install && pnpm build`, then `pnpm playbook <command>`. `pnpm playbook` is a root script of this repository (`scripts/run-playbook.mjs` runs the built `packages/cli/dist/main.js`); it does not exist in other repositories. Use `--repo <path>` to point it at another local repository.
-- **A consumer repository**: the GitHub release tarball `playbook-cli-<version>.tgz` (see [RELEASING.md](./RELEASING.md)). After `npm install --no-save <tarball url>` the repo-local binary is `node_modules/.bin/playbook`; run it from there, never through the unscoped `npx` form. The latest GitHub release as of 2026-11-14 is v0.54.1, older than the packages on `main` (0.66.0).
+- **A consumer repository**: the GitHub release tarball `playbook-cli-<version>.tgz` (see [RELEASING.md](./RELEASING.md)). After `npm install --no-save <tarball url>` the repo-local binary is `node_modules/.bin/playbook`; run it from there, never through the unscoped `npx` form. The latest GitHub release as of 2026-11-14 is v0.54.1, older than the packages on `main` (the version in `packages/cli/package.json`).
 
 ### Why `playbook` (unscoped) is not the npx target
 

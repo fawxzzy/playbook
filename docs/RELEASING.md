@@ -26,7 +26,7 @@ Current status:
 
 Tag pushes (`v*`) trigger `.github/workflows/publish-npm.yml`, which attempts to publish the public Playbook package (`@fawxzzy/playbook`) and the internal runtime distribution set used by the CLI wrapper/fallback path, then packs and attaches the fallback tarball to the GitHub release. The npm publish steps only emit a warning when they fail, so the fallback tarball upload always continues.
 
-Current distribution status (checked 2026-11-14): nothing is published to npm (`npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404). The GitHub release fallback tarball is the only install path for consumers; the latest GitHub release is `v0.54.1`, older than the packages on `main` (0.66.0, see `packages/cli/package.json`). Inside this repository, use `pnpm install && pnpm build && pnpm playbook <command>`.
+Current distribution status (checked 2026-11-14): nothing is published to npm (`npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404). The GitHub release fallback tarball is the only install path for consumers; the latest GitHub release is `v0.54.1`, older than the packages on `main` (the version in `packages/cli/package.json`). Inside this repository, use `pnpm install && pnpm build && pnpm playbook <command>`.
 
 ## 3) Deterministic fallback artifact on each release
 

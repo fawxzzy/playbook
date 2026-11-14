@@ -148,7 +148,7 @@ pnpm playbook --repo "<target-repo-path>" ignore apply --safe-defaults
 The Playbook packages are **not published to npm yet**: `npm view @fawxzzy/playbook` and `npm view @fawxzzy/playbook-cli` return 404 (checked 2026-11-14), so `npx @fawxzzy/playbook ...` and `npm install @fawxzzy/playbook` do not work today. The working paths are:
 
 - **A checkout of this repository** (every `pnpm playbook` example below assumes this): `pnpm install && pnpm build`, then `pnpm playbook <command>`. `pnpm playbook` is a root script (`scripts/run-playbook.mjs` runs the built `packages/cli/dist/main.js`) that exists only in this repository; use `--repo <path>` to point it at another local repository.
-- **A consumer repository**: the GitHub release tarball `playbook-cli-<version>.tgz` (see [docs/RELEASING.md](docs/RELEASING.md)), which provides a repo-local `node_modules/.bin/playbook` binary after `npm install --no-save <tarball url>`. The latest GitHub release as of 2026-11-14 is `v0.54.1`, older than the packages on `main` (0.66.0).
+- **A consumer repository**: the GitHub release tarball `playbook-cli-<version>.tgz` (see [docs/RELEASING.md](docs/RELEASING.md)), which provides a repo-local `node_modules/.bin/playbook` binary after `npm install --no-save <tarball url>`. The latest GitHub release as of 2026-11-14 is `v0.54.1`, older than the packages on `main` (the version in `packages/cli/package.json`).
 
 Playbook operator workflows assume a **repo-local CLI** (for example `node_modules/.bin/playbook`; inside this repository, `pnpm playbook ...`), so clean machines and CI do not depend on PATH-global Playbook binaries.
 
