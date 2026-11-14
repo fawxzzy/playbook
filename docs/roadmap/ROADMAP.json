@@ -345,7 +345,7 @@
         "pnpm playbook failure suggest --json",
         "pnpm test -- failure-intelligence"
       ],
-      "status": "in-progress"
+      "status": "implemented-hardening"
     },
     {
       "feature_id": "PB-V07-ARCH-INTELLIGENCE-GRAPH-001",

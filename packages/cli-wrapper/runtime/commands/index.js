@@ -145,6 +145,7 @@ const commandRunners = {
             quiet,
             input: parseOptionValue(commandArgs, '--input'),
             outFile: parseOptionValue(commandArgs, '--out'),
+            failureId: parseOptionValue(commandArgs, '--failure'),
             help: parseFlag(commandArgs, '--help') || parseFlag(commandArgs, '-h')
         });
     },
