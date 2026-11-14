@@ -1220,3 +1220,5 @@ export { buildWorkspaceGovernanceArtifact, WORKSPACE_GOVERNANCE_RELATIVE_PATH } 
 export type { WorkspaceGovernanceArtifact } from './controlPlane/workspaceGovernance.js';
 export { buildMultiRepoReadInterfaceEnvelope } from './controlPlane/multiRepoControlPlaneReadInterface.js';
 export type { MultiRepoReadInterfaceEnvelope, MultiRepoReadInterfaceSlice } from './controlPlane/multiRepoControlPlaneReadInterface.js';
+export { FAILURE_CLOSURE_KIND, FAILURE_CLOSURE_STATUSES, FAILURE_REPORT_DIR, FAILURE_REPORT_KIND, FAILURE_SCAFFOLD_KIND, buildFailureReports, buildFailureScaffold, buildFailureScaffoldArtifact, evaluateFailureClosure, failureReportFileStem, failureReportPath, mergeExistingClosure, resolveIngestArtifact } from './failure/failureClosure.js';
+export type { FailureClosureArtifact, FailureClosureStatus, FailureClosureViolation, FailureReport, FailureReportFile, FailureScaffold, FailureScaffoldArtifact, FailureScaffoldEntry, ScaffoldKind } from './failure/failureClosure.js';

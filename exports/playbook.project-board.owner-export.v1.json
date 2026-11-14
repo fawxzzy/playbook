@@ -1,11 +1,11 @@
 {
   "contract_version": "atlas.project-board.owner-export.v1",
-  "export_id": "pbe_playbook_roadmap_fd81c7bbe865",
+  "export_id": "pbe_playbook_roadmap_e09a6a168ea7",
   "project_id": "playbook",
   "board_id": "discordos:project-feedback:playbook",
   "owner": "playbook",
   "adapter_id": "playbook-roadmap-v1",
-  "source_revision": "sha256:fd81c7bbe865a12eab8f27c521f36805908f4bd585ed21cac4d0dbf6cbc656ef",
+  "source_revision": "sha256:e09a6a168ea77aca70b6d1f506af9e3478282cd4b30c77b91bea597fcc7e5148",
   "generated_at": "2026-11-14T00:00:00.000Z",
   "sources": [
     {
@@ -13,89 +13,11 @@
       "kind": "json",
       "repository": "playbook",
       "path": "repos/playbook/docs/roadmap/ROADMAP.json",
-      "revision": "sha256:fd81c7bbe865a12eab8f27c521f36805908f4bd585ed21cac4d0dbf6cbc656ef",
+      "revision": "sha256:e09a6a168ea77aca70b6d1f506af9e3478282cd4b30c77b91bea597fcc7e5148",
       "observed_at": "2026-11-14T00:00:00.000Z"
     }
   ],
   "cards": [
-    {
-      "idempotency_key": "pbk_playbook_pb-v06-failure-taxonomy-001_v1",
-      "record_kind": "project-work",
-      "record_status": "active",
-      "record": {
-        "contract_version": "atlas.card-record.v2",
-        "card_id": "PB-V06-FAILURE-TAXONOMY-001",
-        "project_id": "playbook",
-        "board_id": "discordos:project-feedback:playbook",
-        "title": "General failure taxonomy, ingest and prevention mapping",
-        "description": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
-        "card_type": "feature",
-        "lifecycle": "in-progress",
-        "priority": null,
-        "owner": "playbook",
-        "dependencies": [
-          "PB-V06-FAILURE-INTELLIGENCE-001"
-        ],
-        "board_version": 1,
-        "updated_at": "2026-11-14T00:00:00.000Z",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-TAXONOMY-001",
-        "extensions": {
-          "roadmap_status": "in-progress",
-          "roadmap_version": "v0.6"
-        }
-      },
-      "source": {
-        "source_id": "playbook-roadmap",
-        "source_ref": "repos/playbook/docs/roadmap/ROADMAP.json#PB-V06-FAILURE-TAXONOMY-001",
-        "source_status": "current",
-        "source_updated_at": "2026-11-14T00:00:00.000Z"
-      },
-      "content": {
-        "summary": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
-        "objective": "Capture failures from any source as structured intelligence with a stable taxonomy and deterministically map them into rules, tests, docs and remediation scaffolds.",
-        "acceptance_criteria": [
-          "Run: pnpm playbook failure ingest --json --input .playbook/failures/sample.json",
-          "Run: pnpm playbook failure suggest --json",
-          "Run: pnpm test -- failure-intelligence"
-        ],
-        "discoveries": [],
-        "next_actions": [
-          "pnpm playbook failure ingest --json --input .playbook/failures/sample.json",
-          "pnpm playbook failure suggest --json",
-          "pnpm test -- failure-intelligence"
-        ],
-        "blockers": [],
-        "evidence": [
-          "repos/playbook/docs/commands/failure.md",
-          "repos/playbook/docs/contracts/COMMAND_CONTRACTS_V1.md",
-          "repos/playbook/docs/contracts/FAILURE_INTELLIGENCE_CONTRACT.md",
-          "repos/playbook/docs/contracts/FAILURE_TAXONOMY_SCHEMA.json",
-          "repos/playbook/docs/PLAYBOOK_DEV_WORKFLOW.md",
-          "repos/playbook/docs/PLAYBOOK_PRODUCT_ROADMAP.md",
-          "repos/playbook/tests/contracts/failure-intelligence.contract.test.ts",
-          "repos/playbook/tests/unit/failure-taxonomy-classifier.test.ts"
-        ]
-      },
-      "relationships": {
-        "parent_card_id": null,
-        "duplicate_of": null,
-        "superseded_by": null
-      },
-      "extensions": {
-        "commands": [
-          "apply",
-          "doctor",
-          "failure",
-          "plan",
-          "verify"
-        ],
-        "package_ownership": [
-          "@fawxzzy/playbook",
-          "@zachariahredfield/playbook-core",
-          "@zachariahredfield/playbook-engine"
-        ]
-      }
-    },
     {
       "idempotency_key": "pbk_playbook_pb-v07-arch-intelligence-graph-001_v1",
       "record_kind": "project-work",
@@ -1191,9 +1113,9 @@
     }
   ],
   "extensions": {
-    "source_digest": "sha256:fd81c7bbe865a12eab8f27c521f36805908f4bd585ed21cac4d0dbf6cbc656ef",
+    "source_digest": "sha256:e09a6a168ea77aca70b6d1f506af9e3478282cd4b30c77b91bea597fcc7e5148",
     "source_feature_count": 64,
-    "exported_card_count": 16,
+    "exported_card_count": 15,
     "excluded_completed_statuses": [
       "complete",
       "completed",

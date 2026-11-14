@@ -1,0 +1,19 @@
+{
+  "failures": [
+    { "id": "c-01", "source": "build", "file": "packages/engine/src/a.ts", "message": "error TS2322: Type 'string' is not assignable to type 'number'" },
+    { "id": "c-02", "source": "build", "file": "packages/engine/src/b.ts", "message": "error TS2304: Cannot find name 'foo'." },
+    { "id": "c-03", "source": "ci", "message": "ERR_PNPM_OUTDATED_LOCKFILE Cannot install with \"frozen-lockfile\" because pnpm-lock.yaml is not up to date" },
+    { "id": "c-04", "source": "test", "file": "packages/cli/src/x.test.ts", "message": "AssertionError: expected 'a' to be 'b'" },
+    { "id": "c-05", "source": "test", "file": "packages/cli/src/y.test.ts", "message": "AssertionError: expected [] to equal [1]" },
+    { "id": "c-06", "source": "test", "message": "Test timed out in 5000ms" },
+    { "id": "c-07", "source": "test", "message": "Snapshot contracts mismatched" },
+    { "id": "c-08", "source": "verify", "message": "Contract surface changed or could not be checked" },
+    { "id": "c-09", "source": "lint", "message": "eslint: 4 problems (4 errors, 0 warnings)" },
+    { "id": "c-10", "source": "runtime", "message": "ReferenceError: widget is not defined" },
+    { "id": "c-11", "source": "ci", "message": "connect ECONNREFUSED 127.0.0.1:9" },
+    { "id": "c-12", "source": "manual", "message": "Something nobody has seen before" },
+    { "id": "c-13", "source": "ci", "message": "Job failed", "evidence": ["EACCES: permission denied, open '.playbook/x'"] },
+    { "id": "c-14", "source": "ci", "message": "Error: Cannot find module 'left-pad'" },
+    { "id": "c-15", "source": "test", "message": "Snapshot mismatch: expected value did not match, expect(x).toMatchSnapshot()" }
+  ]
+}

@@ -177,7 +177,7 @@ Failure Mode:
 - **generated outputs**: failure reports in `.playbook/failures/*.json`, suggestion bundle, optional scaffold patches.
 - **prevention guarantee**: each closed failure requires linked prevention target IDs; CI blocks unresolved "codification_required" failures.
 
-Status (2026-11-14): `PB-V06-FAILURE-INTELLIGENCE-001` is `implemented-hardening`, re-scoped to the test-failure loop (`test-triage`, `test-fix-plan`, `test-autofix`, `remediation-status`). The `failure ingest|classify|suggest|scaffold` commands, the taxonomy, the `.playbook/failures/*.json` outputs and the CI closure rule described above are the general failure taxonomy, now tracked as `PB-V06-FAILURE-TAXONOMY-001` (`in-progress`). `playbook failure ingest|suggest` exist; `classify`, `scaffold`, the `.playbook/failures/*.json` outputs and the CI closure rule do not.
+Status (2026-11-14): `PB-V06-FAILURE-INTELLIGENCE-001` is `implemented-hardening`, re-scoped to the test-failure loop (`test-triage`, `test-fix-plan`, `test-autofix`, `remediation-status`). The `failure ingest|classify|suggest|scaffold` commands, the taxonomy, the `.playbook/failures/*.json` outputs and the CI closure rule described above are the general failure taxonomy, now tracked as `PB-V06-FAILURE-TAXONOMY-001` (`implemented-hardening`). `playbook failure ingest|classify|suggest|scaffold|check` exist, with `.playbook/failures/*.report.json` closure reports and `failure check` as the closure rule; wiring that check into `verify`, `doctor` and CI is not done.
 
 ## 8. Roadmap feature: Architecture Intelligence Graph
 
