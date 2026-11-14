@@ -47,7 +47,6 @@ export const assertPluginSpecifier = (repoRoot: string, specifier: unknown): str
   if (typeof specifier !== 'string' || specifier.length === 0 || specifier !== specifier.trim()) {
     throw new PluginContractError(`Plugin specifier must be a non-empty string without surrounding whitespace: ${JSON.stringify(specifier)}`);
   }
-  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f\\]/.test(specifier)) {
     throw new PluginContractError(`Plugin specifier "${specifier}" contains a control character or backslash.`);
   }
