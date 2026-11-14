@@ -138,3 +138,42 @@ reaches plugins only through `lib/loadVerifyRules.ts`, which only calls
 `engine.loadRuleCatalog`; `verify`, `rules`, `apply`, `fix` and `status` import that module,
 `analyze` calls the engine `analyze`, and the legacy shim is imported only by
 `unifiedPluginRegistry.ts`.
+
+## Decisions (2026-11-14, delegated by the owner; least privilege, deterministic, long-term)
+
+Rule: one versioned plugin contract, one loader. Plugins are loaded only through
+`packages/engine/src/plugins/unifiedPluginRegistry.ts`; the CLI never discovers, resolves or imports a plugin itself.
+
+1. `OPEN-PLUGIN-SHAPE`: Decision: the engine shape (`check(ctx) -> { failures }` plus optional guidance) is the contract;
+   the legacy `verify({ failure }) -> boolean` shape exists only inside the shim. Alternatives lose: keeping both shapes
+   leaves a plugin visible to one surface only; making the CLI predicate the contract cannot produce failures, so verify and
+   plan could never run plugin rules.
+2. `OPEN-PLUGIN-DISCOVERY`: Decision: discovery is explicit (`playbook.config.json` `plugins`); `playbook-plugin-*`
+   dependency scanning stays only in the deprecated shim. Alternatives lose: naming-convention discovery loads code nobody
+   listed (ambient authority) and makes output depend on what happens to be installed.
+3. `OPEN-RULES-SURFACE`: Decision: `rules --json` lists every rule with an additive `source`; rule ids are not renamed.
+   Alternative loses: renaming CLI guidance ids to engine ids breaks the `rules`/`verify` JSON contract for no new capability.
+   `OPEN-RULE-ID-NAMESPACES` stays open; resolve it only with an additive alias map, never a rename.
+4. `OPEN-ANALYZE-PLUGINS`: Decision: CLI analyze appends plugin detectors after the dependency-only core detectors through
+   the unified registry. Alternative loses: routing through `analyzeRepo` changes `detectorsRun`/`detected` for repositories
+   without plugins.
+5. `OPEN-CORE-ANALYZE-ADAPTER`: Decision: remains OPEN on purpose. Keep the deprecated synchronous core adapter until the
+   engine tests stop using it as their parity oracle, then delete it in the same major as the legacy shim. Alternatives lose:
+   deleting it now removes the only independent oracle for analyze output; keeping it indefinitely leaves two analyzers.
+6. `OPEN-REPO-INDEX-RULES`: Decision: `repo-index.json` `rules` includes plugin rule ids (sorted, de-duplicated) and falls
+   back to core ids when a plugin is broken. Alternative loses: failing `index` on a broken plugin turns a read-only index
+   into a verify gate.
+7. Plugin identity (this slice): a plugin specifier is a package name or a `./` path whose real path stays inside the
+   repository; everything else is rejected before resolution, and the plugin shape is validated before registration.
+   Alternatives lose: trusting the config string lets `../`, absolute paths and links execute code outside the repository
+   from a one-line config edit; a sandbox is not available in-process and would imply a guarantee the loader cannot give.
+8. Privilege: plugins stay report-only; plugin fix handlers keep the change-level-2 floor under the existing apply ceiling,
+   which this contract never raises. Alternative loses: letting a manifest declare its own level is self-granted authority.
+9. Unsupported `contractVersion`: skip with a notice (never half-load). Alternative loses: throwing would break a whole
+   repository because one plugin targets a newer Playbook.
+10. Legacy shim removal: deferred to the next major, tracked by the one-time deprecation notice. Alternative loses: removing
+    it now breaks every existing `playbook-plugin-*` consumer.
+
+Evidence: `packages/engine/test/pluginIdentityV1.test.ts` (specifier, identity and shape rules, each proven by mutation) and
+`packages/engine/test/pluginContractV1.test.ts`. Card `PB-V05-PACKAGE-BOUNDARIES-001` stays `implemented-hardening`:
+`OPEN-CORE-ANALYZE-ADAPTER`, `OPEN-RULE-ID-NAMESPACES` and the shim removal remain.

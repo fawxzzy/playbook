@@ -79,5 +79,6 @@ export const PLAYBOOK_SCHEMA_PATHS = {
   maintenanceExecutionReceipt: 'packages/contracts/src/maintenance-execution-receipt.schema.json',
   maintenanceExecutionState: 'packages/contracts/src/maintenance-execution-state.schema.json',
   multiRepoControlPlaneReadInterface: 'packages/contracts/src/multi-repo-control-plane-read-interface.schema.json',
-  workspaceGovernance: 'packages/contracts/src/workspace-governance.schema.json'
+  workspaceGovernance: 'packages/contracts/src/workspace-governance.schema.json',
+  pluginManifest: 'packages/contracts/src/plugin-manifest.schema.json'
 } as const;

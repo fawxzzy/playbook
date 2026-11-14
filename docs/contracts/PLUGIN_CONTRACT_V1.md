@@ -4,7 +4,7 @@ This document is the contract for Playbook plugins. One engine path loads them f
 (`verify`, `plan`, `apply`, `fix`, `status`, `rules`, `analyze`, `index`); the CLI does not discover plugins itself.
 
 Implementation: `packages/engine/src/plugins/` (`loadPlugins.ts`, `pluginTypes.ts`,
-`unifiedPluginRegistry.ts`, `legacyPredicateShim.ts`). Verified by `packages/engine/test/plugins.test.ts`,
+`pluginIdentity.ts`, `unifiedPluginRegistry.ts`, `legacyPredicateShim.ts`). Manifest schema: `packages/contracts/src/plugin-manifest.schema.json` (registered as `plugin-manifest` in `playbook contracts`). Verified by `packages/engine/test/pluginIdentityV1.test.ts`, `packages/engine/test/plugins.test.ts`,
 `packages/engine/test/pluginLoadingPath.test.ts`, `packages/engine/test/pluginContractV1.test.ts` and
 `packages/cli/src/lib/pluginContract.test.ts`.
 
@@ -16,15 +16,39 @@ Implementation: `packages/engine/src/plugins/` (`loadPlugins.ts`, `pluginTypes.t
    { "version": 1, "plugins": ["my-playbook-plugin"] }
    ```
 
-2. Each entry is resolved with Node module resolution from the repository root (as if from `<repo>/package.json`)
-   and `require`d. The module exports a `PlaybookPlugin` (or `{ default: PlaybookPlugin }`).
-3. A listed plugin that cannot be resolved or throws while loading fails engine `verify`, `plan` and `analyze`.
+2. Each entry must be a **plugin specifier** (see Identity below). It is resolved with Node module resolution from the
+   repository root (as if from `<repo>/package.json`) and `require`d. The module exports a `PlaybookPlugin` (or
+   `{ default: PlaybookPlugin }`).
+3. A listed plugin that cannot be resolved, throws while loading, has a specifier or shape that violates this contract
+   (`PluginContractError`) fails engine `verify`, `plan` and `analyze`.
    The CLI `rules`, `apply`, `fix` and `status` commands degrade to built-in rules and report the reason on
    stderr; `index` degrades to the core rule ids silently.
 4. Plugins are loaded in listed order. A rule or detector whose `id` is already registered is ignored (core rules
    are registered first, so a plugin cannot replace a core rule).
 5. Deprecated: dependencies named `playbook-plugin-*` that are not listed in `plugins` are still discovered by the
    compatibility shim below.
+
+## Identity and least privilege
+
+Identity is checked before anything is resolved or executed (`assertPluginSpecifier`, fail closed):
+
+- A specifier is a bare package name (`name`, `@scope/name`, optional `/sub/path`) or a repo-local `./` file whose real path
+  (after resolving links and junctions) stays inside the repository root.
+- Rejected with `PluginContractError`: absolute and drive paths, backslashes, `..` or empty path segments, URL and
+  `node:`/`file:` schemes, Node built-ins, control characters, padded or non-string entries.
+- A plugin must export a non-empty string `name`. A module with no plugin object is skipped with a notice; a plugin whose
+  rules or detectors are not executable (`check`/`detect` not functions, missing `id`) is rejected with an error naming
+  the offending member.
+- A specifier listed twice, or a second plugin that reuses an earlier plugin's `name`, is ignored with a notice; the first
+  wins. A plugin can never replace a core rule or an earlier plugin's rule or detector id.
+- Unsupported `contractVersion` (any value other than `1` or absent, of any JSON type) is skipped with a notice and none of
+  its rules or detectors is registered.
+- The shim only follows dependency names that are valid package names, so a `package.json` dependency cannot point it
+  outside `node_modules`.
+- Privilege is unchanged and never raised by a plugin: plugin rules are report-only (`check` returns failures); a plugin
+  `fix` handler is floored at change level 2 and stays under the apply ceiling (Level 3 needs the recorded override).
+  Loading a plugin is arbitrary code execution by design, so the trust boundary is the repository's own
+  `playbook.config.json` and dependency graph; this contract narrows what a config entry can reach, it is not a sandbox.
 
 ## Plugin shape
 
@@ -120,6 +144,7 @@ that id.
 
 ## Change policy
 
-Changing `PlaybookPlugin`, `PlaybookRule`, discovery rules or `contractVersion` handling requires a new
+Specifier or shape rules may only be tightened by a new `contractVersion`; the v1 rules above shipped as a fail-closed
+hardening (an absolute-path or malformed plugin that used to load or crash later now fails with a named error). Changing `PlaybookPlugin`, `PlaybookRule`, discovery rules or `contractVersion` handling requires a new
 `contractVersion`, an update to this document and the plugin tests above. Changing `rules --json` output follows
 `docs/contracts/COMMAND_CONTRACTS_V1.md`.
