@@ -202,6 +202,16 @@ const commandRunners: Record<
       help: parseFlag(commandArgs, '--help') || parseFlag(commandArgs, '-h')
     });
   },
+  failure: async ({ cwd, commandArgs, format, quiet }) => {
+    const { runFailure } = await import("./failure.js");
+    return runFailure(cwd, commandArgs, {
+      format,
+      quiet,
+      input: parseOptionValue(commandArgs, '--input'),
+      outFile: parseOptionValue(commandArgs, '--out'),
+      help: parseFlag(commandArgs, '--help') || parseFlag(commandArgs, '-h')
+    });
+  },
   rendezvous: async ({ cwd, commandArgs, format, quiet }) => {
     const { runRendezvous } = await import("./rendezvous.js");
     return runRendezvous(cwd, commandArgs, {
@@ -713,6 +723,7 @@ const commandOrder = [
   "test-fix-plan",
   "test-autofix",
   "remediation-status",
+  "failure",
   "rendezvous",
   "interop",
   "verify",

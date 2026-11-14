@@ -820,7 +820,7 @@ Canonical sequencing reference:
 ### 2) Active hardening (current build mode)
 
 - Shipped, hardening continues (`implemented-hardening` in `docs/roadmap/ROADMAP.json`, grouped there as `activeHardening`): the plan/apply trust model (`PB-V04-PLAN-APPLY-001`: change levels, a Level 2 `apply` ceiling and an explicit, recorded Level 3 override; see `docs/architecture/REMEDIATION_TRUST_MODEL.md`), package-boundary convergence with Plugin Contract v1 (`PB-V05-PACKAGE-BOUNDARIES-001`; see `docs/contracts/PLUGIN_CONTRACT_V1.md`), delivery-system gating (`PB-V1-DELIVERY-SYSTEM-001`), product-truth packaging (`PB-V1-PRODUCT-TRUTH-PACKAGING-001`), the test-failure intelligence loop (`PB-V06-FAILURE-INTELLIGENCE-001`, re-scoped to `test-triage` -> `test-fix-plan` -> `test-autofix` -> `remediation-status`), and the v0.8 knowledge compaction foundations (`PB-V08-*`, except `PB-V08-GRAPH-MEMORY-001`, which is `architecture-defined`).
-- Not shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `planned`; there is no `failure` command). `PB-V1-DEMO-REFRESH-001` is `in-progress`.
+- Partly shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `in-progress`): `playbook failure ingest|suggest` classify failures into a closed taxonomy and emit prevention suggestions; scaffold generation and the CI closure rule are not shipped. `PB-V1-DEMO-REFRESH-001` is `in-progress`.
 
 ### 3) Next buildable slices (dependency-ready after active hardening)
 

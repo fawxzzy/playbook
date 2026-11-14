@@ -269,6 +269,18 @@
       "example": "pnpm playbook explain architecture --json"
     },
     {
+      "name": "failure",
+      "category": "Repository tools",
+      "role": "remediation",
+      "lifecycle": "canonical",
+      "discoverability": "secondary",
+      "onboardingPriority": null,
+      "canonicalSequence": null,
+      "productFacing": true,
+      "machineReadable": true,
+      "example": "pnpm playbook failure ingest --input .playbook/failures/sample.json --json"
+    },
+    {
       "name": "fix",
       "category": "Utility",
       "role": "compatibility",
@@ -742,6 +754,7 @@
     "doctor",
     "execute",
     "explain",
+    "failure",
     "graph",
     "ignore",
     "index",

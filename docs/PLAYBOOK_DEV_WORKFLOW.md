@@ -142,6 +142,8 @@ Module digest context-transfer governance:
 - Pattern: canonical sources -> shaped context -> cached snapshot -> deterministic invalidation.
 - Failure Mode: Without context cache lifecycle policy, snapshots drift stale or trigger wasteful broad rescans on every read.
 
+For failures outside the test loop, `pnpm playbook failure ingest --input <path> --json` classifies them into the stable taxonomy and `pnpm playbook failure suggest --json` lists prevention suggestions (read-only; see `docs/commands/failure.md`).
+
 For remediation workflow updates, run canonical deterministic flow checks:
 
 ```bash
