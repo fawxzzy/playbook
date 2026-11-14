@@ -28,7 +28,7 @@ This model governs `pnpm playbook verify`, `pnpm playbook plan`, and `pnpm playb
 
 ### Level 2 — Scoped module code changes
 
-- Commands: future deterministic auto-fixes limited to one owned module boundary
+- Commands: deterministic auto-fixes limited to one owned module boundary (shipped: `release.package-json.version` and any plugin-registered handler; Level 2 is the default `apply` ceiling, see Enforcement status)
 - Requirements: explicit rule mapping, deterministic patch shape, contract tests
 - Risk profile: medium
 

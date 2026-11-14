@@ -1,5 +1,7 @@
 # Playbook Development Execution System v1
 
+> Historical design snapshot (early 2026 4-week sprint); current truth is `docs/roadmap/ROADMAP.json`, live commands are `docs/commands/README.md`. Wording below is the original plan; the "Status (2026-11-14)" notes in sections 3, 5, 7 and 8 record what shipped and what did not.
+
 ## 1. Executive decisions
 
 1. **Command ownership converges into engine now**: every product command has one canonical implementation in `@zachariahredfield/playbook-engine`; CLI handlers become argument parsing + output adapters only.
@@ -39,6 +41,8 @@ Execution-layer expansion note: future visual-contract intelligence should plug 
 2. Move `analyze` orchestration into engine composition handler.
 3. Move plugin loading into one engine plugin manager.
 4. Delete duplicated loaders/wrappers after contract parity tests pass.
+
+Status (2026-11-14): the analyze ownership step and the single-plugin-path step shipped under `PB-V05-PACKAGE-BOUNDARIES-001` (`implemented-hardening`): one engine plugin path (`packages/engine/src/plugins/unifiedPluginRegistry.ts`), Plugin Contract v1 (`docs/contracts/PLUGIN_CONTRACT_V1.md`), and CLI `analyze` calling the engine. Still open: `OPEN-CORE-ANALYZE-ADAPTER` and `OPEN-RULE-ID-NAMESPACES` (see `docs/architecture/V1_BOUNDARY_REFACTOR_PLAN.md`). The other steps in this plan are not tracked here.
 
 ### Anti-patterns to eliminate
 - Command logic in CLI package.
@@ -91,6 +95,8 @@ interface ScmContext {
   - PR references at least one roadmap ID
   - touched command/docs/contracts map to roadmap entry.
 - Merge automation updates roadmap item status (`planned -> in-progress -> implemented-hardening`) and appends release note fragment.
+
+Status (2026-11-14): CI runs `node scripts/validate-roadmap-contract.mjs --ci --enforce-pr-feature-id` (feature id from the PR title, then the PR body, then `.playbook/pr-metadata.json`). There is no `playbook roadmap verify` command. No merge automation updates roadmap statuses (grep of `.github`, `scripts` and `packages/*/src` found no writer); status changes are hand-edited commits to `docs/roadmap/ROADMAP.json`.
 
 ### Singleton Consolidation Pattern slice (implemented) and next hardening layer
 
@@ -171,6 +177,8 @@ Failure Mode:
 - **generated outputs**: failure reports in `.playbook/failures/*.json`, suggestion bundle, optional scaffold patches.
 - **prevention guarantee**: each closed failure requires linked prevention target IDs; CI blocks unresolved "codification_required" failures.
 
+Status (2026-11-14): `PB-V06-FAILURE-INTELLIGENCE-001` is `implemented-hardening`, re-scoped to the test-failure loop (`test-triage`, `test-fix-plan`, `test-autofix`, `remediation-status`). The `failure ingest|classify|suggest|scaffold` commands, the taxonomy, the `.playbook/failures/*.json` outputs and the CI closure rule described above are the general failure taxonomy, now tracked as `PB-V06-FAILURE-TAXONOMY-001` (`planned`). No `failure` command exists.
+
 ## 8. Roadmap feature: Architecture Intelligence Graph
 
 - **feature_id**: `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`
@@ -185,6 +193,8 @@ Failure Mode:
   - `.playbook/arch-graph.v2.json` (semantic graph canonical)
 - **incremental updates**: file-hash based invalidation + SCM diff deltas.
 - **self-analysis**: Playbook uses arch graph to detect boundary violations and PR risk scoring.
+
+Status (2026-11-14): `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` is `in-progress`. Shipped: `graph impact` (module-level, `packages/engine/src/graph/graphImpact.ts`). Not shipped: `graph boundaries`, `graph risks` and `.playbook/arch-graph.v2.json` (see `docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`).
 
 ## 9. Gate strategy for 4-week sprint
 

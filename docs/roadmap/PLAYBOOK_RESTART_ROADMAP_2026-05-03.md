@@ -1,5 +1,7 @@
 # Playbook Restart Roadmap - 2026-05-03
 
+> Historical snapshot (2026-05-03); current truth is `docs/roadmap/ROADMAP.json`. Feature statuses and "next" wording below are not maintained.
+
 ## Status read
 
 Playbook is already more than a repo helper. The current product truth frames it as a deterministic runtime and trust layer between humans/AI agents and real repositories, with repo intelligence, governance, safe remediation, local/private-first runtime artifacts, and explicit plan/apply/verify boundaries.

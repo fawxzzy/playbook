@@ -1,12 +1,12 @@
 # OUTCOME_LEARNING_AND_POLICY_IMPROVEMENT_V1
 
 - feature_id: PB-V09-OUTCOME-LEARNING-001
-- status: canonical future-state specification (v1)
+- status: canonical specification; roadmap card `PB-V09-OUTCOME-LEARNING-001` is `implemented-hardening` in `docs/roadmap/ROADMAP.json` (runtime surfaces exist), so this text is no longer purely future-state. Live command truth is `docs/commands/README.md`
 - workflow anchor: `verify -> plan -> apply -> verify`
 
 ## Purpose
 
-Define the canonical future-state contract for outcome learning and policy improvement in deterministic remediation planning.
+Define the canonical contract for outcome learning and policy improvement in deterministic remediation planning.
 
 This spec establishes how Playbook learns from remediation evidence while preserving deterministic trust boundaries, explicit control surfaces, and auditability.
 

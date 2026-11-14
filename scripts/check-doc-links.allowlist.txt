@@ -1,0 +1,12 @@
+# Known-dead relative markdown links that the doc-link gate (scripts/check-doc-links.mjs) tolerates.
+#
+# Format, one entry per line:   <source file, repo-relative> -> <link destination exactly as written>
+# Lines starting with '#' (and trailing ' # comment') are ignored.
+#
+# Rules:
+#   - Prefer fixing the link (retarget it, or remove it if the target never existed). Use this list only
+#     when the file cannot be edited in the same change (for example another change owns it).
+#   - Every entry needs a comment above it saying why it is here and what removes it.
+#   - An entry that no longer matches a dead link is reported as stale; delete it.
+#
+# Current entries: none. All dead links found on 2026-11-14 were fixed in place.

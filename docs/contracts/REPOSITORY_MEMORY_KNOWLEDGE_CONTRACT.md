@@ -74,12 +74,12 @@ Pattern: **Compact Doctrine Through Reviewed Transitions** - promote, supersede,
 
 ## Retrieval guidance
 
-Memory-aware retrieval should compose:
+Memory-aware retrieval (shipped, opt-in: `--with-memory` on `query` and `explain`, `--with-repo-context-memory` on `ask --repo-context`; see `docs/commands/query.md`) composes:
 
 1. structural context from `.playbook/repo-index.json` + `.playbook/repo-graph.json`
 2. relevant episodic events from `.playbook/memory/index.json`
 3. promoted local semantic memory artifacts
-4. committed governance doctrine where explicitly reviewed and adopted
+4. committed governance doctrine where explicitly reviewed and adopted (shipped as `doctrineHits`: only `lifecycle: promoted` records of `docs/doctrine/atlas-engineering-doctrine-registry.v1.json`; a missing or unreadable registry yields no hits, not an error; `packages/engine/src/intelligence/runtimeMemory.ts`)
 
 Rule: **Retrieval Must Return Provenance**.
 
