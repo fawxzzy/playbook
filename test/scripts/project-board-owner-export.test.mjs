@@ -94,12 +94,12 @@ test('fails closed for an unsupported non-complete status', () => {
   );
 });
 
-test('canonical export matches the current roadmap and contains 17 non-complete cards', () => {
+test('canonical export matches the current roadmap and contains 16 non-complete cards', () => {
   const rendered = renderProjectBoardOwnerExport(repoRoot);
   const canonicalPath = path.join(repoRoot, 'exports', 'playbook.project-board.owner-export.v1.json');
   // Windows checkouts may materialize the committed export with CRLF; compare the LF form.
   assert.equal(fs.readFileSync(canonicalPath, 'utf8').replace(/\r\n?/g, '\n'), rendered);
-  assert.equal(JSON.parse(rendered).cards.length, 17);
+  assert.equal(JSON.parse(rendered).cards.length, 16);
 });
 
 test('--check accepts a CRLF-materialized export and still rejects real drift', () => {

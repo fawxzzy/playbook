@@ -98,7 +98,7 @@
         "pnpm playbook verify --json",
         "pnpm playbook plan --json"
       ],
-      "status": "in-progress",
+      "status": "implemented-hardening",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-core",
@@ -364,7 +364,9 @@
         "docs/contracts/COMMAND_CONTRACTS_V1.md"
       ],
       "tests": [
-        "tests/contracts/architecture-graph.contract.test.ts"
+        "tests/contracts/architecture-graph.contract.test.ts",
+        "packages/engine/test/graphImpact.test.ts",
+        "packages/cli/src/commands/graph.test.ts"
       ],
       "docs": [
         "docs/commands/graph.md",
