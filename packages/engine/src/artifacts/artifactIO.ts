@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { compareCodeUnits } from '../util/compareCodeUnits.js';
 
 export const INVALID_ARTIFACT_ERROR = 'Invalid Playbook artifact – regenerate using CLI owned output flags.';
 
@@ -16,18 +17,22 @@ type ArtifactEnvelope = {
   data: JsonRecord;
 };
 
-const canonicalize = (value: unknown): unknown => {
+type KeyComparator = (left: string, right: string) => number;
+
+// Keys are ordered by UTF-16 code unit, never by `localeCompare`: the envelope checksum is recomputed when an
+// artifact is read, so the order must be identical on every machine (locale and ICU version independent).
+const canonicalize = (value: unknown, compareKeys: KeyComparator = compareCodeUnits): unknown => {
   if (Array.isArray(value)) {
-    return value.map((entry) => canonicalize(entry));
+    return value.map((entry) => canonicalize(entry, compareKeys));
   }
 
   if (value && typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    const keys = Object.keys(record).sort((left, right) => left.localeCompare(right));
+    const keys = Object.keys(record).sort(compareKeys);
     const normalized: Record<string, unknown> = {};
 
     for (const key of keys) {
-      const entry = canonicalize(record[key]);
+      const entry = canonicalize(record[key], compareKeys);
       if (entry !== undefined) {
         normalized[key] = entry;
       }
@@ -48,6 +53,16 @@ const stableSerialize = (value: unknown): string => JSON.stringify(canonicalize(
 const deterministicStringify = (value: unknown): string => `${JSON.stringify(canonicalize(value), null, 2)}\n`;
 
 const computeChecksum = (value: unknown): string => createHash('sha256').update(stableSerialize(value), 'utf8').digest('hex');
+
+/**
+ * Checksum as written by versions that ordered keys with `localeCompare`. Accepted on read (never written) so
+ * artifacts produced before the code-unit ordering stay valid. It differs from `computeChecksum` only when sibling
+ * keys order differently under locale collation (case, `_` versus letters, accents).
+ */
+const computeLegacyLocaleChecksum = (value: unknown): string =>
+  createHash('sha256')
+    .update(JSON.stringify(canonicalize(value, (left, right) => left.localeCompare(right))), 'utf8')
+    .digest('hex');
 
 const normalizeArtifactType = (artifactPath: string, payload: JsonRecord): string => {
   if (typeof payload.command === 'string') {
@@ -186,7 +201,7 @@ export const readJsonArtifact = <T extends JsonRecord = JsonRecord>(artifactPath
   validateDataByArtifact(envelope.artifact, envelope.data);
 
   const expectedChecksum = computeChecksum(envelope.data);
-  if (expectedChecksum !== envelope.checksum) {
+  if (expectedChecksum !== envelope.checksum && computeLegacyLocaleChecksum(envelope.data) !== envelope.checksum) {
     throw new Error(INVALID_ARTIFACT_ERROR);
   }
 

@@ -2,13 +2,16 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 const toAbsoluteOutputPath = (cwd, outFile) => (path.isAbsolute(outFile) ? outFile : path.join(cwd, outFile));
+// UTF-16 code-unit order, never `localeCompare`: the engine recomputes the envelope checksum when it reads the
+// artifact, so key order must be identical on every machine. Mirrors `compareCodeUnits` in the engine.
+const compareCodeUnits = (left, right) => (left < right ? -1 : left > right ? 1 : 0);
 const canonicalize = (value) => {
     if (Array.isArray(value)) {
         return value.map((entry) => canonicalize(entry));
     }
     if (value && typeof value === 'object') {
         const record = value;
-        const keys = Object.keys(record).sort((left, right) => left.localeCompare(right));
+        const keys = Object.keys(record).sort(compareCodeUnits);
         const normalized = {};
         for (const key of keys) {
             const entry = canonicalize(record[key]);
