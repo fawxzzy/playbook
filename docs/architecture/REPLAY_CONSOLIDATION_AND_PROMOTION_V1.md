@@ -1,12 +1,12 @@
-# Replay, Consolidation, Salience Scoring, Pruning, and Promotion V1 (Canonical Future-State Spec)
+# Replay, Consolidation, Salience Scoring, Pruning, and Promotion V1 (Canonical Spec)
 
 - feature_id: `PB-V08-REPLAY-PROMOTION-001`
-- status: Canonical future-state specification
+- status: canonical specification; roadmap card `PB-V08-REPLAY-PROMOTION-001` is `implemented-hardening` in `docs/roadmap/ROADMAP.json` (runtime surfaces exist), so this text is no longer purely future-state. Live command truth is `docs/commands/README.md`
 - scope: Replay, consolidation, salience scoring, pruning, and governed promotion workflows
 
 ## Purpose
 
-Define the deterministic, artifact-first future state for how Playbook:
+Define the deterministic, artifact-first model for how Playbook:
 
 1. captures high-signal operational events,
 2. scores salience deterministically,

@@ -1,11 +1,11 @@
-# Playbook Control Plane / Agent Runtime v1 (Canonical Future-State Spec)
+# Playbook Control Plane / Agent Runtime v1 (Canonical Spec)
 
 - feature_id: PB-V09-CONTROL-PLANE-001
-- status: canonical future-state specification
+- status: canonical specification; roadmap card `PB-V09-CONTROL-PLANE-001` is `implemented-hardening` in `docs/roadmap/ROADMAP.json` (runtime surfaces exist), so this text is no longer purely future-state. Live command truth is `docs/commands/README.md`
 
 ## Purpose
 
-This document defines the canonical future-state architecture for Playbook Control Plane / Agent Runtime v1.
+This document defines the canonical architecture for Playbook Control Plane / Agent Runtime v1.
 
 It establishes subsystem boundaries, minimum models, and runtime invariants for agentic operation without weakening deterministic governance.
 
