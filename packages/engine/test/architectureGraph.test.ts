@@ -138,12 +138,12 @@ describe('architecture graph v2 readers and fallback', () => {
     const withGraph = JSON.parse(JSON.stringify(explainTarget(root, 'auth')));
     expect(withGraph.semanticNeighborhood.node.id).toBe('module:auth');
     expect(withGraph.semanticNeighborhood.incoming).toEqual(expect.arrayContaining([{ kind: 'depends_on', source: 'module:workouts' }]));
-    const { semanticNeighborhood: _ignored, ...rest } = withGraph;
-    expect(rest).toEqual(beforeExplain);
+    delete withGraph.semanticNeighborhood;
+    expect(withGraph).toEqual(beforeExplain);
     const queryWith = JSON.parse(JSON.stringify(queryRepositoryIndex(root, 'architecture')));
     expect(queryWith.semanticNeighborhood.node.id).toBe('repository:root');
-    const { semanticNeighborhood: _q, ...queryRest } = queryWith;
-    expect(queryRest).toEqual(beforeQuery);
+    delete queryWith.semanticNeighborhood;
+    expect(queryWith).toEqual(beforeQuery);
   });
 
   it.each([
