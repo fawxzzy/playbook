@@ -5,11 +5,13 @@ Manage a deterministic local observer registry, thin local observer API, and loc
 ## Usage
 
 ```bash
-pnpm playbook observer repo add <path> [--root <path>]
+pnpm playbook observer repo add <path> [--id <id>] [--tag <tag>] [--root <path>]
 pnpm playbook observer repo list --json [--root <path>]
 pnpm playbook observer repo remove <id> [--root <path>]
-pnpm playbook observer serve --port 4300 [--root <path>]
+pnpm playbook observer serve [--host <host>] --port 4300 [--root <path>]
 ```
+
+`repo add` options: `--id <id>` sets an explicit registry id (a duplicate id or an already-registered root is rejected); `--tag <tag>` attaches a tag and may be repeated.
 
 ## Registry artifact
 
@@ -40,6 +42,8 @@ Contract:
 ## Local server (`observer serve`)
 
 `pnpm playbook observer serve` starts a local-only HTTP server bound to `127.0.0.1` by default.
+
+`--host <host>` accepts only `127.0.0.1` (default) or `localhost` in v1; other hosts are rejected.
 
 - Dashboard UI shell routes: `GET /`, `GET /ui`, `GET /ui/app.js`
 

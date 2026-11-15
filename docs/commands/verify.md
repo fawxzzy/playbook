@@ -85,6 +85,8 @@ pnpm playbook verify --phase preflight --json --out .playbook/verify-preflight.j
 - Baseline-aware verify output can include `findingState` when `--baseline` is used.
 - Policy failures return exit code `3`.
 - Local-first runs write a durable local receipt that is authoritative for verification, while publishing and deployment remain separate workflow fields.
+- `--run-id <id>` attaches the verify step to an existing execution run.
+- Plugin rules are discovered through the shared engine rule catalog used by `plan`, `apply`, `fix`, `status` and `rules`; see [PLUGIN_CONTRACT_V1](../contracts/PLUGIN_CONTRACT_V1.md) for discovery and load-failure behavior.
 
 
 ## Command-surface guarantees

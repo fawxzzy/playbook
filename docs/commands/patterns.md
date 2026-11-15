@@ -2,6 +2,8 @@
 
 Inspect pattern knowledge graph artifacts and run explicit promotion review decisions. This surface now distinguishes repo-local backlog promotion from global reusable pattern promotion.
 
+`--out <path>` (global to `patterns`) writes the JSON payload as an artifact in addition to printing it when `--json` is used.
+
 Lifecycle note:
 
 - Observer and `knowledge` read surfaces normalize global reusable pattern lifecycle state so `active`, `superseded`, `retired`, and `demoted` patterns remain inspectable without introducing any new mutation route.
@@ -146,6 +148,8 @@ List patterns with portability score `> 0.85` (portable doctrine candidates).
 ### `patterns repo-delta <leftRepo> <rightRepo>`
 
 Compare shared patterns between two repository ids in the cross-repo artifact and report strength/attractor/fitness deltas.
+
+Repos may be given positionally or as `--left <repoId> --right <repoId>`; both are required.
 
 ### `patterns csia [--from <path>] [--regime <id>] [--primitive compute|simulate|interpret|adapt]`
 
@@ -414,6 +418,8 @@ Rule: Cross-repo pattern knowledge may suggest local work, but only repo-local s
 
 Export a governed cross-repo transfer package from a promoted global reusable pattern.
 
+Options: `--risk-class low|medium|high|critical` (default `medium`), `--sanitization-status sanitized|unsanitized|needs-review` (default `needs-review`), and `--target-tag <tag>` (repeatable) to record target repo tags.
+
 Guarantees:
 - export reads promoted global reusable patterns only
 - package includes pattern payload, provenance, sanitization status, compatibility metadata, risk class, known failure modes, and recall/demotion lifecycle hooks
@@ -423,6 +429,8 @@ Guarantees:
 ## `patterns transfer import --file <path> --repo <repo-id>`
 
 Import a transfer package into a receiving repo as candidate input only.
+
+Option: `--repo-tag <tag>` (repeatable) records receiving-repo tags.
 
 Guarantees:
 - incompatible packages fail closed before candidate mutation

@@ -125,9 +125,10 @@ The contract keeps `failures[]` deterministic, but consumers should treat entrie
 The reusable Playbook CI workflow now writes:
 
 - `.playbook/ci-failure.log`
-- `.playbook/failure-summary.json`
 - `.playbook/failure-summary.md`
 - `.playbook/test-triage.json`
+
+`.playbook/failure-summary.json` is not written by the CI action (only `failure-summary.md` is); some workflows list it as an upload path, but nothing in this repository produces it.
 
 It also appends the markdown summary to the GitHub Actions step summary when available.
 

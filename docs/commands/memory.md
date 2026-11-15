@@ -49,6 +49,8 @@ All other candidates are tagged as replay-derived with:
 Additive filter:
 
 - `--source replay|interop-followup`
+- `--kind <kind>`: filter by candidate kind (`decision|pattern|failure_mode|invariant|open_question`).
+- `--include-stale`: include stale candidates in the listing.
 
 Replay output remains candidate-only and is derived from memory evidence in `.playbook/memory/index.json` plus append-only event records under `.playbook/memory/events/*.json`; it does not read opaque raw logs directly.
 
@@ -61,6 +63,19 @@ Retrieval review for promoted knowledge/doc recall remains on the `knowledge` fa
 List promoted knowledge artifacts from `.playbook/memory/knowledge/*.json`.
 
 Consolidation lives alongside this surface as `.playbook/memory/consolidation-candidates.json`: it summarizes replay candidates, preserves event/replay provenance, and keeps promotion explicit with `reviewRequired: true` instead of auto-promoting doctrine.
+
+Options:
+
+- `--kind decision|pattern|failure_mode|invariant`: filter by knowledge kind.
+- `--include-superseded`: include superseded knowledge records.
+
+### `memory outcome-feedback`
+
+Read-only view of `.playbook/outcome-feedback.json`; fails if that artifact is missing. Reports outcome counts, per-outcome records with provenance refs, aggregated confidence / trigger-quality / stale-knowledge / trend signals, a `next_review_action`, and a `governance` block (defaults: candidate-only, no auto-promotion, no auto-mutation, review required).
+
+### `memory policy-improvement`
+
+Read-only view of `.playbook/policy-improvement.json`; fails if that artifact is missing. Reports candidate ranking adjustments, prioritization suggestions, repeated-blocker influence and confidence-trend notes with provenance refs, plus an `authority` block (defaults: read-only mutation, review-required promotion, forbidden rule mutation). Suggestions are candidate-only.
 
 ### `memory compaction`
 
@@ -174,9 +189,13 @@ Promote a reviewed replay candidate into local semantic memory artifacts:
 
 Promotion remains explicit and reviewed: replay/consolidation artifacts never mutate knowledge automatically.
 
+`--from-candidate <candidate-id>` is accepted as an alternative to the positional `<candidate-id>`.
+
 ### `memory retire <knowledge-id>`
 
 Retire an existing promoted knowledge record without deleting provenance.
+
+`--reason <text>` overrides the recorded retirement reason (default `Retired during human memory review.`).
 
 ### `memory supersede <knowledge-id> --by <successor-id>`
 
