@@ -171,6 +171,8 @@ One-line version:
 
 Sevenfold Plus is canonically defined as doctrine, but not yet enforced as a strict generator/runtime contract.
 
+Archive note (2026-11): the Sevenfold Plus files moved to `docs/archive/playbook-sevenfold-plus/` in the docs reorganization; they are unrelated to the CLI and no longer active doctrine for this repo.
+
 ## 2026-03-06
 
 - WHAT changed: Reworked the official composite action at `.github/action.yml` to run from checked-out repository source by activating pnpm from `packageManager`, installing with `pnpm install --frozen-lockfile`, building the workspace, and invoking `node packages/cli/dist/main.js` for `verify`, `plan`, and `apply` modes.

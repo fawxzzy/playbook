@@ -139,7 +139,7 @@ The first external pilot also exposed concrete product-engineering patterns that
 - **Extension**: If Discord should show app-owned member numbers, persist a durable Discord/source-app link and treat nickname sync as display state, not identity proof.
 - **Extension**: If Discord should collect bug reports, use a persistent panel plus buttons and modals, keep attachments bounded and externally hosted, and route reviewed output through governed queues rather than writing directly into repo truth.
 - **Extension**: If Discord should publish release notes, use production deployment events only as draft inputs, then publish curated `@everyone` community posts instead of raw technical logs.
-- **Reference**: [Discord verification gates](./PATTERNS/discord-verification-gates.md)
+- **Reference** (archived, out of product scope): [Discord verification gates](./archive/patterns/discord-verification-gates_2026.md)
 
 ### Shared aggregation boundary for reads, targeted invalidation boundary for writes
 

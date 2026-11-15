@@ -1125,7 +1125,7 @@ Failure Mode: When roadmap docs lag implemented governed surfaces, operator unde
 - **Already exists today**
   - control-plane, session/evidence, and governed interface contracts already establish deterministic runtime and per-repo trust boundaries that this layer must preserve.
 - **Partially defined**
-  - first deterministic read-first workspace/tenant governance slice is now centralized via `docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE.md`, `.playbook/workspace-governance.json`, and observer multi-repo read interface slice `workspace-tenant-governance`.
+  - first deterministic read-first workspace/tenant governance slice is now centralized via `docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE_AND_OPTIONAL_HOSTED_DEPLOYMENT.md`, `.playbook/workspace-governance.json`, and observer multi-repo read interface slice `workspace-tenant-governance`.
 - **Future work**
   - retain `workspace-governance` v1 as read-only; do not introduce mutation endpoints until policy conflict/fail-closed semantics are fully hardened.
   - define user/session/repo/workspace/tenant/promotion scope boundaries with explicit policy inheritance and fail-closed conflict rules.
@@ -1685,7 +1685,7 @@ Use a layered phase model so each phase compounds directly on the previous one:
 15. **Phase 15 — Knowledge Query / Inspection Surfaces (Read Runtime) - implemented (hardening)**  
     Deterministic, provenance-preserving read-runtime inspection of repository memory and promoted knowledge so humans/CI can query, compare, and audit candidate/promoted/stale states before broader automation consumption.
 16. **Phase 16 — Automation Synthesis (Governed Knowledge Consumption)** (implemented as a governed contract shell, `PB-V09-AUTOMATION-SYNTHESIS-001`; hardening continues)  
-    Controlled synthesis that consumes only promoted, inspectable, provenance-linked knowledge artifacts after `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md` (Phase 15) is in place. This phase explicitly excludes raw chat memory, unreviewed candidate knowledge, and undocumented inference as automation-grade input. Initial thin implementation slice is architecture/contracts/docs plus suggestion-generation contracts only (no autonomous mutation-heavy runtime behavior and no autonomous deployment/execution paths).
+    Controlled synthesis that consumes only promoted, inspectable, provenance-linked knowledge artifacts after `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md` (Phase 15) is in place. This phase explicitly excludes raw chat memory, unreviewed candidate knowledge, and undocumented inference as automation-grade input. Initial thin implementation slice is architecture/contracts/docs plus suggestion-generation contracts only (no autonomous mutation-heavy runtime behavior and no autonomous deployment/execution paths).
 
 Phase 16 allowed vs forbidden input examples:
 

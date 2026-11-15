@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-11-14",
+  "updatedAt": "2026-11-15",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -1009,7 +1009,7 @@
         "memory"
       ],
       "contracts": [
-        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md",
+        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md",
         "docs/commands/knowledge.md",
         "docs/commands/memory.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
@@ -1022,7 +1022,7 @@
         "scripts/validate-roadmap-contract.mjs"
       ],
       "docs": [
-        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md",
+        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md",
         "docs/commands/knowledge.md",
         "docs/commands/memory.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
@@ -1416,7 +1416,7 @@
         "docs/AUTOMATION_SYNTHESIS_VISION.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/ROADMAP.json",
-        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md"
+        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md"
       ],
       "tests": [
         "scripts/validate-roadmap-contract.mjs",
@@ -1427,7 +1427,7 @@
         "docs/AUTOMATION_SYNTHESIS_VISION.md",
         "docs/PLAYBOOK_PRODUCT_ROADMAP.md",
         "docs/roadmap/README.md",
-        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md"
+        "docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md"
       ],
       "dependencies": [
         "PB-V09-KNOWLEDGE-QUERY-INSPECTION-001",
