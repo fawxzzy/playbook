@@ -26,6 +26,10 @@
         },
         {
           "kind": "contains",
+          "target": "rule:migrationsAppendOnly"
+        },
+        {
+          "kind": "contains",
           "target": "rule:protected-doc.governance"
         },
         {
