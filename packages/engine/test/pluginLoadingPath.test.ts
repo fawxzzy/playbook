@@ -65,6 +65,7 @@ describe('single engine plugin-loading path (PB-V05-PACKAGE-BOUNDARIES-001)', ()
     expect(ruleIds.slice(0, -1)).toEqual([
       'requireNotesFileWhenGovernanceExists',
       'requireNotesOnChanges',
+      'migrationsAppendOnly',
       'verify.rule.tests.required',
       'protected-doc.governance',
       'release.version-governance'

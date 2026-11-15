@@ -776,6 +776,12 @@ describe('queryRepositoryIndex', () => {
       type: 'rule-owners',
       rules: [
         {
+          ruleId: 'migrationsAppendOnly',
+          area: 'governance',
+          owners: ['governance'],
+          remediationType: 'migration-append-only'
+        },
+        {
           ruleId: 'notes.empty',
           area: 'governance',
           owners: ['governance'],
