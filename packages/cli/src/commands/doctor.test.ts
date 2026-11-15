@@ -9,9 +9,11 @@ const classifySignalFailureDomains = vi.fn();
 const existsSync = vi.fn();
 const collectVerifyReport = vi.fn();
 const runArchitectureAudit = vi.fn();
+const resolveRepoProfile = vi.fn();
 
 vi.mock('@zachariahredfield/playbook-core', () => ({
-  runArchitectureAudit
+  runArchitectureAudit,
+  resolveRepoProfile
 }));
 
 vi.mock('@zachariahredfield/playbook-engine', () => ({
@@ -41,6 +43,8 @@ describe('runDoctor', () => {
     existsSync.mockReset();
     collectVerifyReport.mockReset();
     runArchitectureAudit.mockReset();
+    resolveRepoProfile.mockReset();
+    resolveRepoProfile.mockReturnValue({ profile: 'product', source: 'fail-closed', reason: 'test default' });
 
     existsSync.mockReturnValue(true);
     generateRepositoryHealth.mockReturnValue({
@@ -223,5 +227,18 @@ describe('runDoctor', () => {
 
     const exitCode = await runDoctor(process.cwd(), { format: 'json', quiet: false });
     expect(exitCode).toBe(ExitCode.Failure);
+  });
+
+  it('reports the consumer profile as info only when the repo is classified as a consumer', async () => {
+    const { collectDoctorReport } = await import('./doctor.js');
+
+    const productReport = await collectDoctorReport(process.cwd());
+    expect(productReport.findings.map((finding) => finding.id)).not.toContain('doctor.docs.repo-profile.consumer');
+
+    resolveRepoProfile.mockReturnValue({ profile: 'consumer', source: 'consumer-evidence', reason: 'adoption evidence found.' });
+    const consumerReport = await collectDoctorReport(process.cwd());
+    const profileFinding = consumerReport.findings.find((finding) => finding.id === 'doctor.docs.repo-profile.consumer');
+    expect(profileFinding).toMatchObject({ category: 'Docs', severity: 'info' });
+    expect(profileFinding?.message).toContain('skipped');
   });
 });

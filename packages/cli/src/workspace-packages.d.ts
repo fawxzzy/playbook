@@ -8,6 +8,7 @@ declare module "@zachariahredfield/playbook-core" {
   export const formatJson: (...args: any[]) => Promise<any>;
   export const runArchitectureAudit: (...args: any[]) => any;
   export const loadArchitecture: (...args: any[]) => any;
+  export const resolveRepoProfile: (repoRoot: string) => { profile: 'product' | 'consumer'; source: 'config' | 'product-layout' | 'consumer-evidence' | 'fail-closed'; reason: string };
   export const LOCAL_VERIFICATION_RECEIPT_RELATIVE_PATH: '.playbook/local-verification-receipt.json';
   export const LOCAL_VERIFICATION_RECEIPT_LOG_RELATIVE_PATH: '.playbook/local-verification-receipts.json';
   export type CommandExecutionQualityArtifact = any;

@@ -6,6 +6,12 @@ type ArchitectureCheckDefinition = {
   id: string;
   title: string;
   severity: ArchitectureAuditSeverity;
+  /**
+   * Product-only checks validate docs/layout that exist only in the Playbook product repository
+   * (architecture hardening docs, product roadmap). They are skipped for consumer repos.
+   * Omit for checks that make sense in any repository.
+   */
+  productOnly?: true;
   evaluate: (repoRoot: string) => Omit<ArchitectureAuditResult, 'id' | 'title' | 'severity' | 'evidence'> & {
     evidence: string[];
   };
@@ -86,6 +92,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'artifact.evolution-policy',
     title: 'Artifact evolution policy',
     severity: 'medium',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const policyPath = 'docs/contracts/ARTIFACT_EVOLUTION_POLICY.md';
       const policyExists = exists(repoRoot, policyPath);
@@ -147,6 +154,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'scm.context-layer',
     title: 'SCM/git context normalization layer',
     severity: 'medium',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const sharedScmCandidates = sortStable(['packages/engine/src/git/base.ts', 'packages/engine/src/git/diff.ts']);
       const foundCandidates = sharedScmCandidates.filter((relativePath) => exists(repoRoot, relativePath));
@@ -182,6 +190,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'remediation.trust-model',
     title: 'Remediation trust model',
     severity: 'high',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const trustModelPath = 'docs/architecture/REMEDIATION_TRUST_MODEL.md';
       const trustDoc = readText(repoRoot, trustModelPath);
@@ -212,6 +221,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'ai.determinism-boundary',
     title: 'AI vs deterministic boundary',
     severity: 'high',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const docPath = 'docs/architecture/AI_DETERMINISM_BOUNDARY.md';
       const doc = readText(repoRoot, docPath);
@@ -242,6 +252,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'ecosystem.adapter-boundaries',
     title: 'Ecosystem adapter boundaries',
     severity: 'medium',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const docPath = 'docs/architecture/ECOSYSTEM_ADAPTERS.md';
       const doc = readText(repoRoot, docPath);
@@ -268,6 +279,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'performance.context-efficiency',
     title: 'Context/token efficiency strategy',
     severity: 'medium',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const docPath = 'docs/architecture/CONTEXT_EFFICIENCY_STRATEGY.md';
       const doc = readText(repoRoot, docPath);
@@ -298,6 +310,7 @@ const architectureCheckDefinitions: ArchitectureCheckDefinition[] = [
     id: 'docs.roadmap-coverage',
     title: 'Roadmap/docs coverage for hardening controls',
     severity: 'medium',
+    productOnly: true,
     evaluate: (repoRoot) => {
       const roadmapPath = 'docs/PLAYBOOK_PRODUCT_ROADMAP.md';
       const roadmap = readText(repoRoot, roadmapPath);
@@ -359,5 +372,6 @@ export const architectureAuditChecks: ArchitectureAuditCheck[] = [...architectur
   .map((definition) => ({
     id: definition.id,
     title: definition.title,
+    ...(definition.productOnly ? { productOnly: true } : {}),
     run: ({ repoRoot }) => toResult(definition, repoRoot)
   }));

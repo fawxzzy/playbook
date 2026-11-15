@@ -1,4 +1,4 @@
-import { runArchitectureAudit } from '@zachariahredfield/playbook-core';
+import { resolveRepoProfile, runArchitectureAudit } from '@zachariahredfield/playbook-core';
 import {
   generateRepositoryHealth,
   classifySignalFailureDomains,
@@ -182,6 +182,17 @@ export const collectDoctorReport = async (cwd: string): Promise<DoctorReport> =>
       severity: 'info',
       id: 'doctor.testing.verify.clean',
       message: 'No verify findings detected.'
+    });
+  }
+
+  // Product-only docs/architecture checks are skipped for consumer repos (fail-closed classification; see resolveRepoProfile).
+  const repoProfile = resolveRepoProfile(cwd);
+  if (repoProfile.profile === 'consumer') {
+    findings.push({
+      category: 'Docs',
+      severity: 'info',
+      id: 'doctor.docs.repo-profile.consumer',
+      message: `Repository classified as a Playbook consumer; Playbook product-repo docs and architecture checks are skipped. ${repoProfile.reason}`
     });
   }
 

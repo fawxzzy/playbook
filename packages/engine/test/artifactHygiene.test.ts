@@ -50,6 +50,7 @@ describe('artifact hygiene diagnostics', () => {
       '.playbook/version-policy.json',
       '.playbook/managed-surfaces.json',
       '.playbook/.gitignore',
+      '.playbook/README.md',
       '.playbook/pr-metadata.json',
       '.playbook/functors/registry.json',
       '.playbook/memory/atlas-knowledge-candidates.json',

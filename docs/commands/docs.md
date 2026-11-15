@@ -23,6 +23,8 @@ pnpm playbook docs consolidate-plan --json
 7. Archive and compatibility-stub hygiene (general archive naming conventions, intentional redirect stubs, and cleanup-candidate reporting for ad hoc trackers).
 8. Subapp repo truth-pack contract checks for `subapps/*` and `examples/subapps/*` (required files/directories, required `playbook/context.json` fields, and optional integration JSON validity when present).
 
+Checks 1, 2 (single-roadmap duplicates), 6 and the `docs/contracts/command-truth.json` requirement apply to the Playbook product repo only; for consumer repos only the `README.md`, `AGENTS.md` and `docs/ARCHITECTURE.md` anchors are required. The profile comes from `playbook.config.json` `repoType`, then product-layout detection, then consumer adoption evidence, and fails closed to product (see `docs/commands/doctor.md`).
+
 ## CI behavior
 
 - With `--ci`, any `error` finding exits `3` (policy failure); without `--ci` the same condition exits `1`. No errors exits `0`.

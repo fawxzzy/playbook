@@ -202,6 +202,8 @@ export { PATTERN_TRANSFER_PACKAGE_SCHEMA_VERSION, normalizePatternTransferPackag
 export { additiveCommandFieldSchemaRegistry, getContractsSchemaRegistry, memoryArtifactSchemaRegistry } from './contracts/schemaRegistry.js';
 
 export { runArchitectureAudit } from './audit/architecture.js';
+export { REPO_TYPE_CONFIG_FIELD, isProductRepo, resolveRepoProfile } from './repoProfile.js';
+export type { RepoProfile, RepoProfileResolution, RepoProfileSource } from './repoProfile.js';
 export { ARCHITECTURE_REGISTRY_PATH, loadArchitecture } from './architecture/loadArchitecture.js';
 export { explainArtifactOwnership, explainCommandOwnership, explainSubsystemOwnership } from './architecture/introspection.js';
 export { resolveArtifactConsumers, resolveArtifactLineage, resolveArtifactOwner, resolveArtifactUpstream } from './architecture/artifactLineage.js';
