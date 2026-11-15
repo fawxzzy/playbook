@@ -1,5 +1,7 @@
 # Playbook Local-First Workflow Model
 
+> Status: currency unverified. This model was not re-checked against the current CLI during the 2026 docs reorganization; confirm against [docs/commands/README.md](../commands/README.md) and [docs/RELEASING.md](../RELEASING.md) before relying on it.
+
 ## Purpose
 
 Define the temporary and long-term workflow contract that lets Playbook operate without GitHub as mandatory CI, publishing orchestration, or status truth.
