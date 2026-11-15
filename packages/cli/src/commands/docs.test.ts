@@ -11,6 +11,8 @@ const createFixtureRepo = (): string => {
   fs.mkdirSync(path.join(root, '.playbook', 'orchestrator', 'workers', 'lane-1'), { recursive: true });
 
   const files: Record<string, string> = {
+    // Product-layout marker: this fixture models the Playbook product repo, so product-only docs checks apply.
+    'package.json': JSON.stringify({ name: 'playbook-monorepo' }),
     'README.md': '# README\nai-context ai-contract context verify plan apply\n',
     'AGENTS.md': '# AGENTS\n',
     'docs/index.md': '# Docs Index\nai-context ai-contract context verify plan apply\n',
