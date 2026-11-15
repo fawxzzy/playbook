@@ -5,7 +5,7 @@ This document defines how downstream repos consume the reusable event-contract v
 ## Owner Surface
 
 - reusable workflow: `.github/workflows/event-contract-pack.yml`
-- owner repo: `fawxzzy-playbook`
+- owner repo: `fawxzzy/playbook`
 - owner responsibility: keep the workflow generic, contract-first, and reusable across docs-only repos and app repos without inventing repo-local dialects
 
 The workflow does not redefine app event schemas. Consumer repos remain the owner of their own event catalog, shadow-mode checks, and warehouse smoke commands.

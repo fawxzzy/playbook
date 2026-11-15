@@ -20,6 +20,7 @@ Generate a deterministic remediation task plan from current verify findings.
 - When `--repo <target>` is used, lifecycle artifacts are persisted in the target repository's `.playbook/` directory.
 - `--out <path>` writes the JSON artifact when using JSON mode.
 - `--run-id <id>` attaches planning to an existing execution run; otherwise a run is created/resolved automatically.
+- Plugin rules participate in planning through the shared engine rule loader; see [PLUGIN_CONTRACT_V1](../contracts/PLUGIN_CONTRACT_V1.md).
 
 `--ci` is a global option and only affects text-mode verbosity (`--quiet` behavior); it does not change plan semantics.
 
@@ -61,3 +62,5 @@ Generate a deterministic remediation task plan from current verify findings.
   ]
 }
 ```
+
+See also: [PLAN_APPLY_OVERRIDE_CONTRACT](../contracts/PLAN_APPLY_OVERRIDE_CONTRACT.md) for the Level 3 override accepted by `apply --from-plan`.

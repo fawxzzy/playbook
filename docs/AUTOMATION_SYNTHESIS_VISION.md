@@ -11,7 +11,7 @@ This track should align with the long-term platform layering in `docs/architectu
 Control-plane architecture reference: `docs/architecture/PLAYBOOK_CONTROL_PLANE_ARCHITECTURE.md`.
 
 Governed knowledge-consumption architecture reference: `docs/architecture/PLAYBOOK_AUTOMATION_SYNTHESIS_GOVERNED_KNOWLEDGE_CONSUMPTION.md`.
-Phase 14 prerequisite reference: `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md`.
+Phase 14 prerequisite reference: `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_AND_INSPECTION_SURFACES.md`.
 
 ## Problem statement
 

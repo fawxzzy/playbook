@@ -49,3 +49,7 @@ The registry now includes explicit temporal-memory substrate contracts for:
 - `.playbook/memory/replay-candidates.json#replayEvidence`
 
 These artifacts stay candidate-only, preserve provenance end-to-end, and do not imply promotion.
+
+## Plugin manifest contract
+
+The registry includes `plugin-manifest` (v1.0, `packages/contracts/src/plugin-manifest.schema.json`), the schema for plugin manifests. Plugin discovery, identity and the shared rule loader are specified in [PLUGIN_CONTRACT_V1](../contracts/PLUGIN_CONTRACT_V1.md).

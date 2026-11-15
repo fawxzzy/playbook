@@ -20,7 +20,7 @@ The first governed interface slice is limited to read surfaces. The Observer API
 2. `run-state-inspection` - run-state inspection
 3. `longitudinal-state-summary` - longitudinal state summary
 4. `cross-repo-pattern-comparison` - cross-repo pattern comparison / portability / proposals
-5. `workspace-tenant-governance` - read-only workspace/tenant governance summary (added after the original four; see `docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE.md`)
+5. `workspace-tenant-governance` - read-only workspace/tenant governance summary (added after the original four; see `docs/architecture/PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE_AND_OPTIONAL_HOSTED_DEPLOYMENT.md`)
 
 Slices 1-4 were the original first slice; slice 5 was added later and is part of the same read-only interface. No other slice name is served.
 

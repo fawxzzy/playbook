@@ -229,6 +229,10 @@ Preferred customization mechanisms inside consumer repositories:
 - rule packs
 - plugin extensions
 
+Plugin extensions are declared in the consumer's `playbook.config.json` (`"plugins": ["<specifier>"]`) and must satisfy [Plugin contract v1](contracts/PLUGIN_CONTRACT_V1.md): a bare package name or a repo-local `./` file that stays inside the repository, loaded in listed order, never replacing a core rule. A listed plugin that fails to load fails `verify`, `plan` and `analyze`; `rules`, `apply`, `fix` and `status` degrade to built-in rules and report the reason.
+
+Consumers that run `apply` on plans containing security-sensitive paths (`.github/`, `.git/`, `.husky/`, `.env*`, `.npmrc`, `secrets/`) need the explicit override `--allow-level 3 --reason "<why>"`; see [Plan/apply override contract](contracts/PLAN_APPLY_OVERRIDE_CONTRACT.md).
+
 Avoid this anti-pattern:
 
 - forking or vendoring Playbook Core into consumer repositories for per-project customization

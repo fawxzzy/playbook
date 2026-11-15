@@ -208,7 +208,7 @@ Promotion receipt: `docs/contracts/VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md
 
 ## Proposed ATLAS Registration Shape
 
-This seam is documentation-first, so the registration shape is a draft for explicit admission posture rather than an executable runtime declaration.
+This seam is documentation-first, so the registration shape is a draft for explicit admission posture rather than an executable runtime declaration. The draft is a Phase 0 snapshot: its `contract_status: "planned"` and `derivative-pattern-pack-not-yet-reviewed-for-promotion` blocker predate the 10 patterns promoted in `VERTA_DERIVATIVE_PATTERN_PROMOTION_RECEIPT.md` (Playbook PR #14, commit `0d955393`, verified present in git history); the `atlas.app-registration.v1` shape itself is not defined in this repo (UNVERIFIED).
 
 ```json
 {
@@ -282,6 +282,8 @@ The derivative pack is promotion-ready only when every criterion below is satisf
 - no implicit widening into Lifeline or `_stack`
 
 ## Review Checklist
+
+Template checklist, left unchecked on purpose; the completed status for the promoted patterns is recorded in the promotion receipt's Review Checklist Status.
 
 - [ ] source reviewed against the approved provenance refs
 - [ ] derivative rewritten as Playbook-owned artifact language

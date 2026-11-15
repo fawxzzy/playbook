@@ -107,7 +107,7 @@ export interface PlaybookRule {
 }
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/ARCHITECTURE.md](ARCHITECTURE.md).
+> See also canonical block: [docs/ARCHITECTURE.md](../ARCHITECTURE.md).
 
 Rules should be:
 
@@ -152,7 +152,7 @@ Database: Supabase
 Styling: Tailwind
 
 <!-- docs-merge:duplicate-block -->
-> See also canonical block: [docs/EXAMPLES.md:27](EXAMPLES.md#block-27).
+> See also canonical block: [docs/EXAMPLES.md:27](../EXAMPLES.md).
 
 Analyzers should never modify code directly.
 

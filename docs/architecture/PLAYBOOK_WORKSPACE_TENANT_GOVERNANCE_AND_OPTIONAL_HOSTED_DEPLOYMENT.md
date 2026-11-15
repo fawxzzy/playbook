@@ -231,3 +231,14 @@ Default locality posture:
 - `docs/architecture/PLAYBOOK_GOVERNED_CROSS_REPO_PATTERN_PROMOTION_AND_TRANSFER.md`
 - `docs/architecture/PLAYBOOK_SESSION_EVIDENCE_ARCHITECTURE.md`
 - `docs/CONSUMER_INTEGRATION_CONTRACT.md`
+
+## Read-first v1 slice (shipped)
+
+Merged from the former `PLAYBOOK_WORKSPACE_TENANT_GOVERNANCE.md`.
+
+- Rule: workspace governance may coordinate repos but must not erase per-repo accountability. Pattern: repo-scoped truth -> governed interface -> workspace policy view. Failure mode: multi-repo governance that flattens repo boundaries becomes unsafe before it becomes useful.
+- v1 is explicitly read-only: the deterministic artifact `.playbook/workspace-governance.json` and the `workspace-tenant-governance` slice on the multi-repo control-plane read interface. No mutation endpoints, no hidden cross-repo orchestration.
+- Membership is explicit through `member_repo_ids`; policy references are split into `policy_refs.inherited` and `policy_refs.overridden`; every member repo keeps `policy_boundary: per-repo`.
+- Hosted/self-hosted parity invariant: `hosted_self_hosted_parity_boundary.semantic_parity = required` and `hosted_self_hosted_parity_boundary.mutation_authority = none`.
+- Required output fields: `workspace_id`, `tenant_id`, `member_repo_ids`, `policy_refs.inherited`, `policy_refs.overridden`, `accountability_boundary`, `provenance_boundary`.
+- Determinism: identical underlying artifacts must give identical output; per-repo policy and provenance boundaries are never flattened into workspace-level truth.

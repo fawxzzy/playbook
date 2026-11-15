@@ -103,6 +103,29 @@ Minimum provenance fields:
 - Promotion rationale.
 - Review decision metadata (reviewer/policy, timestamp, decision outcome).
 
+## Repository Memory Events (v1 event store)
+
+Merged from the former `REPOSITORY_MEMORY_EVENTS.md`. Repository Memory Events are deterministic, append-only operational evidence for core orchestration workflows.
+
+- Rule: record events, not interpretations. Conflating raw events with derived insights corrupts evidence lineage.
+- Pattern: append-only event stores preserve deterministic system history.
+- Locations: `.playbook/memory/events/` (append-only event files) and `.playbook/memory/index.json` (event counts and latest timestamps by `event_type`).
+- Event types (v1): `route_decision`, `lane_transition`, `worker_assignment`, `lane_outcome`, `improvement_candidate`. Every record also carries `schemaVersion` and `event_id`.
+- Determinism: stable JSON formatting (2-space indent, trailing newline), canonical key ordering, event ids derived from timestamp + event type + canonical payload hash with deterministic collision suffixing, monotonic append-safe index updates.
+- Engine helpers: `recordRouteDecision()`, `recordLaneTransition()`, `recordWorkerAssignment()`, `recordLaneOutcome()`, `recordImprovementCandidate()`; wrap calls in `safeRecordRepositoryEvent()` where recording must stay best-effort and non-blocking.
+- The envelope schema for memory events is in [REPOSITORY_MEMORY_EVENT_CONTRACT.md](../contracts/REPOSITORY_MEMORY_EVENT_CONTRACT.md).
+
+## Canonical memory-system and replay/promotion artifacts
+
+Merged from the former `PLAYBOOK_REPOSITORY_MEMORY_SYSTEM.md`. Two canonical read-only artifacts unify the layers above: `.playbook/memory-system.json` and `.playbook/replay-promotion-system.json`. The contract is v1 and does not widen mutation authority.
+
+- `.playbook/memory-system.json`: current memory inventory by class, replay/consolidation/promotion boundary refs, pressure/retention class summary, and stale/superseded/candidate state summaries.
+- `.playbook/replay-promotion-system.json`: replay and consolidation candidate inventories, compaction review buckets, salience and review-required status, promotion-ready vs candidate-only boundaries, lifecycle summaries (candidate, promoted, stale, superseded, retired) and provenance refs across replay -> consolidation -> compaction -> promotion. Built from canonical source artifacts only.
+- Layer sources: structural graph (`.playbook/repo-index.json`, `.playbook/repo-graph.json`); temporal memory (`.playbook/memory/index.json`, `.playbook/memory/events/*`); candidate knowledge (`.playbook/memory/replay-candidates.json`, `candidates.json`, `lifecycle-candidates.json`); promoted doctrine (`.playbook/memory/knowledge/{decisions,patterns,failure-modes,invariants}.json`).
+- Boundaries: graph and temporal artifacts stay separate; episodic evidence never auto-promotes into doctrine; replay, consolidation, compaction and promotion remain explicit, provenance-preserving, review-required layers.
+- Authority: mutation `read-only`, promotion `review-required`, execution `unchanged`.
+- Pattern: observe -> replay -> consolidate -> compact -> review -> promote. Failure mode: without a canonical replay/promotion contract, adjacent memory artifacts drift into overlapping authority.
+
 ## Privacy and local-first stance
 
 Repository memory is local-first by default.

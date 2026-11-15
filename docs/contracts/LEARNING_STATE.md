@@ -28,6 +28,7 @@ Top-level fields:
 
 Required metrics:
 
+- `sample_size`
 - `first_pass_yield`
 - `retry_pressure`
 - `validation_load_ratio`

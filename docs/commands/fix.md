@@ -21,6 +21,7 @@ Applies safe, deterministic autofixes for eligible verify findings.
 - Without `--dry-run`, `--yes`, or `--ci`, `fix` does not prompt: it skips every eligible task, reports `Interactive prompts are not available; re-run with --yes to apply fixes.`, and exits `1`.
 - `--dry-run` exits `0`. An applying run re-verifies afterwards and exits `0` when verify is clean, or `3` (policy failure) when verify still reports failures; internal errors exit `1`.
 - `--json` prints `{ schemaVersion: "1.0", command: "fix", ok, exitCode, dryRun, applied, skipped, reverify?, summary }`, where `reverify` (`ok`, `failures`, `warnings`, `exitCode`) is omitted on dry runs.
+- Plugin rules: `fix` discovers rules through the shared engine rule catalog (the same loader `verify` uses) and runs a plugin rule's `fix` handler for tasks with that rule id. If plugins cannot be loaded, `fix` falls back to built-in rules and prints the reason on stderr. See [PLUGIN_CONTRACT_V1](../contracts/PLUGIN_CONTRACT_V1.md).
 
 ## Relationship to `plan` / `apply`
 `fix` remains a convenience remediation path for local/manual operation.

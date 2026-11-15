@@ -68,6 +68,11 @@ Filter knowledge records with:
 - `--text`
 - `--limit`
 
+Read-only subcommands also accept these shared options (see `playbook knowledge --help`):
+
+- `--order asc|desc`: ordering for list/timeline/stale output (default `desc`).
+- `--days <n>`: override the stale threshold in days (read by `inspect`, `compare`, `provenance`, `supersession` and `stale`).
+
 ### `knowledge inspect <id>`
 
 Inspect one knowledge record by id, including normalized lifecycle metadata, warnings, and supersession links.
@@ -266,6 +271,8 @@ Optional options:
 - `--evidence-ref <value>` (repeatable)
 - `--followup-ref <value>` (repeatable; first value is stored as `followUpArtifactPath`)
 - `--receipt-id <id>` (stable overwrite semantics for repeated writes)
+
+`--reviewed-by` is not supported: `knowledge review record` rejects it because the current receipt contract has no field for it.
 
 Behavior guarantees:
 

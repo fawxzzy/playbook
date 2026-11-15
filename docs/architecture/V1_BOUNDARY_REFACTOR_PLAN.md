@@ -82,56 +82,20 @@ Unified in this slice (behavior-preserving, no output or public API change):
   configured plugin and fails if any engine module other than `plugins/*`
   imports `loadPlugins`/`pluginRegistry` directly.
 
-Open items (would change command output or public API; intentionally not done):
+Open-item status (single source of truth; the rationale for each choice is in "Decisions" below, the contract is
+`docs/contracts/PLUGIN_CONTRACT_V1.md`). Each item was originally left open because resolving it would change command
+output or a public API; the Plugin Contract v1 slice closed all but three.
 
-1. `OPEN-PLUGIN-SHAPE`: CLI plugin rules (`verify` predicate over a failure) and
-   engine plugin rules (`check` producing failures) are different contracts. A
-   plugin written for one is invisible to the other. Resolving it needs a
-   versioned plugin contract and migration for existing plugins.
-2. `OPEN-PLUGIN-DISCOVERY`: CLI discovers `playbook-plugin-*` package
-   dependencies; engine reads `playbook.config.json` `plugins`. Aligning changes
-   which plugins load, and therefore `rules --json` and `verify` output, per repo.
-3. `OPEN-RULES-SURFACE`: `rules --json` lists CLI core rules (for example
-   `notes.missing`, `notes.empty`) whose ids differ from engine core rule ids
-   (for example `requireNotesFileWhenGovernanceExists`); engine-registered rules
-   and plugin rules never appear. Changing it changes the `rules` JSON contract.
-4. `OPEN-ANALYZE-PLUGINS`: CLI `analyze` does not load plugin detectors while
-   `analyzeRepo`/`doctor` do. Routing CLI analyze through `analyzeRepo` changes
-   `detectorsRun`/`detected` output and needs its own parity check.
-5. `OPEN-CORE-ANALYZE-ADAPTER`: retire the deprecated synchronous core `analyze`
-   compatibility adapter (carried over from the 2026-10-16 status above).
-6. `OPEN-REPO-INDEX-RULES`: `engine/src/indexer/repoIndexer.ts` (`detectRules`)
-   lists `getCoreRules` ids only, without plugin rules; changing it alters the
-   `repo-index.json` contract.
-
-Plugin Contract v1 slice (`docs/contracts/PLUGIN_CONTRACT_V1.md`) - status of the items above:
-
-1. `OPEN-PLUGIN-SHAPE`: CLOSED (implemented). The contract is the engine shape
-   (`check(ctx) -> { failures }`) with optional guidance fields and a `contractVersion`.
-   Legacy `verify({ failure }) -> boolean` plugins are adapted by
-   `packages/engine/src/plugins/legacyPredicateShim.ts` (the only module that knows the
-   legacy shape).
-2. `OPEN-PLUGIN-DISCOVERY`: CLOSED (implemented). Discovery is `playbook.config.json`
-   `plugins`; `playbook-plugin-*` dependency discovery survives only inside the
-   deprecated shim, with a once-per-process deprecation notice on stderr.
-3. `OPEN-RULES-SURFACE`: CLOSED for listing (implemented). `rules --json` now lists engine
-   core rules without CLI guidance, v1 plugin rules and legacy plugin rules, each with an
-   additive `source` field (`core` | `plugin` | `legacy-plugin`). Residual, tracked as
-   `OPEN-RULE-ID-NAMESPACES`: CLI guidance rules (`notes.missing`, `notes.empty`) and engine
-   rules (`requireNotesFileWhenGovernanceExists`) are still separate id namespaces that
-   explain the same failures; merging them is a rule-id rename and was not done.
-4. `OPEN-ANALYZE-PLUGINS`: CLOSED (implemented). The engine context-based `analyze` used by
-   the CLI appends plugin detectors after the dependency-only core detectors through the
-   unified registry; output for repositories without plugins is unchanged.
-5. `OPEN-CORE-ANALYZE-ADAPTER`: STILL OPEN. Not touched by this slice: the deprecated
-   synchronous core `analyze` compatibility adapter remains because the engine test suite
-   still compares against it.
-6. `OPEN-REPO-INDEX-RULES`: CLOSED (implemented). `repo-index.json` `rules` includes plugin
-   rule ids (core ids unchanged, sorted, de-duplicated); a broken plugin falls back to the
-   core ids instead of failing `index`.
-
-Still open after this slice: `OPEN-CORE-ANALYZE-ADAPTER`, `OPEN-RULE-ID-NAMESPACES`, and
-removal of the legacy shim itself (needs a major release; tracked by the deprecation notice).
+| Id | Original problem | Status | Resolution or remaining work |
+|---|---|---|---|
+| `OPEN-PLUGIN-SHAPE` | CLI plugin rules (`verify` predicate over a failure) and engine plugin rules (`check` producing failures) were different contracts, so a plugin was visible to one surface only. | CLOSED | The contract is the engine shape (`check(ctx) -> { failures }`) with optional guidance fields and a `contractVersion`. Legacy `verify({ failure }) -> boolean` plugins are adapted by `packages/engine/src/plugins/legacyPredicateShim.ts`, the only module that knows the legacy shape. |
+| `OPEN-PLUGIN-DISCOVERY` | CLI discovered `playbook-plugin-*` dependencies; engine read `playbook.config.json` `plugins`. | CLOSED | Discovery is `playbook.config.json` `plugins`; `playbook-plugin-*` dependency discovery survives only inside the deprecated shim, with a once-per-process deprecation notice on stderr. |
+| `OPEN-RULES-SURFACE` | `rules --json` listed only CLI core rules (for example `notes.missing`); engine and plugin rules never appeared. | CLOSED for listing | `rules --json` lists engine core rules without CLI guidance, v1 plugin rules and legacy plugin rules, each with an additive `source` field (`core`, `plugin`, `legacy-plugin`). The residual id-namespace split is tracked as `OPEN-RULE-ID-NAMESPACES`. |
+| `OPEN-ANALYZE-PLUGINS` | CLI `analyze` did not load plugin detectors while `analyzeRepo`/`doctor` did. | CLOSED | The engine context-based `analyze` used by the CLI appends plugin detectors after the dependency-only core detectors through the unified registry; output for repositories without plugins is unchanged. |
+| `OPEN-CORE-ANALYZE-ADAPTER` | The deprecated synchronous core `analyze` compatibility adapter still exists. | OPEN (on purpose) | Kept because the engine test suite compares against it; delete it in the same major as the legacy shim. |
+| `OPEN-REPO-INDEX-RULES` | `repoIndexer.ts` (`detectRules`) listed `getCoreRules` ids only. | CLOSED | `repo-index.json` `rules` includes plugin rule ids (core ids unchanged, sorted, de-duplicated); a broken plugin falls back to the core ids instead of failing `index`. |
+| `OPEN-RULE-ID-NAMESPACES` | CLI guidance rules (`notes.missing`, `notes.empty`) and engine rules (`requireNotesFileWhenGovernanceExists`) are separate id namespaces for the same failures. | OPEN | Resolve only with an additive alias map, never a rename (see Decision 3). |
+| Legacy shim removal | The shim keeps old `playbook-plugin-*` plugins working. | OPEN (next major) | Tracked by the one-time deprecation notice (see Decision 10). |
 
 Single-loader boundary (enforced by `packages/cli/src/lib/pluginContract.test.ts`): the CLI
 reaches plugins only through `lib/loadVerifyRules.ts`, which only calls

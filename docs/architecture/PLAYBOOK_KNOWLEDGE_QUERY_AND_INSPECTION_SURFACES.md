@@ -134,3 +134,31 @@ Recommended dependency ladder:
 - `docs/architecture/PLAYBOOK_REPO_LONGITUDINAL_STATE_AND_KNOWLEDGE_PROMOTION.md`
 - `docs/architecture/PLAYBOOK_OUTCOME_FEEDBACK_AND_AUTOMATION_RUNTIME_LEARNING.md`
 - `docs/architecture/PLAYBOOK_GOVERNED_CROSS_REPO_PATTERN_PROMOTION_AND_TRANSFER.md`
+
+## Shipped CLI surface and read model (Phase 14)
+
+Merged from the former `PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md`.
+
+Lifecycle states exposed for audit: `evidence -> candidate -> promoted -> superseded`.
+
+- `evidence`: episodic memory events under `.playbook/memory/events/*.json`.
+- `candidate`: replayed knowledge candidates in `.playbook/memory/candidates.json`.
+- `promoted`: active or retired promoted knowledge under `.playbook/memory/knowledge/*.json`.
+- `superseded`: promoted records replaced by newer doctrine.
+
+Normalized record fields: `id`, `type`, `createdAt`, `repo`, `source`, `confidence`, `status`, `provenance`, `metadata`. Status values exposed: `observed`, `active`, `stale`, `retired`, `superseded`.
+
+Read-only namespace (mutation, promotion, retirement and pruning stay outside it):
+
+```bash
+pnpm playbook knowledge list --json
+pnpm playbook knowledge query --type candidate --json
+pnpm playbook knowledge inspect <id> --json
+pnpm playbook knowledge timeline --json
+pnpm playbook knowledge provenance <id> --json
+pnpm playbook knowledge stale --json
+```
+
+- `list` enumerates records; `query` filters by type, status, module, rule, text or limit; `inspect` shows one record; `timeline` orders chronologically; `provenance` resolves direct evidence and lineage; `stale` shows stale candidates plus retired and superseded knowledge.
+- Schema: `pnpm playbook schema knowledge --json` and `packages/contracts/src/knowledge.schema.json` (shapes `knowledge-list`, `-query`, `-inspect`, `-timeline`, `-provenance`, `-stale`).
+- Guardrails: provenance is required on every record; inspection commands must not mutate `.playbook/memory/**`. Pattern: queryable knowledge before automated knowledge consumption. Failure mode: hidden mutation inside a read-runtime command.

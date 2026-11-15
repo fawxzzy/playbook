@@ -1,7 +1,7 @@
 # Sevenfold Plus Content Generation Rules
 
 ## Input Contract
-Generators should consume `playbook/ontologies/sevenfold-plus.yaml`.
+Generators should consume `docs/archive/playbook-sevenfold-plus/ontologies/sevenfold-plus.yaml` (archived; formerly `playbook/ontologies/sevenfold-plus.yaml`).
 
 ## Output Families
 For each target number, emit:

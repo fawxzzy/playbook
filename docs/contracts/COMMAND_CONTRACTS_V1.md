@@ -28,8 +28,8 @@ For JSON outputs, commands must emit deterministic objects with:
 | `query` | Fails deterministically with actionable guidance when repo index is missing. |
 | `explain` | Emits deterministic target classification (`rule`, `module`, `architecture`) and structured explanation payload. |
 | `ask` | Preserves deterministic source reporting and validated repo-context hydration from trusted artifacts. |
-| `plan` | Derives remediation status only from `verify` failures (not warnings). |
-| `apply` | Enforces repository boundary checks and refuses unsafe or out-of-plan task execution. |
+| `plan` | Derives remediation status only from `verify` failures (not warnings). Labels each task with an additive `changeLevel` (1, 2, or 3; source of truth `docs/contracts/security/change-level.json`). |
+| `apply` | Enforces repository boundary checks and refuses unsafe or out-of-plan task execution. Enforces a change-level ceiling (default Level 2); Level 3 tasks require `--allow-level 3 --reason <text>`, which records an `apply.change-level-override.v1` event (see [PLAN_APPLY_OVERRIDE_CONTRACT.md](./PLAN_APPLY_OVERRIDE_CONTRACT.md)). |
 | `analyze-pr` | Produces deterministic text/json/github-comment/github-review contracts from the same diff model. |
 | `contracts` | Emits a deterministic registry surface for schema targets, runtime artifacts, and tracked roadmap statuses with structured availability semantics. |
 

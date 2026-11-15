@@ -36,6 +36,12 @@ Top-level fields:
 - `sourceArtifacts`: source artifact availability (`taskExecutionProfile`, `learningState`)
 - `learning_state_available`: whether a concrete learning-state snapshot was available for route refinement
 - `route_confidence`: bounded confidence score for the selected route (0-1)
+- `expected_surfaces`: surfaces the route is expected to touch
+- `likely_conflict_surfaces`: surfaces likely to conflict with parallel work
+- `dependency_level`: `low` | `medium` | `high`
+- `recommended_pr_size`: `small` | `medium` | `large`
+- `worker_ready`: whether the route is ready for worker dispatch
+- `story_reference` (optional): linked story (`story_reference`, `id`, `title`, `status`, `artifact_path`, `suggested_route`, `execution_lane`)
 - `open_questions`: explicit evidence gaps requiring more telemetry before stronger optimization
 - `warnings`: deterministic degradation/refinement warnings
 

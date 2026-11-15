@@ -18,6 +18,7 @@ The environment bridge exists to keep these boundaries explicit:
 
 The bridge export must declare:
 
+- `schemaVersion`
 - `workflowPackId`
 - `environmentName`
 - `verificationGate`
@@ -65,7 +66,7 @@ This contract does not include:
 
 ## Pattern
 
-- Publish the environment bridge as a schema-backed metadata contract first, then let future planners or compatibility layers consume it explicitly.
+- Publish the environment bridge as a schema-backed metadata contract first, then let planners (`environmentBridgePlanner.ts`, shipped) or compatibility layers consume it explicitly.
 
 ## Failure Mode
 

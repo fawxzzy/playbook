@@ -202,8 +202,9 @@ Release sync now has an atomic commit surface: use `pnpm playbook commit` instea
 Behavior:
 
 - `pnpm playbook commit` runs release sync, stages all repo changes, and executes `git commit` with pass-through flags (for example `-m`).
-- `.husky/pre-commit` is warning-only for release drift (no mutation).
-- `.husky/pre-push` remains fail-closed and blocks push when drift still exists.
+- `.husky/pre-commit` runs `pnpm playbook release sync --check` as warning-only and does not mutate.
+- `.husky/pre-push` runs `pnpm playbook release sync --check` and fails closed without mutating repository state.
+- CI parity is intentional: local push blocks and CI both fail on unresolved release drift.
 - The hooks are active once `git config core.hooksPath .husky` has run: `pnpm install` does it through the `prepare` script (`scripts/prepare.mjs`), and `pnpm hooks:install` sets it manually.
 
 Rule: Release governance must be applied before CI, not discovered by CI.
@@ -237,21 +238,8 @@ Rule: Managed release artifacts must remain idempotent after first successful ap
 Pattern: Apply once, verify many times.
 Failure Mode: Duplicate managed changelog prepends create permanent false drift.
 
-## Release Sync Requirement
-
-Release sync should run through `pnpm playbook commit` for atomic local commits, while pre-push keeps a fail-closed fallback check.
-
-- Use `pnpm playbook commit -m "<message>"` for release-governed changes instead of raw `git commit`.
-- `.husky/pre-commit` runs `pnpm playbook release sync --check` as warning-only and does not mutate.
-- `.husky/pre-push` runs `pnpm playbook release sync --check` and fails closed without mutating repository state.
-- CI parity is intentional: local push blocks and CI both fail on unresolved release drift.
-
-Rule: Release plan must be applied before code leaves local environment.
-Pattern: Detect drift locally -> apply -> commit -> push clean state.
-Failure Mode: Relying on CI to detect release drift creates redundant failure cycles and slows iteration.
 Rule: Release sync must be applied before pushing when drift exists.
 Pattern: Local pre-push enforcement prevents CI release drift failures.
-Failure Mode: Relying on CI-only detection causes repeated failed pipelines and wasted cycles.
 
 ## CI Install Stability
 

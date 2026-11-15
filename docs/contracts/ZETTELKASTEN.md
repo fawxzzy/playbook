@@ -9,22 +9,20 @@ They are not durable memory by default.
 
 ## Current maturity
 
-Current shipped scaffolding includes zettels, typed links, graph snapshots, and deterministic grouping.
+Shipped as engine library builders (no dedicated CLI command): `buildGraphSnapshot`, `groupDeterministicMemory`, `buildCandidatePatterns`, `synthesizePatternCardDrafts`, `scorePromotionReadiness`, and `applyPromotionDecision`. Not implemented in code: no writer or schema for `.playbook/zettelkasten/zettels.jsonl` / `links.jsonl`, and the zettel status lifecycle and link kinds below are design, not yet implemented (UNVERIFIED against any code type).
 
-Next phase is deterministic candidate-pattern synthesis into draft pattern cards and promotion-readiness scoring.
-
-This phase stops before automatic promotion.
+Candidate-pattern synthesis into draft pattern cards and promotion-readiness scoring are shipped as library builders. Promotion stays review-gated; there is no automatic promotion.
 
 ## Artifact paths
 
-Runtime output paths:
+Runtime output paths (design, not yet implemented: no code writes them):
 
 - `.playbook/zettelkasten/zettels.jsonl`
 - `.playbook/zettelkasten/links.jsonl`
 
 Committed examples may be stored under `.playbook/demo-artifacts/` as static snapshots.
 
-Graph-memory runtime snapshots are emitted to:
+Graph-memory runtime snapshots are specified for (design, not yet implemented: the builders return in-memory artifacts and nothing writes these paths; the shipped compaction candidates file is `.playbook/compaction/candidates.json`):
 
 - `.playbook/graph/snapshots/<timestamp>@<shortsha>.json`
 - `.playbook/graph/groups/<timestamp>@<shortsha>.json`

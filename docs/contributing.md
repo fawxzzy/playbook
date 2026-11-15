@@ -9,7 +9,44 @@ High-level local setup:
 3. Build and test (`pnpm build`, `pnpm test`).
 4. Run Playbook commands locally while developing.
 
-For environment-specific setup details, see existing project development docs.
+### Prerequisites
+
+- Node.js `>=22` (matches the `package.json` engines policy).
+- pnpm provisioned through Corepack (`corepack enable`).
+
+### Workspace command tips
+
+Run commands in a single workspace package with deterministic directory targeting:
+
+```bash
+pnpm -C <workspace-path> <cmd>
+# examples
+pnpm -C packages/cli build
+pnpm -C packages/engine test
+```
+
+### CI and pnpm version policy
+
+`package.json#packageManager` is the authoritative pnpm version source.
+
+- Do not set `pnpm/action-setup` to a version that differs from `packageManager`.
+- If using Corepack, ensure it resolves the same `packageManager` version.
+
+This prevents pnpm version drift between local development and CI.
+
+### Lockfile policy
+
+- `pnpm-lock.yaml` is required, must be committed, and must not be gitignored.
+
+### Local CLI tarball testing (`npx` from `.tgz`)
+
+Use pnpm packaging (not manual tar) so workspace dependencies are rewritten to publishable semver ranges:
+
+```bash
+pnpm run pack:cli
+```
+
+This matches real publish/install behavior and avoids `workspace:*` dependency leakage in local install tests.
 
 ## 2) Adding a new CLI command
 

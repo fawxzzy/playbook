@@ -10,7 +10,7 @@ Artifact path:
 
 Execution profiles describe the **smallest sufficient rule system** for a task family. They are governance-aware baseline proposals, not final per-task routes and not automatic mutations.
 
-Use `execution-plan` for task-specific route selection.
+Use the `execution-plan` artifact (`.playbook/execution-plan.json`, schema registered as `execution-plan`; `execution-plan` is not a CLI command) for task-specific route selection. The profile file is read (optionally) by `route` and `telemetry`; no shipped command writes `.playbook/task-execution-profile.json`, so it is produced out of band (UNVERIFIED which tool authors it).
 
 ## Smallest sufficient rule system semantics
 
