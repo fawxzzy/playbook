@@ -5,7 +5,8 @@ import { requireNotesOnChangesRule } from '../rules/verify/requireNotesOnChanges
 import { testsRequiredRule } from '../rules/verify/testsRequiredRule.js';
 import { protectedDocGovernanceRule } from '../rules/verify/protectedDocGovernanceRule.js';
 import { releaseVersionGovernanceRule } from '../rules/verify/releaseVersionGovernanceRule.js';
-export const coreVerifyRules = [notesMissingRule, notesEmptyRule, requireNotesOnChangesRule, testsRequiredRule, protectedDocGovernanceRule, releaseVersionGovernanceRule];
+import { migrationsAppendOnlyRule } from '../rules/verify/migrationsAppendOnlyRule.js';
+export const coreVerifyRules = [notesMissingRule, notesEmptyRule, requireNotesOnChangesRule, testsRequiredRule, protectedDocGovernanceRule, releaseVersionGovernanceRule, migrationsAppendOnlyRule];
 // Each notice is printed once per process, to stderr only, so --json stdout stays byte-compatible.
 const printedNotices = new Set();
 const emitNotices = (notices) => {

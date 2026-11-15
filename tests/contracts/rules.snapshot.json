@@ -33,6 +33,11 @@
       "source": "core"
     },
     {
+      "id": "migrationsAppendOnly",
+      "description": "Fail when configured migration files are modified, renamed or deleted instead of appended.",
+      "source": "core"
+    },
+    {
       "id": "requireNotesFileWhenGovernanceExists",
       "description": "Require notes file whenever governance document exists.",
       "source": "core"

@@ -50,6 +50,16 @@ const RULE_REGISTRY: Record<string, RuleMetadata> = {
       remediationType: 'notes-maintenance'
     }
   },
+  migrationsAppendOnly: {
+    id: 'migrationsAppendOnly',
+    purpose: 'Keep applied migrations immutable: configured migration files may only be added, never edited, renamed or deleted.',
+    fix: ['Revert the change to the applied migration and create a new migration instead of editing an applied one.'],
+    ownership: {
+      area: 'governance',
+      owners: ['governance'],
+      remediationType: 'migration-append-only'
+    }
+  },
   'verify.rule.tests.required': {
     id: 'verify.rule.tests.required',
     purpose: 'Require tests for new CLI commands and verify-rule changes.',

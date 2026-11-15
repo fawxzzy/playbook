@@ -2,6 +2,8 @@ import type { Rule } from '../execution/types.js';
 import type { PlaybookConfig } from '../config/schema.js';
 import { requireNotesFileWhenGovernanceExists } from '../verify/rules/requireNotesFileWhenGovernanceExists.js';
 import { requireNotesOnChanges } from '../verify/rules/requireNotesOnChanges.js';
+import { migrationsAppendOnly } from '../verify/rules/migrationsAppendOnly.js';
+import { getChangedFileStatuses } from '../git/diff.js';
 import { requireTestsForNewCommands } from '../verify/rules/requireTestsForNewCommands.js';
 import { verifyProtectedDocGovernance } from '../verify/rules/protectedDocGovernance.js';
 import { verifyReleaseVersionGovernance } from '../verify/rules/releaseVersionGovernance.js';
@@ -18,6 +20,16 @@ export const getCoreRules = (config: PlaybookConfig): Rule[] => [
     check: ({ changedFiles }) => ({
       failures: requireNotesOnChanges(changedFiles, config.verify.rules.requireNotesOnChanges)
     })
+  },
+  {
+    id: 'migrationsAppendOnly',
+    description: 'Fail when configured migration files are modified, renamed or deleted instead of appended.',
+    check: ({ repoRoot, baseSha }) => {
+      const rules = config.verify.rules.migrationsAppendOnly ?? [];
+      // Opt-in: no configured globs or no diff base means nothing to enforce (and no git call).
+      if (!rules.length || !baseSha) return { failures: [] };
+      return { failures: migrationsAppendOnly(getChangedFileStatuses(repoRoot, baseSha), rules) };
+    }
   },
   {
     id: 'verify.rule.tests.required',

@@ -25,6 +25,10 @@ export type PlaybookConfig = {
         whenChanged: string[];
         mustTouch: string[];
       }>;
+      /** Opt-in: files matching `globs` may only be added in a diff, never modified, renamed or deleted. */
+      migrationsAppendOnly: Array<{
+        globs: string[];
+      }>;
     };
   };
   memory: {
@@ -70,7 +74,8 @@ export const defaultConfig: PlaybookConfig = {
           whenChanged: ['src/**', 'app/**', 'server/**', 'supabase/**'],
           mustTouch: ['docs/PLAYBOOK_NOTES.md']
         }
-      ]
+      ],
+      migrationsAppendOnly: []
     }
   },
   memory: {
