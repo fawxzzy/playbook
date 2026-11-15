@@ -1,3 +1,4 @@
+import { resolveRepoProfile } from '../repoProfile.js';
 import { architectureAuditChecks } from './checks/architectureChecks.js';
 import type { ArchitectureAuditReport, ArchitectureAuditResult, ArchitectureAuditSummaryStatus } from './types.js';
 
@@ -28,7 +29,11 @@ const buildNextActions = (results: ArchitectureAuditResult[]): string[] => {
 };
 
 export const runArchitectureAudit = (repoRoot: string): ArchitectureAuditReport => {
-  const checks = [...architectureAuditChecks].sort((left, right) => left.id.localeCompare(right.id));
+  // Product-only checks validate Playbook product-repo docs; unknown/ambiguous repos fail closed to `product`.
+  const isProduct = resolveRepoProfile(repoRoot).profile === 'product';
+  const checks = architectureAuditChecks
+    .filter((check) => isProduct || !check.productOnly)
+    .sort((left, right) => left.id.localeCompare(right.id));
   const audits = checks.map((check) => check.run({ repoRoot })).sort(compareResult);
   const pass = audits.filter((result) => result.status === 'pass').length;
   const warn = audits.filter((result) => result.status === 'warn').length;

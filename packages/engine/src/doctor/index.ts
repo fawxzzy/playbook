@@ -104,6 +104,7 @@ const COMMITTED_CONTRACT_ARTIFACTS = [
   '.playbook/version-policy.json', // engine release/index.ts; seeded into consumer repos by the upgrade migration
   '.playbook/managed-surfaces.json', // managed-surface manifest seeded by `init`, read by `upgrade`
   '.playbook/.gitignore', // seeded by `init` to keep runtime output out of git; committed by design
+  '.playbook/README.md', // repo-authored note explaining the .playbook directory; documentation, not run output
   '.playbook/pr-metadata.json', // repo-owned PR metadata used by the roadmap feature-id gate
   '.playbook/functors/registry.json', // documented RunCycle functor registry path (docs/contracts/RUN_CYCLE.md)
   '.playbook/memory/atlas-knowledge-candidates.json', // `knowledge atlas-admit` review queue kept as owner-intake evidence

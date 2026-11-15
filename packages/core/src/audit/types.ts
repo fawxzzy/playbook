@@ -36,5 +36,7 @@ export type ArchitectureAuditCheckContext = {
 export type ArchitectureAuditCheck = {
   id: string;
   title: string;
+  /** When true the check validates Playbook product-repo docs/layout and is skipped for consumer repos. */
+  productOnly?: boolean;
   run: (context: ArchitectureAuditCheckContext) => ArchitectureAuditResult;
 };

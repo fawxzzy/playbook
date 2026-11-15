@@ -19,6 +19,17 @@ pnpm playbook doctor --quiet
 - `--json` / `--format json`: machine-readable output.
 - `--quiet`: suppress success output in text mode.
 
+## Repository profile (product vs consumer)
+
+Doctor, `docs audit` and `audit architecture` classify the repository before choosing checks:
+
+1. `playbook.config.json` field `"repoType": "product" | "consumer"` wins when present.
+2. Otherwise the Playbook product layout (root `package.json` name `playbook-monorepo`, `packages/cli/package.json` named `@fawxzzy/playbook` or `@zachariahredfield/playbook`, or a generated `docs/contracts/command-truth.json` that carries the command list) means `product`.
+3. Otherwise Playbook adoption evidence (`playbook.config.json`, `.playbookignore`, `.playbook/`, `scripts/playbook-runtime.mjs`, `docs/PLAYBOOK_NOTES.md`) means `consumer`.
+4. Anything else, including an invalid `playbook.config.json` or an unknown `repoType` value, fails closed to `product`.
+
+Product-only checks apply only to `product`: the product docs anchors, the `docs/contracts/command-truth.json` requirement, the repo-roadmap/story contract, the single-roadmap duplicate check, and the architecture-audit hardening docs (AI determinism boundary, artifact evolution, adapters, context efficiency, remediation trust model, SCM context layer, roadmap coverage). Repo-agnostic checks (`README.md`, `AGENTS.md`, `docs/ARCHITECTURE.md` anchors, command-truth ladder drift when a repo keeps its own command-truth file, archive hygiene, artifact hygiene, verify) run for every repo. For a consumer, doctor adds an info finding `doctor.docs.repo-profile.consumer` that states why the profile was chosen. `playbook verify` is not affected.
+
 ## Behavior
 
 - Surfaces findings grouped across architecture, docs, testing, risk, and memory categories.
