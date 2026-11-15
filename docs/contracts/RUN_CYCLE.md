@@ -13,9 +13,9 @@ It is intended to anchor:
 
 ## Current memory maturity
 
-Current shipped scaffolding includes RunCycle capture, zettelkasten extraction, graph snapshots, and deterministic groups.
+Shipped as engine library builders (exported from `@fawxzzy/playbook-engine`, no dedicated CLI command): the `RunCycle` type (`packages/engine/src/schema/runCycle.ts`), `buildGraphSnapshot`, `groupDeterministicMemory`, `buildCandidatePatterns`, `synthesizePatternCardDrafts`, `scorePromotionReadiness`, `applyPromotionDecision`, `buildStateSpaceSnapshot`, `applyFunctor`, and `analyzePlaybookArtifacts` (meta findings/telemetry/proposals). Not implemented: nothing in code writes `.playbook/run-cycles/*.json` or `.playbook/zettelkasten/*.jsonl`; those paths and most of the `.playbook/` paths below are design, not yet implemented.
 
-Next phase adds deterministic candidate-pattern synthesis into reviewable draft pattern cards plus promotion-readiness scoring.
+Candidate-pattern synthesis, reviewable draft pattern cards, and promotion-readiness scoring are shipped as library builders; wiring them into an automated RunCycle writer is not yet implemented.
 
 Current scope explicitly stops before auto-promotion.
 
@@ -64,7 +64,7 @@ This framing is a modeling aid only and must stay consistent with `docs/architec
 
 ## Artifact path
 
-Runtime output path:
+Runtime output path (design, not yet implemented: the engine only reads `.playbook/run-cycles/` in `analyzePlaybookArtifacts`; no code writes it):
 
 - `.playbook/run-cycles/<timestamp>@<shortsha>.json`
 
@@ -144,12 +144,14 @@ Example:
 - `forwardArc`: refs to forward intelligence artifacts (`ai-context`, `ai-contract`, `index`, `graph`).
 - `returnArc`: refs to return/remediation artifacts (`verify`, `plan`, `apply`, post-`verify`).
 - `zettelkasten`: refs to `.playbook/zettelkasten/zettels.jsonl` and `.playbook/zettelkasten/links.jsonl`.
-- `metrics`: must include `loopClosureRate`, `promotionYield`, `compactionGain`, `reuseRate`, `driftScore`, `entropyBudget`, `artifactToZettelRatio`, `zettelToPatternRatio`, `draftToPromotedRatio`, `promotedToContractRatio`, `canonicalCoreSize`, `provisionalFrontierSize`, `unresolvedDraftAge`, and `doctrineDrift`.
+- `metrics`: the shipped `RunCycleMetrics` type requires `loopClosureRate`, `promotionYield`, `compactionGain`, `reuseRate`, `driftScore`, and `entropyBudget`; the remaining fields below (design, not yet in the type) are planned: `artifactToZettelRatio`, `zettelToPatternRatio`, `draftToPromotedRatio`, `promotedToContractRatio`, `canonicalCoreSize`, `provisionalFrontierSize`, `unresolvedDraftAge`, and `doctrineDrift`.
 - `graphMemory` (optional): refs to graph snapshot, deterministic groups, candidate contraction previews, synthesized pattern-card drafts, promotion review queue artifacts, explicit promotion decisions, and promoted pattern-card artifacts.
 - `functorTransforms` (optional): refs to functor registry and deterministic structure-preserving transform output artifacts.
 - `stateSpace` (optional): refs to internal state-space projection artifacts (for example `bloch-v1`).
 
-Each ref is nullable. Producers should populate refs only when source artifacts exist.
+Each ref is optional in the shipped type (`digest` is optional too; `stateSpace` needs `projection: 'bloch-v1'` plus `bloch`). Producers should populate refs only when source artifacts exist.
+
+Path status (checked against `packages/*/src`): the `graph/snapshots`, `graph/groups`, `compaction/candidate-patterns`, `pattern-cards/drafts`, `pattern-cards/promoted`, `promotion/review-queue`, `promotion/decisions`, `functors/registry.json`, `functor-output/`, `state-space/`, `zettelkasten/*.jsonl`, and `post-verify.json` locations are design, not yet implemented (no code writes them; the builders return in-memory artifacts). Shipped writers use different paths: `.playbook/compaction/candidates.json`, `.playbook/compaction/review-drafts.json`, `.playbook/patterns/<patternId>.json`, `.playbook/pattern-review-queue.json`, `.playbook/pattern-review-decisions.json`, `.playbook/patterns-promoted.json`. `.playbook/meta/{findings,telemetry,proposals}/<timestamp>@<shortsha>.json` is written by the library function `analyzePlaybookArtifacts` (no CLI command).
 
 ## Compatibility notes with zettelkasten lifecycle
 

@@ -17,6 +17,7 @@ Top-level fields:
 - `generatedAt`: generation timestamp (ISO date-time)
 - `records`: additive list of repository outcome records
 - `summary`: deterministic rollup computed from `records`
+- `lane_scores` (optional): per-lane scores (`lane_id`, `execution_duration`, `retry_count`, `success_rate`, `score`)
 
 Each `records[]` entry includes baseline outcome evidence:
 

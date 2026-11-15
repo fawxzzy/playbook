@@ -1,8 +1,8 @@
 # Playbook Workflow Pack Environment Bridge Executor Contract
 
-This contract defines the future executor boundary for workflow-pack environment bridges without implementing any executor behavior.
+This contract defines the executor boundary for workflow-pack environment bridges. A dry-run executor ships in `packages/engine/src/workflowPack/environmentBridgeDryRunExecutor.ts` (no mutation); no apply executor exists.
 
-It exists so future dry-run and apply layers must inherit explicit mutation, approval, receipt, and rollback semantics from a stable commandless contract rather than hiding those decisions inside workflow YAML, GitHub Actions mutation, or runtime-side effects.
+It exists so dry-run and apply layers must inherit explicit mutation, approval, receipt, and rollback semantics from a stable commandless contract rather than hiding those decisions inside workflow YAML, GitHub Actions mutation, or runtime-side effects.
 
 ## Contract purpose
 
@@ -87,7 +87,7 @@ This contract does not include:
 
 ## Pattern
 
-- Workflow-pack environment bridge slices advance in order: bridge contract, report builder, planner, executor contract, future dry-run executor, future apply executor.
+- Workflow-pack environment bridge slices advance in order: bridge contract, report builder, planner, executor contract, dry-run executor (shipped), future apply executor.
 
 ## Failure Mode
 

@@ -85,7 +85,7 @@ Event guidance:
 
 ## Runtime location
 
-Runtime snapshots should be written to:
+Shipped: `buildStateSpaceSnapshot` (engine library) returns a `playbook-state-space-snapshot` (`schemaVersion: "1.0"`, with `projectionMeta`, `telemetry`, `axes`, `bloch`, optional `gateEvents`; `angularDistancePrev` is omitted when either vector has zero magnitude). Design, not yet implemented: no command or code writes the artifact; the intended runtime location is:
 
 - `.playbook/state-space/<runCycleId>.json`
 

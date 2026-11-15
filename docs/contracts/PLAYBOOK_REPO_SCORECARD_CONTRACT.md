@@ -64,4 +64,6 @@ Optional:
 
 Pattern: static scorecard contract -> validator -> stable example -> engine builder -> optional query/status surface
 
+Current status: the schema (`exports/playbook.repo-scorecard.schema.v1.json`), examples, and the report schema (`playbook.repo-scorecard.report.v1`) ship, and an engine builder/validator exists in `packages/engine/src/scorecard/repoScorecard.ts`. No CLI command or query/status surface exists yet (the scorecard is absent from `docs/contracts/command-truth.json`).
+
 Failure mode: adding a scorecard command before evidence categories and grading semantics are stable turns standards into a narrative dashboard instead of a deterministic review surface.

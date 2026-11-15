@@ -31,7 +31,7 @@ All workflow promotion receipts use one normalized shape:
 - `generated_at`: promotion receipt timestamp aligned to the workflow artifact timestamp when available.
 - `summary`: short deterministic outcome sentence.
 
-Backward-compatible aliases remain part of the shared contract where older command surfaces already exposed them:
+The schema also requires `schemaVersion` (`"1.0"`) and `kind` (`"workflow-promotion"`); every field listed here is required to be present (`blocked_reason` is `string | null`, so "when present" means non-null). Backward-compatible aliases remain part of the shared contract (also required by the schema) where older command surfaces already exposed them:
 
 - `staged_generation`
 - `staged_artifact_path`
@@ -42,9 +42,10 @@ Backward-compatible aliases remain part of the shared contract where older comma
 
 Use this contract for workflow outputs that write committed `.playbook/` state and need inspectable staged candidates.
 
-Current adopters:
+Current adopters (`packages/cli/src/lib/workflowPromotion.ts` is imported by `status`, `route`, `promote`, `story`, `execution/receiptIngest`, and `observer`):
 
 - `pnpm playbook status updated --json`
 - `pnpm playbook route --json`
+- `pnpm playbook promote` and `pnpm playbook story` (also use the shared helper; UNVERIFIED which of their outputs embed the receipt)
 
 Both workflows now write a staged candidate first, keep the staged artifact inspectable, and return the same promotion metadata shape in JSON output.

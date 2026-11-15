@@ -53,6 +53,8 @@ Allowed archetypes:
 
 Pattern: template registry -> schema/examples -> validator -> static registry fixture -> engine planner later -> optional scaffolder last
 
+Current status: schemas (`playbook.golden-path-template-registry.v1`, `playbook.golden-path-template.v1`), examples, and a validator (`scripts/validate-golden-path-template-registry.mjs`) ship. No engine planner, scaffolder, or command exists.
+
 Rule: golden paths should define repeatable setup contracts before they create files.
 
 Failure mode: shipping a scaffolder before registry semantics are stable creates another copy-paste generator with hidden conventions.

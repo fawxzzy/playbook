@@ -20,7 +20,7 @@ The following are allowed without a major contract break when deterministic and 
 
 - adding new **node kinds**
 - adding new **edge kinds**
-- adding optional fields in summary/read outputs
+- adding optional fields in summary/read outputs (shipped `stats` already also carries `nodeKinds` and `edgeKinds` count maps beyond the `nodeCount`/`edgeCount` shown in the example)
 - adding deterministic nodes/edges derived from existing index/rule metadata
 
 When additive graph shape changes occur, bump artifact `schemaVersion` **minor** (for example `1.0` -> `1.1`) and keep prior invariants deterministic.

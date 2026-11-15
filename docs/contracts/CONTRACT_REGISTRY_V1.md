@@ -17,7 +17,7 @@ Top-level object fields:
 - `command`: fixed `"contracts"`
 - `cliSchemas`:
   - `draft`: fixed `"2020-12"`
-  - `schemaCommand`: fixed `"pnpm playbook schema --json"`
+  - `schemaCommand`: fixed `"playbook schema --json"`
   - `commands`: deterministic list of CLI schema targets discoverable via `schema`
 - `artifacts`:
   - `runtimeDefaults`: deterministic runtime artifact contract defaults and producers
@@ -27,6 +27,9 @@ Top-level object fields:
   - `availability`: structured availability state
   - `schemaVersion`: roadmap schema version when available, otherwise `null`
   - `trackedFeatures`: deterministic subset of tracked roadmap features (`featureId`, `status`)
+- `schemas` (added by the CLI `contracts` command on top of the engine registry; see `packages/cli/src/commands/contracts.ts`):
+  - `memoryArtifacts`: registered memory/runtime artifact schemas (`id`, `version`, `path`)
+  - `commandOutputs`: additive command-output schema registrations (`id`, `version`, `path`)
 
 ## Workflow-pack discovery
 
@@ -50,7 +53,7 @@ Workflow promotion remains a shared contract even when the committed output path
 
 ## Schema registrations
 
-The `schemas.commandOutputs` array includes additive command-output schema registrations. Current file-backed entries include:
+The `schemas.commandOutputs` array includes additive command-output schema registrations (about 51 entries; also `schema://cli/*` command-output targets) and `schemas.memoryArtifacts` lists the memory/runtime artifact schemas (13 entries). The authoritative lists live in `packages/cli/src/commands/contracts.ts`. A non-exhaustive sample of file-backed `commandOutputs` entries:
 
 - `packages/contracts/src/knowledge.schema.json`
 - `packages/contracts/src/pattern-graph.schema.json`

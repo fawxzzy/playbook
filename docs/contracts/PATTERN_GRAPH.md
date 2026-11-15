@@ -22,7 +22,7 @@ This contract is intentionally additive and deterministic:
 ## Metadata types
 
 - **AttractorScore**: scoring metadata separated from structural nodes.
-- **PromotionState**: lifecycle state (`candidate`, `observed`, `promoted`, `retired`).
+- **PromotionState**: lifecycle state (`candidate`, `observed`, `promoted`, `retired`, `canonical`).
 
 ## Evidence vs instance vs relation
 
@@ -49,6 +49,8 @@ Embedding evolving heuristic logic directly into base schemas makes versioning b
 ## Attractor scoring engine
 
 Attractor scores model **structural persistence**, not truth.
+
+> Status: design only. The schema (`AttractorScore` with `id`, `signal`, `value` 0..1, `updatedAt`, optional `notes`) ships in `pattern-graph.schema.json`, but no code in `packages/*/src` computes the weighted formula or applies the promotion thresholds below.
 
 ### Signals
 

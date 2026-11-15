@@ -6,7 +6,7 @@ Playbook remediation decisions are driven exclusively by failures.
 
 Failure count is derived from every failure source present in the verify payload, and the highest count wins (`deriveVerifyFailureFacts` in `packages/cli/src/lib/remediationContract.ts`):
 
-1. `verify.failures[]` array (**authoritative** when present)
+1. `verify.failures[]` array length
 2. `verify.findings[]` entries with `level: "failure"` or `level: "error"`
 3. `verify.summary.failures` when it is a non-negative integer
 
@@ -60,4 +60,5 @@ Remediation Apply
 - Finding identity is derived from rule id, normalized location, baseline ref, and evidence hash.
 - Triage states are `new`, `existing`, `resolved`, and `ignored`.
 - The finding-state artifact is separate from SARIF or GitHub-check output.
-- SARIF/check delivery modes remain a future layer after stable finding identity exists.
+- The artifact is `kind: "playbook-verify-finding-state"`, `schemaVersion: "1.0"`, with `baselineRef`, `summary`, `findings[]` (`new`/`existing`/`ignored`) and `resolved[]`.
+- SARIF delivery is shipped as `verify --format sarif` (raw SARIF 2.1.0 over the same payload); GitHub-check delivery is not implemented.

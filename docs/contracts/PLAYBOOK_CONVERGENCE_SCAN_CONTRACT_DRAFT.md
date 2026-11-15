@@ -1,5 +1,7 @@
 # Playbook Convergence Scan Contract - Draft v1
 
+> Status: draft, not implemented. No code, schema, or export defines `playbook.convergence.scan.v1` or writes `.playbook/convergence-scan.json`; only the related `playbook.convergence.source-inventory` exports exist under `exports/`.
+
 ## Purpose
 
 A convergence scan answers whether a repository has explicit, evidence-backed Playbook adoption and what it still needs before root or fleet surfaces may project it as adopted or verified.
