@@ -3,9 +3,9 @@
   "command": "doctor",
   "status": "error",
   "summary": {
-    "errors": 13,
-    "warnings": 10,
-    "info": 2
+    "errors": 3,
+    "warnings": 3,
+    "info": 4
   },
   "findings": [
     {
@@ -24,109 +24,7 @@
       "category": "Docs",
       "severity": "error",
       "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/archive/README.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/commands/README.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/CONSUMER_INTEGRATION_CONTRACT.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/index.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/PLAYBOOK_BUSINESS_STRATEGY.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/PLAYBOOK_PRODUCT_ROADMAP.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/roadmap/IMPROVEMENTS_BACKLOG.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/roadmap/README.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (docs/roadmap/ROADMAP.json)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
-      "message": "Required documentation anchor is missing. (packages/cli/README.md)"
-    },
-    {
-      "category": "Docs",
-      "severity": "error",
-      "id": "doctor.docs.docs.required-anchor.missing",
       "message": "Required documentation anchor is missing. (README.md)"
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.ai.determinism-boundary",
-      "message": "AI vs deterministic boundary: Update docs/architecture/AI_DETERMINISM_BOUNDARY.md to define where AI assistance ends and deterministic source-of-truth enforcement begins."
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.artifact.evolution-policy",
-      "message": "Artifact evolution policy: Create docs/contracts/ARTIFACT_EVOLUTION_POLICY.md with schema evolution, compatibility, and regeneration guidance."
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.docs.roadmap-coverage",
-      "message": "Roadmap/docs coverage for hardening controls: Add roadmap hardening coverage for artifact versioning/evolution, SCM normalization context, remediation trust scope boundaries, context/token efficiency, and repeatable architecture audit controls."
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.ecosystem.adapter-boundaries",
-      "message": "Ecosystem adapter boundaries: Create or update docs/architecture/ECOSYSTEM_ADAPTERS.md to define external tool isolation and adapter boundary contracts."
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.performance.context-efficiency",
-      "message": "Context/token efficiency strategy: Create or update docs/architecture/CONTEXT_EFFICIENCY_STRATEGY.md with deterministic context/token efficiency patterns."
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.remediation.trust-model",
-      "message": "Remediation trust model: Document deterministic remediation trust boundaries and explicit change levels in docs/architecture/REMEDIATION_TRUST_MODEL.md."
-    },
-    {
-      "category": "Architecture",
-      "severity": "warning",
-      "id": "doctor.architecture.audit.scm.context-layer",
-      "message": "SCM/git context normalization layer: Centralize SCM normalization in shared git-context utilities and document boundaries in docs/architecture/SCM_CONTEXT_LAYER.md."
     },
     {
       "category": "Memory",
@@ -149,8 +47,20 @@
     {
       "category": "Architecture",
       "severity": "info",
+      "id": "doctor.architecture.audit.clean",
+      "message": "Architecture audit has no findings."
+    },
+    {
+      "category": "Architecture",
+      "severity": "info",
       "id": "doctor.architecture.repo-index.present",
       "message": "Repository intelligence index is present."
+    },
+    {
+      "category": "Docs",
+      "severity": "info",
+      "id": "doctor.docs.repo-profile.consumer",
+      "message": "Repository classified as a Playbook consumer; Playbook product-repo docs and architecture checks are skipped. No Playbook product layout and Playbook adoption evidence found: .playbook, docs/PLAYBOOK_NOTES.md."
     },
     {
       "category": "Risk",
@@ -160,27 +70,11 @@
     }
   ],
   "failureDomains": [
-    "contract_validation",
     "sync_drift",
     "governance_planning"
   ],
-  "primaryFailureDomain": "contract_validation",
+  "primaryFailureDomain": "sync_drift",
   "domainBlockers": [
-    {
-      "domain": "contract_validation",
-      "signal": "doctor.docs.docs.required-anchor.missing",
-      "summary": "Required documentation anchor is missing. (docs/CONSUMER_INTEGRATION_CONTRACT.md)"
-    },
-    {
-      "domain": "contract_validation",
-      "signal": "doctor.architecture.audit.artifact.evolution-policy",
-      "summary": "Artifact evolution policy: Create docs/contracts/ARTIFACT_EVOLUTION_POLICY.md with schema evolution, compatibility, and regeneration guidance."
-    },
-    {
-      "domain": "contract_validation",
-      "signal": "doctor.architecture.audit.ecosystem.adapter-boundaries",
-      "summary": "Ecosystem adapter boundaries: Create or update docs/architecture/ECOSYSTEM_ADAPTERS.md to define external tool isolation and adapter boundary contracts."
-    },
     {
       "domain": "sync_drift",
       "signal": "doctor.memory.replay-output-inconsistent",
@@ -197,12 +91,7 @@
       "summary": "playbook.config.json not found; using defaults (this is not an error). Add playbook.config.json for explicit settings and .playbookignore to tune scan scope."
     }
   ],
-  "domainNextActions": [
-    {
-      "domain": "contract_validation",
-      "action": "Run `pnpm playbook verify --json && pnpm playbook plan --json` and resolve the blocking findings."
-    }
-  ],
+  "domainNextActions": [],
   "artifactHygiene": {
     "classification": {
       "runtime": [
