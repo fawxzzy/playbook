@@ -70,3 +70,10 @@ State-space snapshots are derived artifacts.
 - `rotation`: plan/apply transition steps.
 
 These events are telemetry annotations, not physical quantum operations.
+
+## Artifact placement
+
+- Runtime emission target: `.playbook/state-space/<runCycleId>.json`.
+- Stable examples for documentation and tests: `.playbook/demo-artifacts/state-space.example.json`. Only stable snapshot examples should be committed.
+
+This is a projection and diagnostic coordinate system for repository process state; it is not quantum computation, does not simulate qubits and implies no quantum execution semantics.

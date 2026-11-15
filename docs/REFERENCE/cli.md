@@ -59,3 +59,25 @@ Coverage artifacts expose explicit counts (`total_files_seen`, `eligible_files`,
 
 Telemetry artifacts summarize optimization-relevant internals (phase counts, artifact reads/writes, fallback counts, and deterministic expensive-path categories such as `vcs-internal`, `build-cache`, `generated-report`, and `temporary-file`) without emitting raw event firehoses.
 
+## CLI design principles
+
+Playbook CLI commands are designed for both humans and automation:
+
+- Readable text output for local developer workflows, machine-readable JSON output (`--json`) for CI and tooling.
+- Deterministic output wherever possible: findings are sorted before downstream task generation, stable task fields are preserved, and nullable or optional fields are normalized for predictable parsing.
+- JSON output is a public automation contract (stable shape for pipelines and AI agents). The typical envelope starts with `schemaVersion` and `command`, followed by command-specific fields; the per-command shapes are in [docs/contracts/command-truth.json](../contracts/command-truth.json), [docs/contracts/COMMAND_CONTRACTS_V1.md](../contracts/COMMAND_CONTRACTS_V1.md) and the command docs.
+- `packages/cli` owns argument parsing, command dispatch, rendering and exit behavior; `packages/engine` owns analysis, verification, planning and remediation execution. Command files stay thin wrappers around engine functionality.
+
+## Remediation command roles
+
+- `verify`: detect policy/governance issues.
+- `plan`: generate deterministic remediation intent (`tasks`) for review or automation.
+- `apply`: execute deterministic plan tasks, especially via serialized artifacts (`--from-plan`); the Level 2 ceiling and the explicit Level 3 override are described in [PLAN_APPLY_OVERRIDE_CONTRACT.md](../contracts/PLAN_APPLY_OVERRIDE_CONTRACT.md).
+- `fix`: convenience/direct remediation for local/manual workflows; overlaps with `apply` intent but keeps operator-friendly flags like `--dry-run`, `--yes` and `--only`.
+
+For CI and agent workflows, prefer `verify -> plan -> apply -> verify` because the plan artifact is reviewable before execution.
+
+## Diagnosis and PR intelligence
+
+- `doctor` aggregates existing analyzers (verify findings, query risk, docs audit, index and memory diagnostics) into one health report; envelope, failure domains and exit codes are in [doctor.md](../commands/doctor.md).
+- `analyze-pr` is the local-first structured PR analysis command (git diff plus `.playbook/repo-index.json`); see [analyze-pr.md](../commands/analyze-pr.md). Use `ask --diff-context` for conversational answers and `analyze-pr` for structured review artifacts.
