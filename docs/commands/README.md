@@ -78,6 +78,8 @@ Roadmap and planning docs may describe sequencing intent, but they are not comma
 
 ## Product-facing command surface (current)
 
+Per-command pages live beside this index (for example [apply](./apply.md), [failure](./failure.md), [graph](./graph.md)). Artifact and schema contracts are indexed in [docs/contracts/README.md](../contracts/README.md); the plan/apply change-level override is specified in [Plan/apply override contract](../contracts/PLAN_APPLY_OVERRIDE_CONTRACT.md).
+
 The following section is generated from shared CLI command metadata.
 Do not hand-edit entries inside the managed markers.
 

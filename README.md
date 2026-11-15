@@ -79,6 +79,15 @@ Pattern: **private-first by default**. Standard Playbook usage does not imply au
 
 Pattern: **config/plugins/rule packs over forks** for project-specific customization.
 
+### Extension and governance surfaces
+
+- **Plugins:** repositories list plugins in `playbook.config.json`; one engine path loads them for every command, with identity checks and least privilege. See [Plugin contract v1](docs/contracts/PLUGIN_CONTRACT_V1.md).
+- **Failure taxonomy:** `pnpm playbook failure ingest|suggest|classify|scaffold` turns build, CI, lint, test and runtime failures into structured records and propose-only prevention scaffolds. See [Failure intelligence contract](docs/contracts/FAILURE_INTELLIGENCE_CONTRACT.md).
+- **Semantic graph:** `pnpm playbook graph build` writes `.playbook/arch-graph.v2.json` (after `pnpm playbook index`); `explain` and `query` add a `semanticNeighborhood` when it exists. See [Architecture intelligence graph contract](docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md).
+- **Change-level override:** `apply` refuses plans with Level 3 tasks (security-sensitive paths) unless you pass `--allow-level 3 --reason "<why>"`; the override is recorded as evidence. See [Plan/apply override contract](docs/contracts/PLAN_APPLY_OVERRIDE_CONTRACT.md).
+
+Full documentation map: [docs/index.md](docs/index.md).
+
 ## Runtime artifacts and storage
 
 Playbook uses `.playbook/` as the default home for local runtime artifacts (for example repository intelligence indexes, plans, and machine-readable reports).

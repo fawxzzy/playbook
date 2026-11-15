@@ -180,6 +180,15 @@ Preferred extension strategy for consuming repositories:
 
 Pattern: **prefer config/plugins/rule packs over core forks** unless a fork is unavoidable.
 
+Extension and governance contracts (current):
+
+- Plugins load through one engine path for every command surface and are validated for identity and least privilege: [Plugin contract v1](contracts/PLUGIN_CONTRACT_V1.md). A plugin cannot replace a core rule.
+- The semantic architecture graph is a separate artifact, `.playbook/arch-graph.v2.json`, derived from `repo-graph.json` and `repo-index.json` by `graph build`: [Architecture intelligence graph contract](contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md).
+- Failures from any source are classified into a stable taxonomy with deterministic, propose-only prevention suggestions: [Failure intelligence contract](contracts/FAILURE_INTELLIGENCE_CONTRACT.md).
+- `apply` enforces a change-level ceiling (Level 2) and exposes one explicit, evidence-recording override for Level 3: [Plan/apply override contract](contracts/PLAN_APPLY_OVERRIDE_CONTRACT.md).
+
+More architecture docs: [architecture index](architecture/README.md); all contracts: [contracts index](contracts/README.md).
+
 ## Privacy and trust model
 
 Playbook operates as **private-first by default**:
