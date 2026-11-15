@@ -42,6 +42,11 @@ If `playbook.config.json` is missing, Playbook loads defaults and emits a warnin
           "whenChanged": ["glob"],
           "mustTouch": ["path-or-glob"]
         }
+      ],
+      "migrationsAppendOnly": [
+        {
+          "globs": ["glob"]
+        }
       ]
     }
   },
@@ -57,7 +62,7 @@ If `playbook.config.json` is missing, Playbook loads defaults and emits a warnin
 }
 ```
 
-Every key is optional: the loader merges your file over the built-in defaults section by section, so an omitted key keeps its default. The default `verify.policy.rules` is `["protected-doc.governance"]`; `verify.local` and `memory.pressurePolicy` default to the values shown in the schema above; the remaining defaults match the minimal example below.
+Every key is optional: the loader merges your file over the built-in defaults section by section, so an omitted key keeps its default. The default `verify.policy.rules` is `["protected-doc.governance"]`; `verify.local` and `memory.pressurePolicy` default to the values shown in the schema above; `verify.rules.migrationsAppendOnly` defaults to `[]` (the rule is off until you list globs; see `docs/REFERENCE/verify-rules.md`); the remaining defaults match the minimal example below.
 
 ## Local verification
 

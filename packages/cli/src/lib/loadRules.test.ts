@@ -16,7 +16,8 @@ describe('rule loaders', () => {
       'requireNotesOnChanges',
       'verify.rule.tests.required',
       'protected-doc.governance',
-      'release.version-governance'
+      'release.version-governance',
+      'migrationsAppendOnly'
     ]));
     expect(new Set(ids).size).toBe(ids.length);
   });

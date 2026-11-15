@@ -153,6 +153,7 @@ describe('rules --json (CLI)', () => {
       'verify.rule.tests.required',
       'protected-doc.governance',
       'release.version-governance',
+      'migrationsAppendOnly',
       'requireNotesFileWhenGovernanceExists'
     ]);
   });
