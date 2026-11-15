@@ -38,9 +38,9 @@ Planning sources are:
 - `docs/concepts/docs-merge.md`
 - `docs/concepts/governance-model.md`
 - `docs/concepts/what-is-playbook.md`
-- `docs/CONCEPTS/knowledge-pipeline.md`
-- `docs/CONCEPTS/plugins-and-adapters.md`
-- `docs/CONCEPTS/policy-model.md`
+- `docs/concepts/knowledge-pipeline.md`
+- `docs/concepts/plugins-and-adapters.md`
+- `docs/concepts/policy-model.md`
 - `docs/config/playbook-config.md`
 - `docs/contributing.md`
 - `docs/decisions/0001-package-manager-pnpm.md`
@@ -84,7 +84,7 @@ Planning sources are:
   - `docs/index.md:18` -> add canonical heading pointer
 
 ### Decision
-- Canonical: `docs/CONCEPTS/policy-model.md:23`
+- Canonical: `docs/concepts/policy-model.md:23`
 - Duplicates:
   - `docs/decisions/0001-package-manager-pnpm.md:6` -> add canonical heading pointer
 
