@@ -35,7 +35,8 @@ const PRODUCT_COMMAND_TRUTH_PATH = 'docs/contracts/command-truth.json';
 const CONSUMER_EVIDENCE_PATHS = [
   'playbook.config.json',
   '.playbookignore',
-  '.playbook',
+  // Not the bare `.playbook/` directory: Playbook commands create it as run output, so it would flip the profile mid-run.
+  '.playbook/README.md',
   'scripts/playbook-runtime.mjs',
   'docs/PLAYBOOK_NOTES.md'
 ] as const;
@@ -94,7 +95,10 @@ export const resolveRepoProfile = (repoRoot: string): RepoProfileResolution => {
     return failClosed('playbook.config.json is not valid JSON; keeping product checks.');
   }
 
-  if (config.kind === 'ok' && config.value && typeof config.value === 'object' && !Array.isArray(config.value)) {
+  if (config.kind === 'ok') {
+    if (!config.value || typeof config.value !== 'object' || Array.isArray(config.value)) {
+      return failClosed('playbook.config.json is not a JSON object; keeping product checks.');
+    }
     const declared = (config.value as Record<string, unknown>)[REPO_TYPE_CONFIG_FIELD];
     if (declared === 'product' || declared === 'consumer') {
       return { profile: declared, source: 'config', reason: `playbook.config.json ${REPO_TYPE_CONFIG_FIELD} is "${declared}".` };

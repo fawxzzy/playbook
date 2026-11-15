@@ -108,6 +108,16 @@ describe('resolveRepoProfile', () => {
     expect(resolveRepoProfile(invalidJson)).toMatchObject({ profile: 'product', source: 'fail-closed' });
   });
 
+  it.each(['[]', 'null', '"consumer"', '42'])('fails closed when playbook.config.json is valid JSON but not an object (%s)', (content) => {
+    const root = makeRepo({ 'docs/PLAYBOOK_NOTES.md': '# notes', 'playbook.config.json': content });
+    expect(resolveRepoProfile(root)).toMatchObject({ profile: 'product', source: 'fail-closed' });
+  });
+
+  it('does not treat a bare .playbook directory (run output) as adoption evidence', () => {
+    const root = makeRepo({ '.playbook/orchestrator/state.json': '{}' });
+    expect(resolveRepoProfile(root)).toMatchObject({ profile: 'product', source: 'fail-closed' });
+  });
+
   it('a config without repoType falls through to detection', () => {
     const root = makeRepo({ 'playbook.config.json': JSON.stringify({ version: 1 }) });
     expect(resolveRepoProfile(root)).toMatchObject({ profile: 'consumer', source: 'consumer-evidence' });

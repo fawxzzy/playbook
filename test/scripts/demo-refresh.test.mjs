@@ -36,6 +36,8 @@ const requiredAnchorFiles = [
 ];
 
 const copyRequiredDocs = (targetRoot) => {
+  // Product-layout marker: these fixtures model the Playbook product repo, so product-only doctor/docs-audit checks apply.
+  fs.writeFileSync(path.join(targetRoot, 'package.json'), JSON.stringify({ name: 'playbook-monorepo' }) + '\n', 'utf8');
   for (const relativePath of requiredAnchorFiles) {
     const sourcePath = path.join(repoRoot, relativePath);
     const targetPath = path.join(targetRoot, relativePath);

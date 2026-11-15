@@ -60,7 +60,7 @@
       "category": "Docs",
       "severity": "info",
       "id": "doctor.docs.repo-profile.consumer",
-      "message": "Repository classified as a Playbook consumer; Playbook product-repo docs and architecture checks are skipped. No Playbook product layout and Playbook adoption evidence found: .playbook, docs/PLAYBOOK_NOTES.md."
+      "message": "Repository classified as a Playbook consumer; Playbook product-repo docs and architecture checks are skipped. No Playbook product layout and Playbook adoption evidence found: docs/PLAYBOOK_NOTES.md."
     },
     {
       "category": "Risk",
