@@ -884,3 +884,124 @@ describe('docs audit', () => {
     });
   });
 });
+
+describe('docs audit repo profile scoping', () => {
+  const PRODUCT_ONLY_RULE_IDS = [
+    'docs.command-truth.missing',
+    'docs.repo-roadmap.contract-missing-sections',
+    'docs.repo-roadmap.stories-dir-missing',
+    'docs.single-roadmap.duplicate'
+  ];
+  const PRODUCT_ONLY_ANCHORS = [
+    'docs/index.md',
+    'docs/commands/README.md',
+    'docs/archive/README.md',
+    'docs/CONSUMER_INTEGRATION_CONTRACT.md',
+    'docs/PLAYBOOK_BUSINESS_STRATEGY.md',
+    'docs/PLAYBOOK_PRODUCT_ROADMAP.md',
+    'docs/roadmap/README.md',
+    'docs/roadmap/IMPROVEMENTS_BACKLOG.md',
+    'docs/roadmap/ROADMAP.json',
+    'packages/cli/README.md'
+  ];
+
+  // Resembles a Playbook consumer (Fitness/Web/Mazer/ATLAS): adopts Playbook, has none of the product docs layout.
+  const createConsumerRepo = (extra: Record<string, string> = {}): string => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-audit-consumer-'));
+    tmpRoots.push(root);
+    const files: Record<string, string> = {
+      'package.json': JSON.stringify({ name: 'consumer-app' }),
+      'README.md': '# Consumer app',
+      'AGENTS.md': '# Agents',
+      'docs/ARCHITECTURE.md': '# Architecture',
+      'docs/PLAYBOOK_NOTES.md': '# Notes',
+      'docs/ROADMAP.md': '# Roadmap\nfree-form roadmap without Playbook pillars',
+      'docs/PRODUCT_ROADMAP.md': '# Product roadmap of the consumer app',
+      ...extra
+    };
+    Object.entries(files).forEach(([relativePath, content]) => write(root, relativePath, content));
+    return root;
+  };
+
+  const ruleIds = (root: string): string[] => runDocsAudit(root).findings.map((finding) => finding.ruleId);
+  const anchorPaths = (root: string): string[] =>
+    runDocsAudit(root)
+      .findings.filter((finding) => finding.ruleId === 'docs.required-anchor.missing')
+      .map((finding) => finding.path);
+
+  it('reports no product-only findings for a consumer repo', () => {
+    const root = createConsumerRepo();
+    const result = runDocsAudit(root);
+
+    expect(result.findings).toEqual([]);
+    expect(result.status).toBe('pass');
+  });
+
+  it('still applies the generic command-truth ladder check to a consumer that keeps its own command-truth.json', () => {
+    const root = createConsumerRepo({
+      'docs/contracts/command-truth.json': JSON.stringify({ scope: 'consumer', bootstrapLadder: ['ai-context'], remediationLoop: ['verify'] })
+    });
+
+    expect(ruleIds(root)).toContain('docs.command-truth.bootstrap-ladder');
+    expect(ruleIds(root)).not.toContain('docs.command-truth.missing');
+  });
+
+  it('keeps the repo-agnostic anchors required for a consumer repo', () => {
+    const root = createConsumerRepo();
+    fs.rmSync(path.join(root, 'AGENTS.md'));
+    fs.rmSync(path.join(root, 'docs/ARCHITECTURE.md'));
+
+    expect(anchorPaths(root).sort()).toEqual(['AGENTS.md', 'docs/ARCHITECTURE.md']);
+  });
+
+  it('applies every product-only check to an explicit product repoType, even with consumer-shaped docs', () => {
+    const root = createConsumerRepo({ 'playbook.config.json': JSON.stringify({ version: 1, repoType: 'product' }) });
+    const ids = ruleIds(root);
+
+    for (const ruleId of PRODUCT_ONLY_RULE_IDS) {
+      expect(ids).toContain(ruleId);
+    }
+    expect(anchorPaths(root)).toEqual(expect.arrayContaining(PRODUCT_ONLY_ANCHORS));
+  });
+
+  it('an explicit consumer repoType scopes down a repo that has the product layout', () => {
+    const root = createRepo();
+    write(root, 'playbook.config.json', JSON.stringify({ version: 1, repoType: 'consumer' }));
+    fs.rmSync(path.join(root, 'docs/index.md'));
+    fs.rmSync(path.join(root, 'docs/contracts/command-truth.json'));
+
+    const ids = ruleIds(root);
+    expect(ids).not.toContain('docs.command-truth.missing');
+    expect(anchorPaths(root)).toEqual([]);
+  });
+
+  it('fails closed to product checks when the repo is ambiguous', () => {
+    const ambiguous = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-audit-ambiguous-'));
+    tmpRoots.push(ambiguous);
+    write(ambiguous, 'README.md', '# Unknown repo');
+
+    const ids = ruleIds(ambiguous);
+    expect(ids).toContain('docs.command-truth.missing');
+    expect(anchorPaths(ambiguous)).toEqual(expect.arrayContaining(PRODUCT_ONLY_ANCHORS));
+    expect(anchorPaths(ambiguous)).toEqual(expect.arrayContaining(['AGENTS.md', 'docs/ARCHITECTURE.md']));
+
+    const unknownType = createConsumerRepo({ 'playbook.config.json': JSON.stringify({ version: 1, repoType: 'library' }) });
+    expect(ruleIds(unknownType)).toContain('docs.command-truth.missing');
+
+    const brokenConfig = createConsumerRepo({ 'playbook.config.json': '{ nope' });
+    expect(ruleIds(brokenConfig)).toContain('docs.command-truth.missing');
+  });
+
+  it('product repo layout still reports everything it reported before scoping', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'docs-audit-product-'));
+    tmpRoots.push(root);
+    write(root, 'package.json', JSON.stringify({ name: 'playbook-monorepo' }));
+    write(root, 'docs/ROADMAP.md', '# Roadmap');
+
+    const ids = ruleIds(root);
+    for (const ruleId of PRODUCT_ONLY_RULE_IDS.filter((ruleId) => ruleId !== 'docs.single-roadmap.duplicate')) {
+      expect(ids).toContain(ruleId);
+    }
+    expect(anchorPaths(root)).toHaveLength(13);
+  });
+});

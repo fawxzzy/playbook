@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveRepoProfile } from '@zachariahredfield/playbook-core';
 
 type CommandTruthCommand = {
   name: string;
@@ -103,6 +104,9 @@ const REQUIRED_ANCHORS = [
   'packages/cli/README.md'
 ] as const;
 
+// Anchors that make sense in any repository. The rest of REQUIRED_ANCHORS describe the Playbook product repo's own
+// docs layout and apply only when the repo profile is `product` (see resolveRepoProfile in playbook-core).
+const CONSUMER_REQUIRED_ANCHORS: ReadonlySet<string> = new Set(['README.md', 'AGENTS.md', 'docs/ARCHITECTURE.md']);
 
 const REPO_ROADMAP_REQUIRED_SECTIONS = ['pillars', 'active stories'] as const;
 const STORY_REQUIRED_SECTIONS = ['status', 'pillar', 'outcome', 'scope', 'non-goals', 'surfaces', 'dependencies', 'done when', 'evidence'] as const;
@@ -470,9 +474,15 @@ const readCommandTruth = (repoRoot: string): CommandTruth | null => {
 
 export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
   const findings: DocsAuditFinding[] = [];
+  // Product-only checks (product anchors, command-truth contract, repo-roadmap/story contract, single-roadmap) apply
+  // to the Playbook product repo. Unknown or ambiguous classification fails closed to `product`.
+  const isProductRepo = resolveRepoProfile(repoRoot).profile === 'product';
   const commandTruth = readCommandTruth(repoRoot);
 
   for (const requiredPath of REQUIRED_ANCHORS) {
+    if (!isProductRepo && !CONSUMER_REQUIRED_ANCHORS.has(requiredPath)) {
+      continue;
+    }
     if (!fs.existsSync(path.join(repoRoot, requiredPath))) {
       findings.push({
         ruleId: 'docs.required-anchor.missing',
@@ -483,7 +493,7 @@ export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
     }
   }
 
-  if (!commandTruth) {
+  if (isProductRepo && !commandTruth) {
     findings.push({
       ruleId: 'docs.command-truth.missing',
       level: 'error',
@@ -494,7 +504,7 @@ export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
 
   const topLevelDocs = listDocsTopLevelMarkdown(repoRoot);
   const duplicateRoadmapCandidates = new Set(['docs/PRODUCT_ROADMAP.md', 'docs/PLAYBOOK_ROADMAP.md']);
-  for (const duplicatePath of topLevelDocs.filter((relativePath) => duplicateRoadmapCandidates.has(relativePath))) {
+  for (const duplicatePath of topLevelDocs.filter((relativePath) => isProductRepo && duplicateRoadmapCandidates.has(relativePath))) {
     findings.push({
       ruleId: 'docs.single-roadmap.duplicate',
       level: 'error',
@@ -505,8 +515,8 @@ export const runDocsAudit = (repoRoot: string): DocsAuditResult => {
   }
 
   const repoRoadmapPath = 'docs/ROADMAP.md';
-  const repoRoadmap = readTextIfExists(repoRoot, repoRoadmapPath);
-  const storyDocs = listStoryDocs(repoRoot);
+  const repoRoadmap = isProductRepo ? readTextIfExists(repoRoot, repoRoadmapPath) : null;
+  const storyDocs = isProductRepo ? listStoryDocs(repoRoot) : [];
 
   if (repoRoadmap) {
     const missingSections = hasRequiredSections(repoRoadmap, REPO_ROADMAP_REQUIRED_SECTIONS);
