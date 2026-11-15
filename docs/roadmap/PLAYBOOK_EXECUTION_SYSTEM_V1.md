@@ -194,7 +194,7 @@ Status (2026-11-14): `PB-V06-FAILURE-INTELLIGENCE-001` is `implemented-hardening
 - **incremental updates**: file-hash based invalidation + SCM diff deltas.
 - **self-analysis**: Playbook uses arch graph to detect boundary violations and PR risk scoring.
 
-Status (2026-11-14): `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` is `in-progress`. Shipped (module-level, read-only): `graph impact`, `graph boundaries`, `graph risks` (`packages/engine/src/graph/`) and the `analyze-pr` `graphImpact` section. Not shipped: the semantic node/edge layer and `.playbook/arch-graph.v2.json` (see `docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`).
+Status (2026-11-14): `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` is `in-progress`. Shipped (module-level, read-only): `graph impact`, `graph boundaries`, `graph risks` (`packages/engine/src/graph/`) and the `analyze-pr` `graphImpact` section. Also shipped: `graph build` and the persisted semantic graph `.playbook/arch-graph.v2.json` (`playbook-arch-graph` 2.0; see `docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`). Remaining work on the card: the impact index, SCM-diff partial rebuilds and `analyze-pr` use of the semantic layer.
 
 ## 9. Gate strategy for 4-week sprint
 
@@ -321,8 +321,8 @@ interface ScmContextProvider {
 ### Cluster 1: ownership + registry
 - **Objective**: implement canonical engine command registry and thin CLI adapters.
 - **Plan**: add registry, migrate analyze/verify/rules handlers, remove duplicate loaders, add parity tests.
-- **Files**: `packages/engine/src/commands/*`, `packages/cli/src/main.ts`, `tests/contracts/plugin-contracts.test.ts`.
-- **Verification**: `pnpm -r build`, `pnpm test -- plugin-contracts`.
+- **Files**: `packages/engine/src/commands/*`, `packages/cli/src/main.ts`, `packages/cli/src/lib/pluginContract.test.ts`, `packages/engine/test/pluginContractV1.test.ts`, `packages/engine/test/pluginIdentityV1.test.ts`.
+- **Verification**: `pnpm -r build`, `pnpm test -- pluginContract`.
 - **Docs summary**: update command ownership tables in roadmap and product roadmap docs.
 
 ### Cluster 2: SCM normalization

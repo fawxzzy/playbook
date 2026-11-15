@@ -25,7 +25,7 @@ pnpm playbook cycle --json
 ## Flags
 
 - `--json` (alias for `--format json`)
-- `--stop-on-error` (default behavior: stop at first failing step)
+- `--no-stop-on-error` (continue after a failing step; the default is to stop at the first failing step)
 
 ## Artifact
 

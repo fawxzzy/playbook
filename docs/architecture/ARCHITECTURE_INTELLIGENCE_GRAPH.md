@@ -52,7 +52,7 @@ The semantic layer is additive on repo-graph 1.x (see the contract for the versi
 | Heuristic creep | Semantic edges can quietly become guesses, undermining explainability | Only metadata-derived edges; every edge kind documented in the contract with its derivation |
 | Graph size and regeneration cost | File-level nodes grow with repo size | Incremental invalidation; keep file nodes optional or scoped |
 | Two diverging boundary sources | `analyze-pr` path prefixes and graph boundaries could disagree during migration | Migrate `analyze-pr` behind additive fields; keep a contract test comparing both on fixtures |
-| Contract drift between the plan and the shipped artifact | The execution-system sketch says `2.0` and `depends-on`; the shipped artifact is `1.1` and `depends_on` | This document and the contract state the additive-1.x decision; the roadmap text should be trimmed to what is real |
+| Contract drift between the plan and the shipped artifacts | The execution-system sketch says `depends-on`; the shipped `.playbook/repo-graph.json` is schema `1.1` with `depends_on`, and the separate semantic artifact `.playbook/arch-graph.v2.json` is `playbook-arch-graph` 2.0 | This document and the contract state the additive-1.x decision; the roadmap text should be trimmed to what is real |
 
 ## Verification
 

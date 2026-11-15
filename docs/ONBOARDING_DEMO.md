@@ -38,7 +38,7 @@ pnpm playbook verify --json
 
 The `pnpm playbook ...` form above is a root script of the Playbook repository (it is not published to npm yet), and the demo repository does not define a `playbook` script. Run the ladder from a built Playbook checkout (`pnpm install && pnpm build`) and point it at a local clone of the demo with the global `--repo` option, for example `pnpm playbook --repo ../playbook-demo verify --json`; `--out` and `--from-plan` paths then resolve inside the demo repository. See [README.md](../README.md), "Install status".
 
-What the demo repository itself provides (checked against `fawxzzy/playbook-demo` `main` and Playbook 0.66.0 on 2026-11-14):
+What the demo repository itself provides (checked against `fawxzzy/playbook-demo` `main` and Playbook 0.66.0 on 2026-11-14; the demo refresh is `planned-later`, so re-check against the current Playbook version before relying on this list):
 
 - It is an npm project with no dependencies (`package-lock.json`, no pnpm lockfile), so the `pnpm install` step printed by `pnpm playbook demo` has nothing to install. Its README documents `npx @fawxzzy/playbook ...` commands, which do not work yet because the Playbook packages are not published to npm.
 - It bundles a small CLI (`dist/cli.js`, run through `npm run verify`, `npm run plan` and `npm run apply`) that implements only `analyze`, `index`, `explain`, `rules`, `verify`, `plan`, `apply`, `diagram` and `doctor`. It has no `ai-context`, `ai-contract`, `context`, `query` or `ask`.

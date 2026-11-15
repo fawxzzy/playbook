@@ -268,7 +268,7 @@ CORE PRINCIPLES
 
 These rules guide all development decisions.
 
-1ï¸âƒ£ CLI First
+1️⃣ CLI First
 
 Playbook must always function:
 
@@ -286,7 +286,7 @@ pnpm playbook verify
 
 must always work independently.
 
-2ï¸âƒ£ Deterministic Governance
+2️⃣ Deterministic Governance
 
 Rules must be:
 
@@ -316,22 +316,22 @@ CI contract stance:
 
 Failure Mode: If CI mixes product validation with maintenance tasks, pipelines become slow and fragile.
 
-3ï¸âƒ£ Knowledge Lifecycle (Internal-First)
+3️⃣ Knowledge Lifecycle (Internal-First)
 
 Every meaningful engineering change should produce evidence, but evidence is not automatically reusable knowledge.
 
 Playbook must enforce a deterministic knowledge lifecycle:
 
 Observation / Extraction
-â†“
+↓
 Canonicalization
-â†“
+↓
 Deterministic Comparison
-â†“
+↓
 Bucketing / Compaction
-â†“
+↓
 Promotion
-â†“
+↓
 Retirement
 
 Reasoning-engine lifecycle bridge (implementation-facing):
@@ -496,7 +496,7 @@ A strong pilot repo improves both the product being built and the reasoning engi
 Failure Mode:
 Using a second repo too early without bounded rollout turns a proving ground into a noise amplifier.
 
-## External Pilot Integration â€” Fawxzzy Fitness
+## External Pilot Integration — Fawxzzy Fitness
 
 Roadmap checkpoint: first-class external targeting (`--repo`) and one-command baseline external analysis via `playbook pilot --repo <path>` are implemented; treat this section as sequencing context, not canonical live command status
 
@@ -617,49 +617,49 @@ Correct outputs that require system knowledge to interpret reduce actionability 
 Failure Mode — Superficial Integration Without Bootstrap Proof
 A repo can appear integrated while still failing real governed consumption due to missing bootstrap/runtime/artifact guarantees.
 
-Rule â€” Machine-Consumed Artifacts Must Be CLI-Written
+Rule — Machine-Consumed Artifacts Must Be CLI-Written
 If downstream commands read generated JSON artifacts, those artifacts must be written by the CLI itself rather than relying on shell redirection.
 
-Pattern â€” First-Class Artifact Emission
+Pattern — First-Class Artifact Emission
 Structured runtime artifacts should be emitted through explicit output flags with controlled encoding, directory creation, and deterministic content boundaries.
 
-Failure Mode â€” Shell Redirect Artifact Corruption
+Failure Mode — Shell Redirect Artifact Corruption
 Machine-readable JSON captured through wrappers or shell redirection can be silently corrupted by banner text, encoding differences, or shell behavior.
 
-Failure Mode â€” Opaque JSON Parse Crash
+Failure Mode — Opaque JSON Parse Crash
 When corrupted runtime artifacts are parsed without a guardrail, later commands fail far from the original write site, making the real bug harder to diagnose.
 
-Pattern â€” Artifact Consumers Treat Prior JSON as Untrusted Input
+Pattern — Artifact Consumers Treat Prior JSON as Untrusted Input
 Commands that consume prior runtime artifacts should treat those files as untrusted inputs and degrade gracefully when artifacts are missing or malformed.
 
-Failure Mode â€” Hidden Optional Artifact Dependency Crash
+Failure Mode — Hidden Optional Artifact Dependency Crash
 A secondary command like index can fail because of a hidden dependency on stale or corrupted `.playbook/*.json` artifacts produced by an earlier workflow step.
 
-Rule â€” Canonical Operator Surface
+Rule — Canonical Operator Surface
 A CLI repo must expose one canonical operator-facing invocation form across docs, templates, generated docs, and roadmap guidance.
 
-Pattern â€” Generator-Level Truth Enforcement
+Pattern — Generator-Level Truth Enforcement
 If a documentation surface is generated, command normalization must be fixed at the metadata/generator layer rather than by patching rendered markdown.
 
-Failure Mode â€” Command-Surface Drift
+Failure Mode — Command-Surface Drift
 When bare commands, npx flows, and direct internal entrypoints are all shown as if they are equivalent truth, humans and agents start planning against the wrong surface.
 
-Failure Mode â€” External-Repo Coupling
+Failure Mode — External-Repo Coupling
 A repo-intelligence system that only works when executed inside its own repo context is not yet a true external runtime.
 
-Rule â€” Optimize for Measurable Coverage, Not Imagined Completeness
+Rule — Optimize for Measurable Coverage, Not Imagined Completeness
 A repo-intelligence system should report how much of a repository was analyzable, analyzed, skipped, and unknown instead of claiming total understanding.
 
-Pattern â€” Versioned Runtime Observability
+Pattern — Versioned Runtime Observability
 A durable analysis system should store current state, immutable per-cycle snapshots, and compact history rollups so it can reason about both repo state and its own behavior over time.
 
-Pattern â€” Observation / Interpretation Split
+Pattern — Observation / Interpretation Split
 Observed facts and derived inferences must be stored separately so analyzer upgrades can be distinguished from repository changes.
 
-Failure Mode â€” Artifact Heap Without Runtime Model
+Failure Mode — Artifact Heap Without Runtime Model
 If `.playbook/` only accumulates outputs without cycle boundaries, coverage accounting, and telemetry, the system cannot learn, explain drift, or optimize itself reliably.
 
-Failure Mode â€” False 100 Percent Analysis
+Failure Mode — False 100 Percent Analysis
 If Playbook reports strong conclusions without modeling blind spots, skipped files, unsupported areas, and confidence boundaries, users will overtrust incomplete analysis.
 
 Rule — Scores Must Not Hide Blind Spots
@@ -725,12 +725,12 @@ Rule:
 Every major subsystem in Playbook must contribute to knowledge formation, compression, governance, or self-reflection.
 
 Pattern:
-Playbookâ€™s novelty is architectural synthesis, not isolated invention of underlying theory.
+Playbook’s novelty is architectural synthesis, not isolated invention of underlying theory.
 
 Failure Mode:
 Treating Playbook as only a tooling layer hides its real product direction and leads to roadmap underreach.
 
-4ï¸âƒ£ Developer Experience Over Features
+4️⃣ Developer Experience Over Features
 
 Adoption depends on:
 
@@ -746,9 +746,9 @@ PRODUCT ARCHITECTURE
 Playbook evolves through three layers.
 
 Playbook CLI (Open Source)
-â†“
+↓
 Governance Engine
-â†“
+↓
 Playbook Cloud (Optional)
 YEAR 1 OBJECTIVE
 
@@ -820,13 +820,13 @@ Canonical sequencing reference:
 ### 2) Active hardening (current build mode)
 
 - Shipped, hardening continues (`implemented-hardening` in `docs/roadmap/ROADMAP.json`, grouped there as `activeHardening`): the plan/apply trust model (`PB-V04-PLAN-APPLY-001`: change levels, a Level 2 `apply` ceiling and an explicit, recorded Level 3 override; see `docs/architecture/REMEDIATION_TRUST_MODEL.md`), package-boundary convergence with Plugin Contract v1 (`PB-V05-PACKAGE-BOUNDARIES-001`; see `docs/contracts/PLUGIN_CONTRACT_V1.md`), delivery-system gating (`PB-V1-DELIVERY-SYSTEM-001`), product-truth packaging (`PB-V1-PRODUCT-TRUTH-PACKAGING-001`), the test-failure intelligence loop (`PB-V06-FAILURE-INTELLIGENCE-001`, re-scoped to `test-triage` -> `test-fix-plan` -> `test-autofix` -> `remediation-status`), and the v0.8 knowledge compaction foundations (`PB-V08-*`, except `PB-V08-GRAPH-MEMORY-001`, which is `architecture-defined`).
-- Partly shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `implemented-hardening`): `playbook failure ingest|classify|suggest|scaffold|check` classify failures into a closed taxonomy, write `.playbook/failures/*.report.json` closure reports, emit prevention suggestions and propose-only rule/test/doc scaffolds, and enforce the closure rule via `failure check`; `failure check` is not yet wired into `verify`, `doctor` or the CI workflow. `PB-V1-DEMO-REFRESH-001` is `in-progress`.
+- Partly shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `implemented-hardening`): `playbook failure ingest|classify|suggest|scaffold|check` classify failures into a closed taxonomy, write `.playbook/failures/*.report.json` closure reports, emit prevention suggestions and propose-only rule/test/doc scaffolds, and enforce the closure rule via `failure check`; `failure check` is not yet wired into `verify`, `doctor` or the CI workflow. `PB-V1-DEMO-REFRESH-001` is `planned-later` (owner decision 2026-11-14; see its feature section below).
 
 ### 3) Next buildable slices (dependency-ready after active hardening)
 
 Near-term dependency chain (build-order intent from `ROADMAP.json` `implementationSequencing.nextBuildableSlicesInOrder`, not a gate; status as of the roadmap `updatedAt` date in brackets):
 
-1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`in-progress`: `graph impact`, `graph boundaries`, `graph risks` and the `analyze-pr` `graphImpact` section are shipped (module-level, read-only); the semantic node/edge layer and a persisted `.playbook/arch-graph.v2.json` are not]
+1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`in-progress`: `graph impact`, `graph boundaries`, `graph risks`, the `analyze-pr` `graphImpact` section and `graph build` with the persisted semantic graph `.playbook/arch-graph.v2.json` are shipped; remaining: the impact index, SCM-diff partial rebuilds and `analyze-pr` use of the semantic layer]
 2. `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001` [`implemented`]
 3. `PB-V09-SESSION-EVIDENCE-001` [`implemented-hardening`] (implemented canonical runtime truth surface; hardening continues)
    - Runtime truth boundary: `.playbook/session.json` + `evidenceEnvelope` is the canonical continuity/provenance seam for downstream policy, approval, receipt, and memory interpretation.
@@ -1239,13 +1239,13 @@ Conservative non-goals for this track:
 Playbook features follow a structured lifecycle:
 
 Idea
-â†“
+↓
 Improvement Backlog
-â†“
+↓
 Roadmap
-â†“
+↓
 Implemented
-â†“
+↓
 Archived
 
 This keeps the roadmap focused on active commitments while preserving product intelligence discovered during development.
@@ -1279,7 +1279,7 @@ Future roadmap work should focus on enhancement quality (schema hardening, riche
 
 ## Platform Hardening
 
-Playbookâ€™s long-term reliability depends on deterministic repository artifacts powering higher-level intelligence commands.
+Playbook’s long-term reliability depends on deterministic repository artifacts powering higher-level intelligence commands.
 
 Priority hardening tracks:
 
@@ -1623,30 +1623,30 @@ Sequencing issues:
 
 Use a layered phase model so each phase compounds directly on the previous one:
 
-1. **Phase 1 â€” CLI Foundations**  
+1. **Phase 1 — CLI Foundations**  
    Deterministic command contracts, distribution reliability, baseline verification UX, and deterministic lane contract generation for orchestration planning.
-2. **Phase 2 â€” Repository Intelligence Substrate**  
+2. **Phase 2 — Repository Intelligence Substrate**  
    Formalize index contracts for modules, dependencies, test relationships, docs mapping, ownership, and architecture metadata.
-3. **Phase 3 â€” Repository Knowledge Graph**  
+3. **Phase 3 — Repository Knowledge Graph**  
    Deterministic local graph substrate generated from repository intelligence artifacts.
-4. **Phase 4 â€” Context Compression Layer**  
+4. **Phase 4 — Context Compression Layer**  
    Context bundles, module digests, cached snapshots, and deterministic change-scope assembly.
-5. **Phase 5 â€” Read Runtime (Query / Explain / Ask / Analyze-PR)**  
+5. **Phase 5 — Read Runtime (Query / Explain / Ask / Analyze-PR)**  
    Deterministic architecture reasoning and read-only repository understanding flows.
-6. **Phase 6 â€” Change Runtime (Verify / Plan / Apply)**  
+6. **Phase 6 — Change Runtime (Verify / Plan / Apply)**  
    Deterministic remediation orchestration with explicit plan contracts and mutation boundaries.
-7. **Phase 7 â€” Risk-Aware Execution**  
+7. **Phase 7 — Risk-Aware Execution**  
    Risk signals, impact-aware sequencing, and risk-shaped remediation prioritization.
    - Wave 1 (implemented): deterministic `learning-state-snapshot` layering over outcome/process telemetry and optional task-execution-profile evidence (`Evidence -> Snapshot -> Proposal`) for compact reviewable learning summaries without autonomous mutation.
    - Wave 2B (implemented): additive process telemetry route-learning evidence (`task_profile_id`, `route_id`, selected rule packs/validations, validation/planning/apply durations, intervention and over/under-validation signals, and realized parallel safety indicators) with deterministic normalization + bounded rollups for Learning State Snapshot evaluation quality.
    - Wave 2C (implemented): learning-state derivation now consumes enriched outcome/process telemetry to strengthen route-fit, parallel safety, reasoning-scope efficiency, and validation-cost pressure metrics with explicit low-signal open-question prompts and backward-compatible partial summaries.
    - Wave 2A (implemented): additive outcome-telemetry structural context (`task_profile_id`, `task_family`, `affected_surfaces`, estimated/actual change surface, post-apply verify/CI status, regression categories, pattern families implicated) with deterministic normalization and backward-compatible safe degradation for partial legacy records.
-8. **Phase 8 â€” AI Repository Contract**  
+8. **Phase 8 — AI Repository Contract**  
    Machine-readable AI-operability contract and enforcement rules.
    - Router Lane 1 (implemented): additive deterministic `execution-plan` proposal contract (`.playbook/execution-plan.json`) and `playbook route` inspection surface that stays proposal-only, uses task-execution-profile baselines, optionally refines with learning-state evidence, and degrades safely when optional artifacts are missing.
    - Router Lane 3 (implemented): learning-state metrics now conservatively refine route proposals (retry pressure, route efficiency, parallel safety, router fit, validation-cost pressure) with additive `learning_state_available`, `route_confidence`, `open_questions`, and warnings while preserving required validations and deterministic output ordering.
    - Router Lane 4 (implemented): execution-plan outputs are now Codex-worker-ready with additive route fields (`expected_surfaces`, `likely_conflict_surfaces`, `dependency_level`, `recommended_pr_size`, `worker_ready`) and deterministic `playbook route --codex-prompt` compilation into PR-sized proposal-only worker prompts (objective, implementation plan, surfaces, verification, docs updates, and governance block).
-9. **Phase 9 â€” Worker Fragment Consolidation for Shared Singleton Docs**  
+9. **Phase 9 — Worker Fragment Consolidation for Shared Singleton Docs**  
    Implemented proposal-only consolidation seam for protected singleton narrative artifacts so parallel worker execution remains merge-safe before managed subagents/hooks are introduced.
    - Implemented seam: worker fragments, protected singleton registry, prompt-thin worker prompts, and proposal-only docs consolidate now ship together as the current safety slice.
    - Problem addressed: parallel workers can be isolated across implementation surfaces and still collide on singleton narrative docs such as `docs/CHANGELOG.md`, roadmap rollups, and shared architecture summaries.
@@ -1663,11 +1663,11 @@ Use a layered phase model so each phase compounds directly on the previous one:
        - define guardrails preventing direct concurrent edits to protected singleton docs during parallel execution.
        - connect this dependency path explicitly to future managed subagents / hooks orchestration.
      - Dependency path: `worker partitioning / overlap detection -> worker-local fragments / receipts -> final consolidation pass for singleton narrative docs -> managed subagents / hooks`.
-10. **Phase 10 â€” Repository Memory System** (implemented, `PB-V09-REPO-MEMORY-FOUNDATION-001`; hardening continues)  
+10. **Phase 10 — Repository Memory System** (implemented, `PB-V09-REPO-MEMORY-FOUNDATION-001`; hardening continues)  
    Establish the temporal memory substrate (session/episodic evidence) while keeping repository structural intelligence (`index`/`graph`) as a distinct deterministic layer.
    - Worker assignment slice (implemented): deterministic proposal-only `worker-assignments` contract generation from lane-state readiness/dependency gates via `pnpm playbook workers` / `pnpm playbook workers assign`, including `.playbook/worker-assignments.json` and `.playbook/prompts/<lane_id>.md` outputs without worker launch or branch/PR automation.
    - Prompt-thin artifact-rich refinement (implemented): worker prompts now separate direct-edit ownership from fragment-only protected singleton docs so humans get bounded execution instructions while `.playbook` artifacts keep the full machine contract.
-11. **Phase 11 â€” Replay / Consolidation / Promotion** (implemented, `PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001`; hardening continues)  
+11. **Phase 11 — Replay / Consolidation / Promotion** (implemented, `PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001`; hardening continues)  
     Add deterministic replay and consolidation pipelines with salience-gated, provenance-preserving promotion queues so fast episodic memory cannot become durable doctrine without review.
     - Recent implementation note: replay candidates now materialize at `.playbook/memory/replay-candidates.json` (compat-written to `.playbook/memory/candidates.json`) with explicit `candidateOnly`, `authority`, salience, and event provenance fields derived from memory index + append-only event evidence rather than opaque raw logs.
     - Recent implementation note: consolidation now emits `.playbook/memory/consolidation-candidates.json`, preserving replay and event provenance end-to-end, surfacing salience for review, and marking every promotion path as explicit `reviewRequired` with no auto-promotion behavior.
@@ -1676,15 +1676,15 @@ Use a layered phase model so each phase compounds directly on the previous one:
     - Rule: Replay, consolidation, compaction, and promotion must remain explicit, provenance-preserving layers.
     - Pattern: observe -> replay -> consolidate -> compact -> review -> promote.
     - Failure Mode: Adjacent memory artifacts without a canonical replay/promotion contract create lifecycle drift and unclear promotion authority.
-12. **Phase 12 â€” Session + Evidence Layer** (implemented; runtime truth hardening continues)  
+12. **Phase 12 — Session + Evidence Layer** (implemented; runtime truth hardening continues)  
     Session envelope and evidence provenance contracts bind actor context, command lineage, approvals, and deterministic artifact references as a canonical runtime truth surface.
-13. **Phase 13 â€” Control Plane / Agent Runtime v1** (implemented, `PB-V09-CONTROL-PLANE-001`; hardening continues)  
+13. **Phase 13 — Control Plane / Agent Runtime v1** (implemented, `PB-V09-CONTROL-PLANE-001`; hardening continues)  
     First-class policy/approval/mutation-boundary architecture that gates privileged execution and keeps agents above (not inside) the deterministic substrate.
-14. **Phase 14 â€” Review + Execution Orchestration** (`PB-V09-EXECUTION-ORCHESTRATION-001`, in progress)  
+14. **Phase 14 — Review + Execution Orchestration** (`PB-V09-EXECUTION-ORCHESTRATION-001`, in progress)  
     Policy-gated orchestration that consumes repository intelligence + AI contracts + session/evidence + control-plane checks while preserving deterministic mutation workflow.
-15. **Phase 15 â€” Knowledge Query / Inspection Surfaces (Read Runtime) - implemented (hardening)**  
+15. **Phase 15 — Knowledge Query / Inspection Surfaces (Read Runtime) - implemented (hardening)**  
     Deterministic, provenance-preserving read-runtime inspection of repository memory and promoted knowledge so humans/CI can query, compare, and audit candidate/promoted/stale states before broader automation consumption.
-16. **Phase 16 â€” Automation Synthesis (Governed Knowledge Consumption)** (implemented as a governed contract shell, `PB-V09-AUTOMATION-SYNTHESIS-001`; hardening continues)  
+16. **Phase 16 — Automation Synthesis (Governed Knowledge Consumption)** (implemented as a governed contract shell, `PB-V09-AUTOMATION-SYNTHESIS-001`; hardening continues)  
     Controlled synthesis that consumes only promoted, inspectable, provenance-linked knowledge artifacts after `docs/architecture/PLAYBOOK_KNOWLEDGE_QUERY_SURFACES.md` (Phase 15) is in place. This phase explicitly excludes raw chat memory, unreviewed candidate knowledge, and undocumented inference as automation-grade input. Initial thin implementation slice is architecture/contracts/docs plus suggestion-generation contracts only (no autonomous mutation-heavy runtime behavior and no autonomous deployment/execution paths).
 
 Phase 16 allowed vs forbidden input examples:
@@ -1692,7 +1692,7 @@ Phase 16 allowed vs forbidden input examples:
 - Allowed: promoted knowledge from deterministic query/inspection surfaces with provenance/freshness metadata attached, used to produce reviewable suggestions.
 - Forbidden: raw transcripts, opaque prompt memory, or unreviewed candidate artifacts used directly for mutation-ready actions.
 
-17. **Phase 17 â€” Outcome Feedback + Automation Runtime Learning (Human-Reviewed)** (implemented, `PB-V09-OUTCOME-FEEDBACK-LEARNING-001`; hardening continues)  
+17. **Phase 17 — Outcome Feedback + Automation Runtime Learning (Human-Reviewed)** (implemented, `PB-V09-OUTCOME-FEEDBACK-LEARNING-001`; hardening continues)  
     Governed feedback loops that convert verified runtime outcomes, rollback/deactivation events, and later regressions into provenance-linked repo-local candidate learning artifacts (confidence, template suitability, trigger quality, rollback heuristics, stale-knowledge flags, and trend updates). Outputs remain candidate artifacts until explicit human-reviewed promotion/demotion/supersession.
     - Operator-visible read surface (implemented): `pnpm playbook memory outcome-feedback --json` now exposes the canonical `.playbook/outcome-feedback.json` artifact as a first-class read-only runtime surface with compact text mode and additive JSON fields for outcome class, confidence/trigger/stale-knowledge signals, trend updates, provenance refs, and deterministic next-review guidance.
     - Operator-visible read surface (implemented): `pnpm playbook memory policy-improvement --json` now exposes canonical `.playbook/policy-improvement.json` as a read-only runtime surface for deterministic ranking/prioritization candidate suggestions and repeated-blocker/confidence-trend review notes.
@@ -1702,18 +1702,18 @@ Phase 16 allowed vs forbidden input examples:
     - Pattern: outcome feedback -> learning signals -> policy improvement candidates -> human-reviewed promotion.
     - Failure Mode: Outcome feedback that exists only as an internal artifact never becomes an operator-visible learning loop.
     - Failure Mode: Treating outcome learning as direct policy mutation bypasses the same review boundaries the rest of the system already enforces.
-18. **Phase 18 â€” Governed Cross-Repo Pattern Promotion / Transfer** (`PB-V09-MULTI-REPO-TRANSFER-001`, in progress)  
+18. **Phase 18 — Governed Cross-Repo Pattern Promotion / Transfer** (`PB-V09-MULTI-REPO-TRANSFER-001`, in progress)  
     Controlled compounding of reusable engineering knowledge across repositories through explicit, provenance-preserving, sanitization-verified, compatibility-gated transfer packages. Imported patterns are candidate inputs until locally reviewed; no hidden telemetry or automatic global sync.
-19. **Phase 19 â€” Governed Interface / API Surfaces for Multi-Repo Control Planes** (`PB-V09-GOVERNED-INTERFACE-API-001`, in progress)  
+19. **Phase 19 — Governed Interface / API Surfaces for Multi-Repo Control Planes** (`PB-V09-GOVERNED-INTERFACE-API-001`, in progress)  
     Optional interface expansion that exposes validated server/API action surfaces over the same deterministic runtime, preserving per-repo policy/provenance boundaries while enabling coordinated multi-repo control-plane workflows.
-20. **Phase 20 â€” Workspace / Tenant Governance + Optional Hosted Deployment Model** (`PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`, in progress)  
+20. **Phase 20 — Workspace / Tenant Governance + Optional Hosted Deployment Model** (`PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`, in progress)  
     Optional workspace/tenant governance and deployment packaging layer over the same deterministic runtime, defining policy inheritance, per-repo accountability, and hosted/self-hosted parity without making cloud connectivity mandatory.
-21. **Phase 21 â€” Autonomous Maintenance (Policy-Gated)**  
+21. **Phase 21 — Autonomous Maintenance (Policy-Gated)**  
     Recurring maintenance execution modes with approval and policy controls, layered after governed synthesis, outcome-feedback, cross-repo transfer, governed control-plane interface contracts, and workspace/tenant governance boundaries.
     - Rule: Autonomous Maintenance may execute only through explicit approval-gated bounded actions.
     - Pattern: recurring evidence -> maintenance plan -> approval -> bounded execution -> receipt.
     - Failure Mode: Proposal-only maintenance that never reaches an approved execution path creates planning theater; execution without approval breaks the trust model.
-22. **Phase 22 â€” Repository Learning Loop Expansion (Human-Reviewed)**  
+22. **Phase 22 — Repository Learning Loop Expansion (Human-Reviewed)**  
     Canonical repository-learning expansion that formalizes a three-step ladder: (1) deterministic learning clusters as repeated-signal aggregation, (2) graph-informed learning artifacts as structural enrichment over those clusters, and (3) later higher-order synthesis proposals. Outputs remain candidate knowledge artifacts until human review promotes them to enforced governance.
     - Implemented thin additive synthesis artifact: `.playbook/higher-order-synthesis.json` generated deterministically from canonical cluster + graph-informed learning inputs.
     - Rule: Higher-order synthesis may generalize repeated signals, but may not bypass human-reviewed promotion.
@@ -1836,7 +1836,7 @@ Roadmap documentation must preserve these architectural statements:
 - Future phases should prioritize intelligence quality and contract durability over command-surface growth.
 - A repository learning loop can propose rule/context improvements from observed patterns through canonical learning-cluster and graph-informed candidate artifacts, with human review required.
 
-PHASE 1 â€” CLI FOUNDATIONS
+PHASE 1 — CLI FOUNDATIONS
 
 Goal:
 Ship a reliable local-first CLI with deterministic contracts for human and machine workflows.
@@ -1847,7 +1847,7 @@ Core outcomes:
 - Stable command registry and deterministic JSON outputs.
 - Verification-first baseline (`verify`, `plan`, `apply`) for governance enforcement.
 
-PHASE 2 â€” REPOSITORY INTELLIGENCE
+PHASE 2 — REPOSITORY INTELLIGENCE
 
 Goal:
 Build deterministic repository intelligence artifacts that AI systems and developers can trust.
@@ -1863,7 +1863,7 @@ Intelligence artifacts should include:
 - dependents
 - architecture metadata
 
-PHASE 3 â€” REPOSITORY KNOWLEDGE GRAPH
+PHASE 3 — REPOSITORY KNOWLEDGE GRAPH
 
 Goal:
 Build a deterministic local Repository Knowledge Graph artifact from repository intelligence.
@@ -1930,7 +1930,7 @@ Current stabilization direction:
 - avoid broad new graph command families when existing command surfaces can absorb deterministic summaries
 - add only low-cost deterministic relationships derivable from indexed repository truth (`contains`, `depends_on`, `governed_by`)
 
-PHASE 4 â€” AI EFFICIENCY & CONTEXT COMPRESSION
+PHASE 4 — AI EFFICIENCY & CONTEXT COMPRESSION
 
 Goal:
 Reduce AI cost/latency while increasing knowledge reuse quality for repository reasoning and remediation.
@@ -1952,7 +1952,7 @@ Key mechanisms:
 - cached context snapshots
 - deterministic patch scope
 
-PHASE 5 â€” QUERY SYSTEM
+PHASE 5 — QUERY SYSTEM
 
 Goal:
 Enable deterministic repository reasoning through command-surface intelligence queries.
@@ -1991,7 +1991,7 @@ Output:
 - affected rules
 - architecture boundaries touched
 
-PHASE 6 â€” DEPENDENCY GRAPH + IMPACT ANALYSIS
+PHASE 6 — DEPENDENCY GRAPH + IMPACT ANALYSIS
 
 Goal:
 Use repository dependency edges to make change impact deterministic.
@@ -2007,7 +2007,7 @@ Expected outcomes:
 - expose architectural blast radius for proposed changes
 - prioritize low-impact remediation paths first
 
-PHASE 7 â€” RISK ANALYSIS
+PHASE 7 — RISK ANALYSIS
 
 Goal:
 Add deterministic module-level risk scoring for safer AI and human remediation planning.
@@ -2027,7 +2027,7 @@ Expected outcome:
 
 - safer prioritization of change sequencing and rollout planning.
 
-PHASE 8 â€” AI REPOSITORY CONTRACT
+PHASE 8 — AI REPOSITORY CONTRACT
 
 Status: **Baseline implemented** via `pnpm playbook ai-contract` and `.playbook/ai-contract.json`.
 
@@ -2083,7 +2083,7 @@ Future standardization direction:
 
 - Publish `docs/AI_CONTRACT_SPEC.md` as a public AI Contract specification for AI-operable repositories.
 
-PHASE 9 â€” REPOSITORY MEMORY SYSTEM (ARCHITECTURE + CONTRACT FOUNDATIONS)
+PHASE 9 — REPOSITORY MEMORY SYSTEM (ARCHITECTURE + CONTRACT FOUNDATIONS)
 
 Goal:
 Introduce first-class Repository Memory System architecture and contracts while preserving current runtime behavior.
@@ -2104,7 +2104,7 @@ Execution posture:
 - documentation/contract architecture phase only
 - no command-surface or runtime behavior expansion required in this slice
 
-PHASE 10 â€” AI EXECUTION RUNTIME (PLAYBOOK AGENT)
+PHASE 10 — AI EXECUTION RUNTIME (PLAYBOOK AGENT)
 
 Goal:
 Introduce **Playbook Agent** as an AI execution runtime for repositories.
@@ -2173,7 +2173,7 @@ Playbook should analyze PRs but not author them.
 
 Rule: **Playbook analyzes changes rather than rewriting developer intent.**
 
-PHASE 11 â€” AUTONOMOUS REPOSITORY MAINTENANCE
+PHASE 11 — AUTONOMOUS REPOSITORY MAINTENANCE
 
 Goal:
 Extend Playbook Agent into recurring and CI-driven repository maintenance modes.
@@ -2212,7 +2212,7 @@ Key product pillars:
 
 ## Security Program
 
-Security is a first-class product program for Playbook and is implemented as deterministic, automated processâ€”not manual review.
+Security is a first-class product program for Playbook and is implemented as deterministic, automated process—not manual review.
 
 ### Deterministic Mutation Architecture
 
@@ -2230,11 +2230,11 @@ This execution pipeline preserves both automation and control:
 
 Playbook intentionally separates analysis (`verify`), planning (`plan`), and execution (`apply`) so automated repository changes remain reviewable, policy-gated, and reproducible.
 
-### 1ï¸âƒ£ Execution Safety (Highest Priority)
+### 1️⃣ Execution Safety (Highest Priority)
 
 Secure the core lifecycle:
 
-`index â†’ query/ask/explain â†’ verify â†’ plan â†’ validate â†’ policy â†’ apply â†’ verify`
+`index → query/ask/explain → verify → plan → validate → policy → apply → verify`
 
 Key guarantees:
 
@@ -2256,7 +2256,7 @@ Roadmap milestones:
 - [ ] policy engine gate before apply
 - [ ] deterministic remediation contracts with strict schema + task invariants
 
-### 2ï¸âƒ£ Release and Supply Chain Integrity
+### 2️⃣ Release and Supply Chain Integrity
 
 Ensure Playbook releases are verifiable and tamper-resistant.
 
@@ -2276,7 +2276,7 @@ Automated artifacts:
 - `/artifacts/provenance.json`
 - `/artifacts/signature.cosign`
 
-### 3ï¸âƒ£ Self-Auditing Security Features
+### 3️⃣ Self-Auditing Security Features
 
 Playbook will provide built-in deterministic security intelligence via the same query/verify engine contracts.
 
@@ -2290,15 +2290,15 @@ Planned command surface:
 
 Documentation patterns and rules to encode:
 
-- Rule â€” No Unreviewed Writes: Playbook must never modify repository files without a diff-based plan and explicit apply step.
-- Rule â€” Repo Root Security Boundary: all file reads and writes must resolve within the repository root.
-- Pattern â€” Policy-Gated Remediation: `finding â†’ plan â†’ validation â†’ policy â†’ apply â†’ verify`.
-- Pattern â€” Evidence-Bound Outputs: plans must reference deterministic findings and source evidence.
-- Failure Mode â€” Prompt Poisoning via Repository Content: repository text is untrusted evidence and must not influence runtime policy behavior.
-- Failure Mode â€” Boundary Drift: new commands must not expand file access scope without explicit security review.
-- Rule â€” Roadmap Automation Check: every new CLI command must include a security verification checklist (path boundary protection, deterministic outputs, plan/apply compatibility, and snapshot tests).
+- Rule — No Unreviewed Writes: Playbook must never modify repository files without a diff-based plan and explicit apply step.
+- Rule — Repo Root Security Boundary: all file reads and writes must resolve within the repository root.
+- Pattern — Policy-Gated Remediation: `finding → plan → validation → policy → apply → verify`.
+- Pattern — Evidence-Bound Outputs: plans must reference deterministic findings and source evidence.
+- Failure Mode — Prompt Poisoning via Repository Content: repository text is untrusted evidence and must not influence runtime policy behavior.
+- Failure Mode — Boundary Drift: new commands must not expand file access scope without explicit security review.
+- Rule — Roadmap Automation Check: every new CLI command must include a security verification checklist (path boundary protection, deterministic outputs, plan/apply compatibility, and snapshot tests).
 
-FUTURE DIRECTION â€” PLAYBOOK PLATFORM VISION
+FUTURE DIRECTION — PLAYBOOK PLATFORM VISION
 
 Playbook starts as a CLI-first developer tool, but the platform is intentionally architected so the same analysis engine can power multiple product surfaces.
 
@@ -2329,10 +2329,10 @@ Playbook becomes the governance infrastructure for AI-assisted development.
 
 Equivalent ecosystem role:
 
-Git â†’ version control
-CI â†’ builds
-Sentry â†’ runtime errors
-Playbook â†’ architecture governance
+Git → version control
+CI → builds
+Sentry → runtime errors
+Playbook → architecture governance
 NORTH STAR METRICS
 
 Year 1 (adoption-over-revenue, measured with deterministic proof-of-value context):
@@ -2500,7 +2500,7 @@ Pattern: **Reviewed Intent Before Execution**
 
 The safest automation model is to generate a machine-readable plan, review it, then execute that exact artifact.
 
-Pattern: **Two-tier backlog (Improvement Backlog â†’ Roadmap)**.
+Pattern: **Two-tier backlog (Improvement Backlog → Roadmap)**.
 
 Use `docs/roadmap/IMPROVEMENTS_BACKLOG.md` to capture emerging ideas; promote only prioritized capabilities into this roadmap.
 
@@ -2687,7 +2687,7 @@ Future enhancement:
 - Added machine-readable security contracts to map runtime guards to deterministic enforcement tests.
 - Added contract-driven security verification stage (`pnpm test:security`) for CI regression protection.
 
-## Feature: PB-V1-DEMO-REFRESH-001 â€” PR-based demo repository refresh automation
+## Feature: PB-V1-DEMO-REFRESH-001 — PR-based demo repository refresh automation
 
 Status: `planned-later` (owner decision 2026-11-14: the demo refresh is dropped from the v1 scope; the existing script and workflows stay as they are and nothing new is scheduled).
 
