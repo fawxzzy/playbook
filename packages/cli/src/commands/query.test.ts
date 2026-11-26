@@ -670,6 +670,12 @@ describe('runQuery', () => {
       type: 'rule-owners',
       rules: [
         {
+          ruleId: 'generatedFilesInSync',
+          area: 'governance',
+          owners: ['governance'],
+          remediationType: 'generated-files-in-sync'
+        },
+        {
           ruleId: 'migrationsAppendOnly',
           area: 'governance',
           owners: ['governance'],
@@ -710,6 +716,12 @@ describe('runQuery', () => {
           area: 'governance',
           owners: ['governance'],
           remediationType: 'notes-maintenance'
+        },
+        {
+          ruleId: 'requireTestRegistration',
+          area: 'quality',
+          owners: ['testing'],
+          remediationType: 'test-registration'
         },
         {
           ruleId: 'verify.rule.tests.required',

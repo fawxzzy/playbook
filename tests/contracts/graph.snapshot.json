@@ -5,16 +5,16 @@
     "schemaVersion": "1.1",
     "kind": "playbook-repo-graph",
     "stats": {
-      "nodeCount": 8,
-      "edgeCount": 13,
+      "nodeCount": 10,
+      "edgeCount": 17,
       "nodeKinds": {
         "module": 1,
         "repository": 1,
-        "rule": 6
+        "rule": 8
       },
       "edgeKinds": {
-        "contains": 7,
-        "governed_by": 6
+        "contains": 9,
+        "governed_by": 8
       }
     },
     "nodeKinds": [

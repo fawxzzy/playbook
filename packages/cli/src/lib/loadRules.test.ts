@@ -17,7 +17,9 @@ describe('rule loaders', () => {
       'verify.rule.tests.required',
       'protected-doc.governance',
       'release.version-governance',
-      'migrationsAppendOnly'
+      'migrationsAppendOnly',
+      'generatedFilesInSync',
+      'requireTestRegistration'
     ]));
     expect(new Set(ids).size).toBe(ids.length);
   });

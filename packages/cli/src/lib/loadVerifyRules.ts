@@ -8,6 +8,8 @@ import { testsRequiredRule } from '../rules/verify/testsRequiredRule.js';
 import { protectedDocGovernanceRule } from '../rules/verify/protectedDocGovernanceRule.js';
 import { releaseVersionGovernanceRule } from '../rules/verify/releaseVersionGovernanceRule.js';
 import { migrationsAppendOnlyRule } from '../rules/verify/migrationsAppendOnlyRule.js';
+import { generatedFilesInSyncRule } from '../rules/verify/generatedFilesInSyncRule.js';
+import { requireTestRegistrationRule } from '../rules/verify/requireTestRegistrationRule.js';
 
 export type VerifyFailure = VerifyReport['failures'][number];
 
@@ -33,7 +35,7 @@ export type RuleListingEntry = {
   source: RuleSource;
 };
 
-export const coreVerifyRules: VerifyRule[] = [notesMissingRule, notesEmptyRule, requireNotesOnChangesRule, testsRequiredRule, protectedDocGovernanceRule, releaseVersionGovernanceRule, migrationsAppendOnlyRule];
+export const coreVerifyRules: VerifyRule[] = [notesMissingRule, notesEmptyRule, requireNotesOnChangesRule, testsRequiredRule, protectedDocGovernanceRule, releaseVersionGovernanceRule, migrationsAppendOnlyRule, generatedFilesInSyncRule, requireTestRegistrationRule];
 
 // Engine plugin rule shape (docs/contracts/PLUGIN_CONTRACT_V1.md). Typed structurally because the
 // engine package types are declared loosely for the CLI build.

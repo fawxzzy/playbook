@@ -60,6 +60,26 @@ const RULE_REGISTRY: Record<string, RuleMetadata> = {
       remediationType: 'migration-append-only'
     }
   },
+  generatedFilesInSync: {
+    id: 'generatedFilesInSync',
+    purpose: 'Keep committed generated files in step with their inputs: when a configured generator input changes, one of its outputs must change in the same diff.',
+    fix: ['Run the generator for the listed outputs and commit the regenerated files with the input change.'],
+    ownership: {
+      area: 'governance',
+      owners: ['governance'],
+      remediationType: 'generated-files-in-sync'
+    }
+  },
+  requireTestRegistration: {
+    id: 'requireTestRegistration',
+    purpose: 'Make sure CI runs new tests: a newly added test file must be listed in one of the configured CI test lists unless a covered glob already runs it.',
+    fix: ['Add the new test file to one of the configured CI test lists, or list its folder as a glob under "covered".'],
+    ownership: {
+      area: 'quality',
+      owners: ['testing'],
+      remediationType: 'test-registration'
+    }
+  },
   'verify.rule.tests.required': {
     id: 'verify.rule.tests.required',
     purpose: 'Require tests for new CLI commands and verify-rule changes.',

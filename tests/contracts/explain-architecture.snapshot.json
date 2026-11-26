@@ -26,6 +26,10 @@
         },
         {
           "kind": "contains",
+          "target": "rule:generatedFilesInSync"
+        },
+        {
+          "kind": "contains",
           "target": "rule:migrationsAppendOnly"
         },
         {
@@ -43,6 +47,10 @@
         {
           "kind": "contains",
           "target": "rule:requireNotesOnChanges"
+        },
+        {
+          "kind": "contains",
+          "target": "rule:requireTestRegistration"
         },
         {
           "kind": "contains",
