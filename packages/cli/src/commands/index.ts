@@ -353,8 +353,8 @@ const commandRunners: Record<
     });
   },
   apply: async ({ cwd, commandArgs, ci, format, quiet }) => {
-    const { runApply } = await import("./apply.js");
-    return runApply(cwd, {
+    const { runApplyCommand } = await import("./apply.js");
+    return runApplyCommand(cwd, {
       ci,
       format,
       quiet,

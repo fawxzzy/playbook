@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as engine from '@zachariahredfield/playbook-engine';
 import { ExitCode } from '../lib/cliContract.js';
-import { runApply } from './apply.js';
+import { runApply, runApplyCommand } from './apply.js';
 import { runPlan } from './plan.js';
 
 vi.setConfig({ testTimeout: 60_000 });
@@ -234,6 +234,93 @@ describe('apply change-scope binding (real engine)', () => {
 
     await expect(runFromPlan()).rejects.toThrow(/written by "analyze-pr"/);
     expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(false);
+  });
+  describe('refusals surface as a failure result, not an uncaught error (registered entry point)', () => {
+    let errSpy: ReturnType<typeof vi.spyOn>;
+    beforeEach(() => {
+      errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    });
+    afterEach(() => {
+      errSpy.mockRestore();
+    });
+
+    const fromPlanCommand = (format: 'json' | 'text') =>
+      runApplyCommand(repoDir, { format, ci: false, quiet: false, fromPlan: 'plan.json', skipReleaseGovernanceBoundary: true });
+
+    it('prints only the standard failure envelope on stdout with --json, exit code unchanged, nothing written', async () => {
+      writePlan([notesTask]);
+      fs.rmSync(path.join(repoDir, '.playbook', 'change-scope.json'));
+      const before = repoFiles();
+
+      const exitCode = await fromPlanCommand('json');
+
+      expect(exitCode).toBe(ExitCode.Failure);
+      expect(logSpy).toHaveBeenCalledTimes(1);
+      expect(errSpy).not.toHaveBeenCalled();
+      const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+      expect(payload).toMatchObject({ schemaVersion: '1.0', command: 'apply', ok: false, exitCode: ExitCode.Failure, results: [] });
+      expect(payload.message).toMatch(/change-scope.json is missing.*playbook plan --json/s);
+      expect(repoFiles()).toEqual(before);
+      expect(fs.existsSync(path.join(repoDir, '.playbook', 'runs'))).toBe(false);
+    });
+
+    it('prints one clear line on stderr without --json, no stack, nothing on stdout', async () => {
+      writePlan([notesTask]);
+      const scopePath = path.join(repoDir, '.playbook', 'change-scope.json');
+      const scope = JSON.parse(fs.readFileSync(scopePath, 'utf8'));
+      scope.bundles[0].source.artifactDigest = '0'.repeat(64);
+      fs.writeFileSync(scopePath, JSON.stringify(scope));
+      const before = repoFiles();
+
+      const exitCode = await fromPlanCommand('text');
+
+      expect(exitCode).toBe(ExitCode.Failure);
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(errSpy).toHaveBeenCalledTimes(1);
+      const line = String(errSpy.mock.calls[0]?.[0]);
+      expect(line).toMatch(/^playbook apply: Change-scope binding failed/);
+      expect(line).not.toMatch(/\n/);
+      expect(repoFiles()).toEqual(before);
+    });
+
+    it('carries the loaded plan remediation in the envelope of a pre-run refusal', async () => {
+      writePlan([notesTask]);
+      fs.rmSync(path.join(repoDir, '.playbook', 'change-scope.json'));
+
+      await fromPlanCommand('json');
+
+      const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+      expect(payload.remediation).toMatchObject({ status: 'ready', totalSteps: 1, unresolvedFailures: 0 });
+    });
+
+    it('does not turn a failure after the run exists into a clean refusal (Cannot apply remediation is unchanged)', async () => {
+      writePlan([notesTask]);
+      const planPath = path.join(repoDir, 'plan.json');
+      const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+      plan.remediation = { status: 'unavailable', totalSteps: 0, unresolvedFailures: 1, reason: 'nothing to do' };
+      fs.writeFileSync(planPath, JSON.stringify(plan));
+
+      await expect(fromPlanCommand('json')).rejects.toThrow(/Cannot apply remediation: nothing to do/);
+
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(errSpy.mock.calls.some((call) => String(call[0]).startsWith('playbook apply:'))).toBe(false);
+    });
+
+    it('does not turn a release-boundary failure after writes into a clean envelope', async () => {
+      writePlan([]);
+      const planPath = path.join(repoDir, 'plan.json');
+      const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+      plan.remediation = { status: 'not_needed', totalSteps: 0, unresolvedFailures: 0, reason: 'No verify failures were detected.' };
+      fs.writeFileSync(planPath, JSON.stringify(plan));
+
+      // skipReleaseGovernanceBoundary is deliberately unset: the boundary runs after the run and artifacts are written.
+      await expect(
+        runApplyCommand(repoDir, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' })
+      ).rejects.toThrow(/playbook release plan:/);
+
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(fs.existsSync(path.join(repoDir, '.playbook', 'runs'))).toBe(true);
+    });
   });
 });
 
