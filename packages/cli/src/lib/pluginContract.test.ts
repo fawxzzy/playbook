@@ -154,6 +154,8 @@ describe('rules --json (CLI)', () => {
       'protected-doc.governance',
       'release.version-governance',
       'migrationsAppendOnly',
+      'generatedFilesInSync',
+      'requireTestRegistration',
       'requireNotesFileWhenGovernanceExists'
     ]);
   });

@@ -57,6 +57,8 @@ describe('runRules', () => {
       'protected-doc.governance',
       'release.version-governance',
       'migrationsAppendOnly',
+      'generatedFilesInSync',
+      'requireTestRegistration',
       'requireNotesFileWhenGovernanceExists'
     ]);
     expect(payload.verify.every((rule) => rule.source === 'core')).toBe(true);

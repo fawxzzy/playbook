@@ -38,6 +38,16 @@
       "source": "core"
     },
     {
+      "id": "generatedFilesInSync",
+      "description": "Fail when a configured generator input changes but none of its generated outputs change.",
+      "source": "core"
+    },
+    {
+      "id": "requireTestRegistration",
+      "description": "Fail when a newly added test file is not listed in any configured CI test list.",
+      "source": "core"
+    },
+    {
       "id": "requireNotesFileWhenGovernanceExists",
       "description": "Require notes file whenever governance document exists.",
       "source": "core"

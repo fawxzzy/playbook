@@ -3,6 +3,8 @@ import type { PlaybookConfig } from '../config/schema.js';
 import { requireNotesFileWhenGovernanceExists } from '../verify/rules/requireNotesFileWhenGovernanceExists.js';
 import { requireNotesOnChanges } from '../verify/rules/requireNotesOnChanges.js';
 import { migrationsAppendOnly } from '../verify/rules/migrationsAppendOnly.js';
+import { generatedFilesInSync } from '../verify/rules/generatedFilesInSync.js';
+import { requireTestRegistration } from '../verify/rules/requireTestRegistration.js';
 import { getChangedFileStatuses } from '../git/diff.js';
 import { requireTestsForNewCommands } from '../verify/rules/requireTestsForNewCommands.js';
 import { verifyProtectedDocGovernance } from '../verify/rules/protectedDocGovernance.js';
@@ -29,6 +31,26 @@ export const getCoreRules = (config: PlaybookConfig): Rule[] => [
       // Opt-in: no configured globs or no diff base means nothing to enforce (and no git call).
       if (!rules.length || !baseSha) return { failures: [] };
       return { failures: migrationsAppendOnly(getChangedFileStatuses(repoRoot, baseSha), rules) };
+    }
+  },
+  {
+    id: 'generatedFilesInSync',
+    description: 'Fail when a configured generator input changes but none of its generated outputs change.',
+    check: ({ repoRoot, baseSha }) => {
+      const rules = config.verify.rules.generatedFilesInSync ?? [];
+      // Opt-in: no configured entries or no diff base means nothing to enforce (and no git call).
+      if (!rules.length || !baseSha) return { failures: [] };
+      return { failures: generatedFilesInSync(getChangedFileStatuses(repoRoot, baseSha), rules) };
+    }
+  },
+  {
+    id: 'requireTestRegistration',
+    description: 'Fail when a newly added test file is not listed in any configured CI test list.',
+    check: ({ repoRoot, baseSha }) => {
+      const rules = config.verify.rules.requireTestRegistration ?? [];
+      // Opt-in: no configured entries or no diff base means nothing to enforce (and no git call).
+      if (!rules.length || !baseSha) return { failures: [] };
+      return { failures: requireTestRegistration(repoRoot, getChangedFileStatuses(repoRoot, baseSha), rules) };
     }
   },
   {

@@ -29,6 +29,18 @@ export type PlaybookConfig = {
       migrationsAppendOnly: Array<{
         globs: string[];
       }>;
+      /** Opt-in: when a changed file matches `inputs`, a changed file must also match `outputs`. */
+      generatedFilesInSync: Array<{
+        inputs: string[];
+        outputs: string[];
+        regenerate?: string;
+      }>;
+      /** Opt-in: an added file matching `tests` (and no `covered` glob) must be listed in one of the `registries`. */
+      requireTestRegistration: Array<{
+        tests: string[];
+        registries: string[];
+        covered?: string[];
+      }>;
     };
   };
   memory: {
@@ -75,7 +87,9 @@ export const defaultConfig: PlaybookConfig = {
           mustTouch: ['docs/PLAYBOOK_NOTES.md']
         }
       ],
-      migrationsAppendOnly: []
+      migrationsAppendOnly: [],
+      generatedFilesInSync: [],
+      requireTestRegistration: []
     }
   },
   memory: {

@@ -66,6 +66,8 @@ describe('single engine plugin-loading path (PB-V05-PACKAGE-BOUNDARIES-001)', ()
       'requireNotesFileWhenGovernanceExists',
       'requireNotesOnChanges',
       'migrationsAppendOnly',
+      'generatedFilesInSync',
+      'requireTestRegistration',
       'verify.rule.tests.required',
       'protected-doc.governance',
       'release.version-governance'
