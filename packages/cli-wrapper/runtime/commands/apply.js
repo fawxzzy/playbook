@@ -1012,4 +1012,35 @@ export const runApply = async (cwd, options) => {
     }
     return emitApplyOutput(options, payload, renderTextApply);
 };
+/**
+ * Registered `apply` entry point. Every refusal `runApply` raises as an Error (change-scope binding or
+ * missing scope, Level 2 ceiling, unknown task id, invalid plan, ...) is reported here as a failure result
+ * instead of escaping to the process as an uncaught stack. Exit code stays `ExitCode.Failure`. Internal
+ * callers (for example `release sync`) keep calling `runApply` directly and keep their behavior.
+ */
+export const runApplyCommand = async (cwd, options) => {
+    try {
+        return await runApply(cwd, options);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (options.format === 'json') {
+            const payload = {
+                schemaVersion: '1.0',
+                command: 'apply',
+                ok: false,
+                exitCode: ExitCode.Failure,
+                remediation: { status: 'unavailable', totalSteps: 0, unresolvedFailures: 0, reason: message },
+                message,
+                results: [],
+                summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 }
+            };
+            console.log(JSON.stringify(payload, null, 2));
+        }
+        else {
+            console.error(`playbook apply: ${message}`);
+        }
+        return ExitCode.Failure;
+    }
+};
 //# sourceMappingURL=apply.js.map
