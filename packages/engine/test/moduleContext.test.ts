@@ -49,6 +49,28 @@ describe('module context digest', () => {
     });
   });
 
+  it('labels each module with the source folder it actually lives in', () => {
+    const repo = createRepo('playbook-module-context-paths');
+    const index: RepositoryIndex = {
+      ...sampleIndex,
+      modules: [
+        { name: 'auth', dependencies: ['lib'] },
+        { name: 'lib', dependencies: [] }
+      ]
+    };
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'auth'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(repo, '.playbook'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'features', 'auth', 'index.ts'), "import { db } from '@/lib/db';\nexport const auth = db;\n");
+    fs.writeFileSync(path.join(repo, 'src', 'lib', 'db.ts'), 'export const db = true;\n');
+    fs.writeFileSync(path.join(repo, '.playbook', 'repo-index.json'), JSON.stringify(index, null, 2));
+
+    const graph = generateRepositoryGraph(index, new Date('2026-01-01T00:00:00.000Z'));
+    const digests = buildModuleContextDigests(repo, index, graph, new Date('2026-01-01T00:00:00.000Z'));
+
+    expect(digests.map((digest) => digest.module.path)).toEqual(['src/features/auth', 'src/lib']);
+  });
+
   it('degrades risk context when optional verify artifacts are malformed', () => {
     const repo = createRepo('playbook-module-context-malformed-optional-artifact');
     fs.mkdirSync(path.join(repo, 'src', 'features', 'auth'), { recursive: true });

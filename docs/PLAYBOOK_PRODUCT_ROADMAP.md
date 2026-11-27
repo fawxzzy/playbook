@@ -2375,7 +2375,7 @@ Implemented baseline: `pnpm playbook index` (paired with `query`, `deps`, `ask`,
 - Command intent: generate a machine-readable repository intelligence artifact for AI-safe repository understanding.
 - Output path: `.playbook/repo-index.json`.
 - Current index coverage:
-  - modules (including modular-monolith `src/features/*` modules as first-class indexed/explainable module targets)
+  - modules (including modular-monolith `src/features/*` modules as first-class indexed/explainable module targets, alongside the other top-level `src/*` directories)
   - dependency edges (workspace manifest links, root manifest links, and source import relationships)
   - workspace topology (`packages/*` relationships and package roles)
   - module test presence mapping (`tests_present` + deterministic `coverage_estimate: unknown`)

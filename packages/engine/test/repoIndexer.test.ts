@@ -84,6 +84,127 @@ describe('generateRepositoryIndex', () => {
     ]);
   });
 
+  it('indexes top-level src/* directories next to src/features/* modules and links them through imports', () => {
+    const repo = createRepo('playbook-repo-index-features-siblings');
+    fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));
+    fs.mkdirSync(path.join(repo, 'src', 'app'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'shared'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'users'), { recursive: true });
+    fs.writeFileSync(
+      path.join(repo, 'src', 'app', 'page.tsx'),
+      "import { users } from '@/features/users';\nimport { db } from '@/lib/db';\nexport const page = [users, db];\n"
+    );
+    fs.writeFileSync(path.join(repo, 'src', 'lib', 'db.ts'), 'export const db = true;\n');
+    fs.writeFileSync(path.join(repo, 'src', 'shared', 'format.ts'), 'export const format = true;\n');
+    fs.writeFileSync(
+      path.join(repo, 'src', 'features', 'users', 'index.ts'),
+      "import { db } from '@/lib/db';\nimport { format } from '../../shared/format';\nexport const users = [db, format];\n"
+    );
+
+    const index = generateRepositoryIndex(repo);
+
+    expect(index.modules).toEqual([
+      { name: 'app', dependencies: ['lib', 'users'] },
+      { name: 'lib', dependencies: [] },
+      { name: 'shared', dependencies: [] },
+      { name: 'users', dependencies: ['lib', 'shared'] }
+    ]);
+  });
+
+  it('keeps the feature module when a top-level src/* directory has the same name', () => {
+    const repo = createRepo('playbook-repo-index-features-collision');
+    fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));
+    fs.mkdirSync(path.join(repo, 'src', 'users'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'users'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'users', 'legacy.ts'), "import { db } from '@/lib/db';\nexport const legacy = db;\n");
+    fs.writeFileSync(path.join(repo, 'src', 'lib', 'db.ts'), 'export const db = true;\n');
+    fs.writeFileSync(path.join(repo, 'src', 'features', 'users', 'index.ts'), 'export const users = true;\n');
+
+    const index = generateRepositoryIndex(repo);
+
+    expect(index.modules).toEqual([
+      { name: 'lib', dependencies: [] },
+      { name: 'users', dependencies: [] }
+    ]);
+  });
+
+  it('respects .playbookignore for top-level src/* directories next to feature modules', () => {
+    const repo = createRepo('playbook-repo-index-features-siblings-ignore');
+    fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));
+    fs.writeFileSync(path.join(repo, '.playbookignore'), 'src/generated\n');
+    fs.mkdirSync(path.join(repo, 'src', 'generated'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'users'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'generated', 'types.ts'), 'export const types = true;\n');
+    fs.writeFileSync(
+      path.join(repo, 'src', 'features', 'users', 'index.ts'),
+      "import { types } from '@/generated/types';\nexport const users = types;\n"
+    );
+
+    const index = generateRepositoryIndex(repo);
+
+    expect(index.modules).toEqual([
+      { name: 'lib', dependencies: [] },
+      { name: 'users', dependencies: [] }
+    ]);
+  });
+
+  it('keeps src/features as a plain module when the architecture is not modular-monolith', () => {
+    const repo = createRepo('playbook-repo-index-features-other-architecture');
+    fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));
+    fs.writeFileSync(path.join(repo, 'playbook.config.json'), JSON.stringify({ architecture: 'layered' }, null, 2));
+    fs.mkdirSync(path.join(repo, 'src', 'app'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'users'), { recursive: true });
+    fs.writeFileSync(path.join(repo, 'src', 'app', 'page.ts'), "import { users } from '@/features/users';\nexport const page = users;\n");
+    fs.writeFileSync(path.join(repo, 'src', 'features', 'users', 'index.ts'), 'export const users = true;\n');
+
+    const index = generateRepositoryIndex(repo);
+
+    expect(index.modules).toEqual([
+      { name: 'app', dependencies: [] },
+      { name: 'features', dependencies: [] }
+    ]);
+  });
+
+  it('detects tests inside feature module folders and top-level src/* modules', () => {
+    const repo = createRepo('playbook-repo-index-features-tests');
+    fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));
+    fs.mkdirSync(path.join(repo, 'src', 'app', 'tests'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'users', '__tests__'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'workouts', 'test'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'billing', 'tests'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'profile'), { recursive: true });
+
+    const index = generateRepositoryIndex(repo);
+
+    expect(index.tests).toEqual([
+      { module: 'app', tests_present: true, coverage_estimate: 'unknown' },
+      { module: 'billing', tests_present: true, coverage_estimate: 'unknown' },
+      { module: 'lib', tests_present: false, coverage_estimate: 'unknown' },
+      { module: 'profile', tests_present: false, coverage_estimate: 'unknown' },
+      { module: 'users', tests_present: true, coverage_estimate: 'unknown' },
+      { module: 'workouts', tests_present: true, coverage_estimate: 'unknown' }
+    ]);
+  });
+
+  it('does not read src/features/<name> tests for modules outside a modular-monolith feature layout', () => {
+    const repo = createRepo('playbook-repo-index-features-tests-other-architecture');
+    fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));
+    fs.writeFileSync(path.join(repo, 'playbook.config.json'), JSON.stringify({ architecture: 'layered' }, null, 2));
+    fs.mkdirSync(path.join(repo, 'src', 'users'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'users', '__tests__'), { recursive: true });
+
+    const index = generateRepositoryIndex(repo);
+
+    expect(index.tests).toEqual([
+      { module: 'features', tests_present: false, coverage_estimate: 'unknown' },
+      { module: 'users', tests_present: false, coverage_estimate: 'unknown' }
+    ]);
+  });
+
   it('falls back to src/* module detection when src/features/* is absent', () => {
     const repo = createRepo('playbook-repo-index-fallback');
     fs.writeFileSync(path.join(repo, 'package.json'), JSON.stringify({}, null, 2));

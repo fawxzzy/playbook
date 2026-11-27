@@ -438,7 +438,7 @@ Failure Mode: Agent drift occurs when AI tools bypass Playbook command outputs a
 
 Use `pnpm playbook query` to read structured architecture metadata directly from `.playbook/repo-index.json` without rescanning your repository.
 
-For modular-monolith repositories, Playbook indexes `src/features/*` directories as first-class modules (falling back to immediate `src/*` module directories when `src/features/*` is absent).
+For modular-monolith repositories, Playbook indexes `src/features/*` directories as first-class modules together with every other top-level `src/*` directory except `features` itself (a feature module keeps its name when a top-level directory shares it), and falls back to immediate `src/*` module directories when `src/features/*` is absent.
 
 ```bash
 pnpm playbook index
