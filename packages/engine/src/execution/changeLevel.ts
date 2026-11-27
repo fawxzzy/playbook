@@ -30,8 +30,10 @@ const RULE_CHANGE_LEVELS: Readonly<Record<string, ChangeLevel>> = {
   'maintenance.execution': 2
 };
 
-const SECURITY_SENSITIVE_PREFIXES = ['.github/', '.git/', '.husky/'] as const;
-const SECURITY_SENSITIVE_BASENAMES = new Set(['.npmrc', '.yarnrc', '.yarnrc.yml']);
+const SECURITY_SENSITIVE_PREFIXES = ['.github/', '.git/', '.husky/', '.vercel/', 'supabase/'] as const;
+// Basenames are matched against the lowercased canonical path (TM-GAP-04): Playbook's own rule config, deployment config, code ownership and submodule wiring.
+const SECURITY_SENSITIVE_BASENAMES = new Set(['.npmrc', '.yarnrc', '.yarnrc.yml', 'playbook.config.json', 'vercel.json', 'codeowners', '.gitmodules']);
+const SECURITY_SENSITIVE_SEGMENT_SEQUENCES = ['/supabase/migrations/'] as const;
 
 export type ChangeLevelContext = {
   /** Repository root. When provided, absolute task paths inside the repository are resolved to repo-relative form. */
@@ -84,7 +86,8 @@ const isSecuritySensitivePath = (canonical: string): boolean => {
     base === '.env' ||
     base.startsWith('.env.') ||
     SECURITY_SENSITIVE_BASENAMES.has(base) ||
-    canonical.split('/').includes('secrets')
+    canonical.split('/').includes('secrets') ||
+    SECURITY_SENSITIVE_SEGMENT_SEQUENCES.some((sequence) => `/${withSlash}`.includes(sequence))
   );
 };
 

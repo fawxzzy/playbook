@@ -13,7 +13,7 @@ Sources:
 - `plan` emits a `changeLevel` (`1 | 2 | 3`) on each task. It is additive and does not affect task ids or ordering.
 - `apply` runs only `autoFix: true` tasks and rejects the whole selection, before any handler runs, if any task resolves above Level 2.
 - A task's level is the highest of its declared `changeLevel`, the level classified from `ruleId` and repo-relative `file`, and Level 2 for plugin-handled or unknown rule ids. A plan artifact cannot lower it.
-- Level 3 covers security-sensitive paths (`.github/`, `.git/`, `.husky/`, `.env*`, `.npmrc`, `secrets/`).
+- Level 3 covers security-sensitive paths (`.github/`, `.git/`, `.husky/`, `.env*`, `.npmrc`, `secrets/`, `playbook.config.json`, `vercel.json`, `CODEOWNERS`, `.gitmodules`, `.vercel/`, a root `supabase/` directory, and any `/supabase/migrations/` path).
 
 ## Override
 

@@ -5,6 +5,7 @@
   "expectedBehavior": [
     "generatePlanContract labels every plan task with changeLevel 1, 2, or 3 derived deterministically from ruleId and the canonical repo-relative file path.",
     "Classification runs on the canonical path: dot segments resolved, backslashes normalized, absolute in-repo paths made repo-relative, trailing dots and spaces stripped per segment, lowercased. Paths that escape the repository are Level 3.",
+    "Level 3 security-sensitive paths (TM-GAP-04 extended the list): a .github/, .git/, .husky/, .vercel/ or root supabase/ prefix; any path containing /supabase/migrations/; a segment named secrets; and the basenames .env, .env.*, .npmrc, .yarnrc, .yarnrc.yml, playbook.config.json, vercel.json, codeowners and .gitmodules, all matched on the canonical lowercased path.",
     "A plan artifact may raise a task's declared changeLevel but can never lower it below the level Playbook classifies from the task itself.",
     "parsePlanArtifact rejects a declared changeLevel that is not 1, 2, or 3.",
     "A rule id outside the reviewed built-in table, and any rule id served by a plugin-registered handler, is never below Level 2.",
@@ -16,6 +17,7 @@
     "The override is recorded as an apply.change-level-override.v1 memory event written before the executor runs (best-effort, reason secret-redacted) and as changeLevelOverride in the apply result, whose overriddenTaskIds lists every task that passed only because of the override, including tasks caught by the reported-write check.",
     "plan --json stamps its change-scope bundle with source.artifactDigest (sha256 over each task's id, rule, file, action, autoFix, task_kind and hashes of write, preconditions and provenance; the explanatory advisory block is excluded; changeLevel excluded; null and undefined hash alike).",
     "When --from-plan is a plan artifact, apply refuses a change-scope written by another command, without a digest, or with a different digest than the plan being applied. Release, test-fix, docs-consolidation and maintenance plans do not read the change-scope file; without --from-plan the scope limits are enforced with no digest check.",
+    "When --from-plan is a plan artifact and .playbook/change-scope.json is missing, apply fails closed before enforcing or mutating anything (TM-GAP-13); a deleted scope file is not treated as no limit. The remedy is to re-run plan --json. An unreadable or malformed scope file also fails. Without --from-plan, or for release, test-fix, docs-consolidation and maintenance plans, a missing scope file keeps the previous behavior.",
     "A maxChangeLevel that is not the integer 1, 2 or 3 (NaN, fraction, null, out of range) is rejected by assertCeilingAuthorized, enforceChangeLevelCeiling, assertReportedWritesWithinCeiling, validateRemediationPlan and FixExecutor.apply; only undefined means the default ceiling.",
     "PlanGenerator declares the file a built-in handler writes for notes.missing and notes.empty (BUILT_IN_WRITE_TARGETS) without changing task ids, so plan --json produces a change-scope with write authority and apply --from-plan works for them; plugin tasks that declare no file stay fail-closed.",
     "A maintenance plan combined with --allow-level/--reason is rejected before an execution run is created."
@@ -33,6 +35,8 @@
     "handEditedPlanWriteUnderSameDigest",
     "overrideReasonSpoofedWithInvisibleCharacters",
     "nanCeilingDisablesLevelCheck",
-    "builtInPlanLoopBlockedByProposalOnlyScope"
+    "builtInPlanLoopBlockedByProposalOnlyScope",
+    "playbookRuleConfigOrDeployConfigEditedByApply",
+    "deletedChangeScopeRemovesPlanApplyLimit"
   ]
 }

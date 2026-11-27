@@ -1107,6 +1107,20 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
     );
   }
 
+  // change-scope.json describes a `plan` artifact. Applying a `plan` artifact binds it by digest (a stale or foreign scope
+  // is refused). Both refusals happen here, before resolveRunId, so a refused plan artifact creates no execution run and
+  // writes nothing under .playbook.
+  const planArtifactScope = options.fromPlan && plan.isPlanArtifact === true ? engine.readApplyChangeScope(cwd) : null;
+  if (options.fromPlan && plan.isPlanArtifact === true) {
+    if (!planArtifactScope) {
+      // TM-GAP-13: `plan --json` always writes the scope next to the plan. A missing scope file must not silently remove the limit.
+      throw new Error(
+        'Change-scope binding failed: .playbook/change-scope.json is missing for the plan artifact being applied, so its file and patch-size limits cannot be enforced. Re-run `playbook plan --json` (it rewrites .playbook/change-scope.json and .playbook/plan.json together); a deleted scope file is not treated as no limit.'
+      );
+    }
+    engine.assertApplyChangeScopeBinding(planArtifactScope, engine.computePlanArtifactDigest(plan.tasks));
+  }
+
   const runId = resolveRunId(cwd, options.runId);
   const applyPrecondition = remediationToApplyPrecondition(plan.remediation);
 
@@ -1254,15 +1268,11 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   }
 
   validateReleaseTaskSelection(plan, selectedTasks);
-  // change-scope.json describes a `plan` artifact. Applying a `plan` artifact binds it by digest (a stale or foreign scope
-  // is refused); applying regenerated tasks (no --from-plan) enforces the file/budget limits as before without a digest
-  // check; release, fix and maintenance plans never use the file, so a leftover plan-sourced scope cannot block them.
-  const scopeApplies = options.fromPlan ? plan.isPlanArtifact === true : true;
-  const declaredScope = scopeApplies ? engine.readApplyChangeScope(cwd) : null;
+  // A `plan` artifact's scope was read and digest-bound before the run was created (see above). Applying regenerated tasks
+  // (no --from-plan) enforces the file/budget limits as before without a digest check; release, fix and maintenance plans
+  // never use the file, so a leftover plan-sourced scope cannot block them.
+  const declaredScope = options.fromPlan ? planArtifactScope : engine.readApplyChangeScope(cwd);
   if (declaredScope) {
-    if (options.fromPlan) {
-      engine.assertApplyChangeScopeBinding(declaredScope, engine.computePlanArtifactDigest(plan.tasks));
-    }
     engine.enforceApplyChangeScope(selectedTasks, declaredScope);
   }
   validateSelectedTasks(selectedTasks);
