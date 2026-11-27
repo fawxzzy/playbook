@@ -94,12 +94,35 @@ test('fails closed for an unsupported non-complete status', () => {
   );
 });
 
-test('canonical export matches the current roadmap and contains 15 non-complete cards', () => {
+test('canonical export matches the current roadmap and contains 0 non-complete cards (all 15 were archived 2026-11-27)', () => {
   const rendered = renderProjectBoardOwnerExport(repoRoot);
   const canonicalPath = path.join(repoRoot, 'exports', 'playbook.project-board.owner-export.v1.json');
   // Windows checkouts may materialize the committed export with CRLF; compare the LF form.
   assert.equal(fs.readFileSync(canonicalPath, 'utf8').replace(/\r\n?/g, '\n'), rendered);
-  assert.equal(JSON.parse(rendered).cards.length, 15);
+  const parsed = JSON.parse(rendered);
+  assert.equal(parsed.cards.length, 0);
+  assert.equal(parsed.extensions.exported_card_count, 0);
+  assert.equal(parsed.extensions.source_feature_count > 0, true);
+});
+
+test('archived features leave the board like completed ones and an export with zero cards is valid', () => {
+  const archived = {
+    ...feature('PB-V1-ARCH-001', 'archived'),
+    archived_on: '2026-11-27',
+    archived_reason: 'No consumer.',
+    reopen_when: 'A consumer needs it.'
+  };
+  const mixed = { ...roadmap, features: [feature('PB-V1-LIVE-001', 'planned'), archived] };
+  const withOne = buildProjectBoardOwnerExport(mixed, Buffer.from(JSON.stringify(mixed)));
+  assert.deepEqual(withOne.cards.map((card) => card.record.card_id), ['PB-V1-LIVE-001']);
+  assert.deepEqual(withOne.extensions.excluded_archived_statuses, ['archived']);
+
+  const onlyArchived = { ...roadmap, features: [archived, feature('PB-V1-DONE-001', 'implemented')] };
+  const empty = buildProjectBoardOwnerExport(onlyArchived, Buffer.from(JSON.stringify(onlyArchived)));
+  assert.deepEqual(empty.cards, []);
+  assert.equal(empty.extensions.exported_card_count, 0);
+  assert.equal(empty.extensions.source_feature_count, 2);
+  assert.equal(JSON.parse(JSON.stringify(empty)).cards.length, 0);
 });
 
 test('--check accepts a CRLF-materialized export and still rejects real drift', () => {

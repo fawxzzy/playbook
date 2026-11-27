@@ -18,6 +18,9 @@ const COMPLETED_STATUSES = new Set([
   'shipped'
 ]);
 
+// Archived features stay in ROADMAP.json but are not live work, so they leave the board like completed ones.
+const ARCHIVED_STATUSES = new Set(['archived']);
+
 const STATUS_MAPPING = new Map([
   ['in-progress', { recordStatus: 'active', lifecycle: 'in-progress' }],
   ['planned', { recordStatus: 'active', lifecycle: 'planning' }],
@@ -161,7 +164,7 @@ export function buildProjectBoardOwnerExport(roadmap, roadmapBytes) {
   const digest = crypto.createHash('sha256').update(canonicalRoadmapBytes, 'utf8').digest('hex');
   const sourceRevision = `sha256:${digest}`;
   const cards = roadmap.features
-    .filter((feature) => !COMPLETED_STATUSES.has(feature.status))
+    .filter((feature) => !COMPLETED_STATUSES.has(feature.status) && !ARCHIVED_STATUSES.has(feature.status))
     .map((feature) => mapFeature(feature, generatedAt))
     .sort((left, right) => left.record.card_id.localeCompare(right.record.card_id));
 
@@ -189,7 +192,8 @@ export function buildProjectBoardOwnerExport(roadmap, roadmapBytes) {
       source_digest: sourceRevision,
       source_feature_count: roadmap.features.length,
       exported_card_count: cards.length,
-      excluded_completed_statuses: [...COMPLETED_STATUSES].sort()
+      excluded_completed_statuses: [...COMPLETED_STATUSES].sort(),
+      excluded_archived_statuses: [...ARCHIVED_STATUSES].sort()
     }
   };
 }

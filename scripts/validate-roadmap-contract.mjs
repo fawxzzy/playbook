@@ -12,6 +12,10 @@ const commandTruthPath = path.join(repoRoot, 'docs', 'contracts', 'command-truth
 // Shipped features must keep their declared commands, contracts, docs and tests real (any roadmap version).
 const shippedStatuses = new Set(['implemented', 'implemented-hardening', 'in-progress']);
 
+// Archived features stay in the file (ids and dependencies keep resolving) but are not shipped and not live work.
+const archivedStatus = 'archived';
+const archiveFields = ['archived_on', 'archived_reason', 'reopen_when'];
+
 const validateReferencedPath = (candidatePath, context) => {
   if (typeof candidatePath !== 'string' || !candidatePath.trim()) return;
   if (candidatePath.startsWith('schema://')) return;
@@ -145,6 +149,23 @@ for (const [index, feature] of (roadmap.features ?? []).entries()) {
   const duplicateCommands = [...new Set(feature.commands.filter((command, commandIndex) => feature.commands.indexOf(command) !== commandIndex))];
   if (duplicateCommands.length > 0) {
     fail(`features[${index}].commands contains duplicate entries: ${duplicateCommands.join(', ')}`);
+  }
+
+  if (feature.status === archivedStatus) {
+    if (typeof feature.archived_on !== 'string' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(feature.archived_on) || Number.isNaN(Date.parse(feature.archived_on))) {
+      fail(`features[${index}] archived status requires archived_on as a YYYY-MM-DD date`);
+    }
+    for (const field of ['archived_reason', 'reopen_when']) {
+      if (typeof feature[field] !== 'string' || !feature[field].trim()) {
+        fail(`features[${index}] archived status requires a non-empty ${field}`);
+      }
+    }
+  } else {
+    for (const field of archiveFields) {
+      if (field in feature) {
+        fail(`features[${index}].${field} is only allowed on a feature with status "archived" (status is ${JSON.stringify(feature.status)})`);
+      }
+    }
   }
 
   if (shippedStatuses.has(feature.status)) {

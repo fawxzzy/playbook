@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-11-15",
+  "updatedAt": "2026-11-27",
   "features": [
     {
       "feature_id": "PB-V03-INDEX-001",
@@ -387,7 +387,10 @@
         "pnpm playbook graph --json",
         "pnpm playbook analyze-pr --json"
       ],
-      "status": "in-progress"
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "The part in real use (index, query modules/impact/risk, graph impact, module digests) is shipped and stays live; the remaining semantic graph v2 for explain/ask/analyze-pr has no consumer.",
+      "reopen_when": "Reopen when a consumer needs file-path impact in src/features repos (graph impact <file> rejects those paths; ask --diff-context and analyze-pr match only src/<name>/)."
     },
     {
       "feature_id": "PB-V1-DEMO-REFRESH-001",
@@ -415,10 +418,13 @@
         "node scripts/demo-validate.mjs",
         "node scripts/demo-refresh.mjs --dry-run --feature-id PB-V1-DEMO-REFRESH-001"
       ],
-      "status": "planned-later",
       "package_ownership": [
         "@fawxzzy/playbook"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Already deferred by the owner on 2026-11-14; no refresh credential exists.",
+      "reopen_when": "Reopen when the demo repo is actively maintained again."
     },
     {
       "feature_id": "PB-V08-KNOWLEDGE-COMPACTION-SPEC-001",
@@ -655,11 +661,14 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "directional",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-KNOWLEDGE-PERSISTENCE-001",
@@ -689,11 +698,14 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001",
@@ -855,12 +867,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "planned-later",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-core"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-CONTROL-PLANE-001",
@@ -1089,12 +1104,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived. It was labelled in-progress with no work under way, which did not match evidence.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-MULTI-REPO-TRANSFER-001",
@@ -1131,12 +1149,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived. It was labelled in-progress with no work under way, which did not match evidence.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability. Also reopen when cross-repo learning moves from the ATLAS-side tooling into the engine."
     },
     {
       "feature_id": "PB-V09-GOVERNED-INTERFACE-API-001",
@@ -1173,12 +1194,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived. It was labelled in-progress with no work under way, which did not match evidence.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-WORKSPACE-TENANT-GOVERNANCE-001",
@@ -1215,12 +1239,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "in-progress",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived. It was labelled in-progress with no work under way, which did not match evidence.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-PACKAGING-SKU-ARCHITECTURE-001",
@@ -1253,12 +1280,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-METRICS-ROI-PROOF-OF-VALUE-001",
@@ -1292,12 +1322,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001",
@@ -1330,12 +1363,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-INTERFACE-SURFACES-001",
@@ -1366,12 +1402,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "directional",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-node"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-CAPABILITY-ROUTING-001",
@@ -1398,12 +1437,15 @@
         "pnpm playbook docs audit --json",
         "node scripts/validate-roadmap-contract.mjs --ci"
       ],
-      "status": "directional",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine",
         "@zachariahredfield/playbook-core"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-AUTOMATION-SYNTHESIS-001",
@@ -1831,11 +1873,14 @@
         "pnpm playbook graph --json",
         "pnpm playbook explain architecture --json"
       ],
-      "status": "architecture-defined",
       "package_ownership": [
         "@fawxzzy/playbook",
         "@zachariahredfield/playbook-engine"
-      ]
+      ],
+      "status": "archived",
+      "archived_on": "2026-11-27",
+      "archived_reason": "Platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands this card lists (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived.",
+      "reopen_when": "Reopen when there is a second real user or tenant, or a concrete consumer need for this capability."
     },
     {
       "feature_id": "PB-V09-OUTCOME-LEARNING-001",

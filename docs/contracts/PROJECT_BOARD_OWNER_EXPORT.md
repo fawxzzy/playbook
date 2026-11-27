@@ -19,7 +19,7 @@ deterministic projection for Atlas and DiscordOS; it is not a second roadmap.
 | `directional` | `candidate` | `intake` |
 | `architecture-defined` | `active` | `planning` |
 
-Completed and implemented statuses are excluded. The adapter preserves roadmap
+Completed and implemented statuses are excluded, and so is `archived` (owner-archived features stay in the roadmap but are not live work). An export with zero cards is valid; `extensions.excluded_archived_statuses` records the exclusion. The adapter preserves roadmap
 feature IDs as card IDs, keeps priority `null` when the roadmap does not define
 one, maps dependencies without inference, and derives the source revision from
 the roadmap's canonical UTF-8 bytes with line endings normalized to LF. This

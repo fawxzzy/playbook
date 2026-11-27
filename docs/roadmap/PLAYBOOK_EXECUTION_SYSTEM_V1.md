@@ -194,7 +194,7 @@ Status (2026-11-14): `PB-V06-FAILURE-INTELLIGENCE-001` is `implemented-hardening
 - **incremental updates**: file-hash based invalidation + SCM diff deltas.
 - **self-analysis**: Playbook uses arch graph to detect boundary violations and PR risk scoring.
 
-Status (2026-11-14): `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` is `in-progress`. Shipped (module-level, read-only): `graph impact`, `graph boundaries`, `graph risks` (`packages/engine/src/graph/`) and the `analyze-pr` `graphImpact` section. Also shipped: `graph build` and the persisted semantic graph `.playbook/arch-graph.v2.json` (`playbook-arch-graph` 2.0; see `docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`). Remaining work on the card: the impact index, SCM-diff partial rebuilds and `analyze-pr` use of the semantic layer.
+Status (2026-11-14): `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` was `in-progress` and is `archived` as of 2026-11-27 (the shipped part stays live; the remaining work has no consumer). Shipped (module-level, read-only): `graph impact`, `graph boundaries`, `graph risks` (`packages/engine/src/graph/`) and the `analyze-pr` `graphImpact` section. Also shipped: `graph build` and the persisted semantic graph `.playbook/arch-graph.v2.json` (`playbook-arch-graph` 2.0; see `docs/contracts/ARCHITECTURE_INTELLIGENCE_GRAPH_CONTRACT.md`). Remaining work that was on the card and is now archived: the impact index, SCM-diff partial rebuilds and `analyze-pr` use of the semantic layer.
 
 ## 9. Gate strategy for 4-week sprint
 
