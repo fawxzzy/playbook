@@ -163,40 +163,60 @@ describe('apply change-scope binding (real engine)', () => {
     expect(fs.existsSync(path.join(repoDir, '.gitignore'))).toBe(true);
   });
 
+  /** Every file under the repo (relative, sorted): a refused apply must leave this exactly as it was (no run record, no artifact). */
+  const repoFiles = (): string[] => {
+    const walk = (dir: string): string[] =>
+      fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+        const full = path.join(dir, entry.name);
+        return entry.isDirectory() ? walk(full) : [path.relative(repoDir, full).replace(/\\/g, '/')];
+      });
+    return walk(repoDir).sort();
+  };
+
   it('refuses, and mutates nothing, when the change-scope belongs to a different plan', async () => {
     writePlan([notesTask]);
     writeScopeFor([otherTask]);
+    const before = repoFiles();
 
     await expect(runFromPlan()).rejects.toThrow(/Change-scope binding failed.*different plan/);
 
     expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(false);
+    expect(repoFiles()).toEqual(before);
   });
 
   it('refuses a plan artifact whose change-scope file was deleted, and mutates nothing (TM-GAP-13)', async () => {
     writePlan([notesTask]);
     fs.rmSync(path.join(repoDir, '.playbook', 'change-scope.json'));
+    const before = repoFiles();
 
     await expect(runFromPlan()).rejects.toThrow(/change-scope.json is missing.*playbook plan --json/s);
 
     expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(false);
+    // The refusal comes before resolveRunId: no execution run and no other file is created.
+    expect(repoFiles()).toEqual(before);
+    expect(fs.existsSync(path.join(repoDir, '.playbook', 'runs'))).toBe(false);
   });
 
   it('also refuses with the Level 3 override flags when the change-scope file is missing', async () => {
     writePlan([notesTask]);
     fs.rmSync(path.join(repoDir, '.playbook', 'change-scope.json'));
+    const before = repoFiles();
 
     await expect(runFromPlan({ allowLevel: '3', reason: OVERRIDE_REASON })).rejects.toThrow(/change-scope.json is missing/);
 
     expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(false);
+    expect(repoFiles()).toEqual(before);
   });
 
   it('refuses an unreadable (non-JSON) change-scope file for a plan artifact', async () => {
     writePlan([notesTask]);
     fs.writeFileSync(path.join(repoDir, '.playbook', 'change-scope.json'), '{not json');
+    const before = repoFiles();
 
     await expect(runFromPlan()).rejects.toThrow(/Unable to read change-scope artifact/);
 
     expect(fs.existsSync(path.join(repoDir, 'docs', 'PLAYBOOK_NOTES.md'))).toBe(false);
+    expect(repoFiles()).toEqual(before);
   });
 
   it('refuses a change-scope last written by analyze-pr', async () => {

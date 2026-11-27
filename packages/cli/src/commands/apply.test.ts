@@ -1150,6 +1150,13 @@ describe('runApply', () => {
     fs.writeFileSync(path.join(tmpRoot, 'plan.json'), JSON.stringify({ schemaVersion: '1.0', command: 'plan', remediation: { status: 'ready', totalSteps: 3, unresolvedFailures: 0 }, tasks: [] }));
 
     parsePlanArtifact.mockReturnValue({ tasks: [{ id: 'task-1', ruleId: 'one', file: null, action: 'first', autoFix: true }] });
+    // A plan artifact needs its change-scope before anything else is checked (the scope refusal precedes run creation).
+    readApplyChangeScope.mockReturnValue({
+      scopeId: 'scope-unknown-task',
+      allowedFiles: [],
+      patchSizeBudget: { maxFiles: 1, maxHunks: 1, maxAddedLines: 20, maxRemovedLines: 20 },
+      boundaryChecks: []
+    });
 
     await expect(
       runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json', tasks: ['task-missing'] })

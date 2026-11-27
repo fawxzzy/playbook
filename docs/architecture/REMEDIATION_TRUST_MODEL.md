@@ -66,7 +66,7 @@ Implemented and covered by tests (contract: `docs/contracts/security/change-leve
 
 Named open gaps. Each is current behavior, not a promise of the code above; none is a regression.
 
-- `TM-GAP-13` (residual) Change-scope is unauthenticated: `.playbook/change-scope.json` is integrity-bound to the plan by digest, but anyone who can write both files can make them agree, and an `apply` without `--from-plan` has no scope to require at all (a missing file then means no file or patch-size limit). The deleted-scope case for `plan` artifacts is closed (see Closed gaps).
+- `TM-GAP-13` (residual) Change-scope is unauthenticated: `.playbook/change-scope.json` is integrity-bound to the plan by digest, but anyone who can write both files can make them agree, and an `apply` without `--from-plan` has no scope to require at all (a missing file then means no file or patch-size limit). Whether an artifact is a `plan` artifact is read from the `command` field inside the plan file itself, so someone who can edit `plan.json` can also relabel it as another plan type (for example `test-fix-plan`), which does not use the scope file; that is the same write access, not a second route past review. The deleted-scope case for `plan` artifacts is closed (see Closed gaps).
 - Related lexical limits: classification does not resolve Windows 8.3 short names or NTFS alternate data streams; symlink traversal is covered by the repository-boundary guard, not by classification.
 
 ## Decided: default apply ceiling (`TM-GAP-02`, decided 2026-11-27)
