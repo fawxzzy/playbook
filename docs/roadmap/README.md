@@ -13,6 +13,14 @@ Rule: command implementation status is **not** authored in roadmap documents; us
 
 Dependencies in `ROADMAP.json` are sequencing intent, not a status gate: a feature may ship before a listed dependency. `test/contracts/roadmap/roadmap-dependency-graph.test.mjs` only requires the graph to be well formed (unique IDs, no dangling edges, no cycles, build order consistent with edges).
 
+## Status vocabulary: `archived`
+
+`archived` means the owner decided not to pursue the feature now. It is not a shipped status: the validator does not require its commands, contracts, docs or tests to exist, and it never counts as implemented. The feature stays in `ROADMAP.json` so ids and dependencies keep resolving (features that depend on an archived feature are valid).
+
+- Required on an archived feature: `archived_on` (YYYY-MM-DD), `archived_reason`, `reopen_when`. The validator rejects them missing on an archived feature and rejects them present on any other status.
+- Archived features are excluded from the project-board owner export (`pnpm board:export`) the same way complete statuses are. An export with zero cards is valid.
+- To reopen: change `status` to the real one (for example `planned` or `in-progress`), remove the three archive fields, bump `updatedAt`, run `pnpm board:export`, and add a CHANGELOG bullet. Do this only once the `reopen_when` condition holds.
+
 ## Role of each document
 
 - `docs/PLAYBOOK_PRODUCT_ROADMAP.md`: strategic direction, sequencing, and commitment posture.

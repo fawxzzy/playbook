@@ -792,6 +792,16 @@ Pattern: Single Strategic Roadmap
 Only one roadmap exists in the repository: `docs/PLAYBOOK_PRODUCT_ROADMAP.md`.
 All idea-level planning belongs in `docs/roadmap/IMPROVEMENTS_BACKLOG.md`.
 
+## Archived features
+
+On 2026-11-27 all 15 features that were not complete were archived in `docs/roadmap/ROADMAP.json` (status `archived`). They stay in the file so ids and dependencies keep resolving; nothing was deleted, and no feature was marked implemented. Each carries `archived_on`, `archived_reason` and `reopen_when`.
+
+- `PB-V07-ARCH-INTELLIGENCE-GRAPH-001`: the part in real use (index, query modules/impact/risk, `graph impact`, module digests) is shipped and stays live; the remaining semantic graph v2 for explain/ask/analyze-pr has no consumer. Reopen when a consumer needs file-path impact in `src/features` repos.
+- `PB-V1-DEMO-REFRESH-001`: deferred by the owner 2026-11-14 and no refresh credential exists. Reopen when the demo repo is actively maintained again.
+- `PB-V08-GRAPH-MEMORY-001` and the 12 `PB-V09` cards (platform observation, knowledge persistence, trust evidence, execution orchestration, multi-repo transfer, governed interface API, workspace/tenant governance, packaging/SKU, metrics/ROI, pilot rollout, interface surfaces, capability routing): platform, multi-tenant, hosted, SKU, pilot and routing architecture for a multi-user product. Playbook is used as a single-owner verify gate and pattern engine in three repos, and expansion is frozen. Shipped commands some of them list (orchestrate, agent, patterns, knowledge, observer) stay live and documented; only the unbuilt expansion is archived. Reopen when there is a second real user or tenant, or a concrete consumer need (for `PB-V09-MULTI-REPO-TRANSFER-001` also when cross-repo learning moves from the ATLAS-side tooling into the engine).
+
+Archived features leave the project board export. See `docs/roadmap/README.md` for the status meaning and how to reopen one.
+
 ## Roadmap-as-contract
 
 Machine-readable roadmap commitments are maintained in `docs/roadmap/ROADMAP.json`. CI validates this contract and enforces feature ID references for pull requests in CI contexts.
@@ -820,13 +830,13 @@ Canonical sequencing reference:
 ### 2) Active hardening (current build mode)
 
 - Shipped, hardening continues (`implemented-hardening` in `docs/roadmap/ROADMAP.json`, grouped there as `activeHardening`): the plan/apply trust model (`PB-V04-PLAN-APPLY-001`: change levels, a Level 2 `apply` ceiling and an explicit, recorded Level 3 override; see `docs/architecture/REMEDIATION_TRUST_MODEL.md`), package-boundary convergence with Plugin Contract v1 (`PB-V05-PACKAGE-BOUNDARIES-001`; see `docs/contracts/PLUGIN_CONTRACT_V1.md`), delivery-system gating (`PB-V1-DELIVERY-SYSTEM-001`), product-truth packaging (`PB-V1-PRODUCT-TRUTH-PACKAGING-001`), the test-failure intelligence loop (`PB-V06-FAILURE-INTELLIGENCE-001`, re-scoped to `test-triage` -> `test-fix-plan` -> `test-autofix` -> `remediation-status`), and the v0.8 knowledge compaction foundations (`PB-V08-*`, except `PB-V08-GRAPH-MEMORY-001`, which is `architecture-defined`).
-- Partly shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `implemented-hardening`): `playbook failure ingest|classify|suggest|scaffold|check` classify failures into a closed taxonomy, write `.playbook/failures/*.report.json` closure reports, emit prevention suggestions and propose-only rule/test/doc scaffolds, and enforce the closure rule via `failure check`; `failure check` is not yet wired into `verify`, `doctor` or the CI workflow. `PB-V1-DEMO-REFRESH-001` is `planned-later` (owner decision 2026-11-14; see its feature section below).
+- Partly shipped: the general failure taxonomy, ingest and prevention mapping (`PB-V06-FAILURE-TAXONOMY-001`, `implemented-hardening`): `playbook failure ingest|classify|suggest|scaffold|check` classify failures into a closed taxonomy, write `.playbook/failures/*.report.json` closure reports, emit prevention suggestions and propose-only rule/test/doc scaffolds, and enforce the closure rule via `failure check`; `failure check` is not yet wired into `verify`, `doctor` or the CI workflow. `PB-V1-DEMO-REFRESH-001` is `archived` (deferred by the owner 2026-11-14, archived 2026-11-27; see its feature section below).
 
 ### 3) Next buildable slices (dependency-ready after active hardening)
 
 Near-term dependency chain (build-order intent from `ROADMAP.json` `implementationSequencing.nextBuildableSlicesInOrder`, not a gate; status as of the roadmap `updatedAt` date in brackets):
 
-1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`in-progress`: `graph impact`, `graph boundaries`, `graph risks`, the `analyze-pr` `graphImpact` section and `graph build` with the persisted semantic graph `.playbook/arch-graph.v2.json` are shipped; remaining: the impact index, SCM-diff partial rebuilds and `analyze-pr` use of the semantic layer]
+1. `PB-V07-ARCH-INTELLIGENCE-GRAPH-001` [`archived` 2026-11-27; the shipped part stays live. Status before archiving was `in-progress`: `graph impact`, `graph boundaries`, `graph risks`, the `analyze-pr` `graphImpact` section and `graph build` with the persisted semantic graph `.playbook/arch-graph.v2.json` are shipped; remaining: the impact index, SCM-diff partial rebuilds and `analyze-pr` use of the semantic layer]
 2. `PB-V09-ARCHITECTURE-ROLE-INFERENCE-001` [`implemented`]
 3. `PB-V09-SESSION-EVIDENCE-001` [`implemented-hardening`] (implemented canonical runtime truth surface; hardening continues)
    - Runtime truth boundary: `.playbook/session.json` + `evidenceEnvelope` is the canonical continuity/provenance seam for downstream policy, approval, receipt, and memory interpretation.
@@ -853,12 +863,12 @@ Rule worth preserving:
 ### 4) Later platform layers (sequenced after the trust slices; dependencies are build-order intent, not a gate)
 
 - Automation and learning extensions: `PB-V09-AUTOMATION-SYNTHESIS-001`, `PB-V09-OUTCOME-FEEDBACK-LEARNING-001` (both shipped as hardening).
-- Cross-repo and multi-tenant expansion: `PB-V09-MULTI-REPO-TRANSFER-001`, `PB-V09-GOVERNED-INTERFACE-API-001`, `PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`. First read-only slices ship (candidate-only transfer import/export, observer control-plane reads, workspace governance read); the cards stay `in-progress` until the hosted, per-repo-auth and mutation surfaces exist.
-- Broader interface/routing direction remains later and proof-gated: `PB-V09-INTERFACE-SURFACES-001`, `PB-V09-CAPABILITY-ROUTING-001`.
+- Cross-repo and multi-tenant expansion: `PB-V09-MULTI-REPO-TRANSFER-001`, `PB-V09-GOVERNED-INTERFACE-API-001`, `PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`. First read-only slices ship (candidate-only transfer import/export, observer control-plane reads, workspace governance read) and stay live; the cards are `archived` (2026-11-27), so the hosted, per-repo-auth and mutation surfaces are not planned.
+- Broader interface/routing direction (`PB-V09-INTERFACE-SURFACES-001`, `PB-V09-CAPABILITY-ROUTING-001`) is `archived` (2026-11-27).
 
 ### 5) Product/business overlays (not runtime prerequisites)
 
-- Packaging/SKU, metrics/ROI, and pilot/rollout architecture remain overlay layers scheduled over proven runtime evidence (`PB-V09-PACKAGING-SKU-ARCHITECTURE-001`, `PB-V09-METRICS-ROI-PROOF-OF-VALUE-001`, `PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001`). Their architecture is defined and pinned by `test/contracts/roadmap/architecture-docs.test.mjs` (`architecture-defined`); no runtime is claimed.
+- Packaging/SKU, metrics/ROI, and pilot/rollout architecture remain overlay layers scheduled over proven runtime evidence (`PB-V09-PACKAGING-SKU-ARCHITECTURE-001`, `PB-V09-METRICS-ROI-PROOF-OF-VALUE-001`, `PB-V09-PILOT-DESIGN-PARTNER-ROLLOUT-001`). Their architecture documents stay pinned by `test/contracts/roadmap/architecture-docs.test.mjs`; the cards are `archived` (2026-11-27) and no runtime is claimed.
 
 ## Platform evolution: deterministic runtime first, platform second
 
@@ -930,7 +940,7 @@ Pattern: Same runtime, different operational surfaces.
 - **Partially defined**
   - candidate extraction, deterministic bucketing, and pattern-card storage are shipped as internal foundations (`PB-V08-KNOWLEDGE-CANDIDATE-EXTRACTION-001`, `PB-V08-KNOWLEDGE-BUCKETING-001`, `PB-V08-PATTERN-CARD-STORAGE-001`, all `implemented-hardening`), and the `memory` command already covers replay, human-reviewed promotion, retirement, supersession and prune (`PB-V09-KNOWLEDGE-COMPACTION-PROMOTION-001`, `PB-V09-REPO-MEMORY-REPLAY-CONSOLIDATION-001`, `PB-V09-REPO-MEMORY-PROMOTION-PRUNE-001`, all `implemented-hardening`).
 - **Future work**
-  - the persistence layer as a whole (`PB-V09-KNOWLEDGE-PERSISTENCE-001`, `architecture-defined`; no runtime is claimed for it beyond the shipped `memory` lifecycle commands above).
+  - the persistence layer as a whole (`PB-V09-KNOWLEDGE-PERSISTENCE-001`, `archived` 2026-11-27, previously `architecture-defined`; no runtime is claimed for it beyond the shipped `memory` lifecycle commands above).
 - **Execution window**
   - inside the near-term window only for current deterministic compaction foundations; broader persistence/promotion runtime is outside the current 4-week plan.
 
@@ -1680,7 +1690,7 @@ Use a layered phase model so each phase compounds directly on the previous one:
     Session envelope and evidence provenance contracts bind actor context, command lineage, approvals, and deterministic artifact references as a canonical runtime truth surface.
 13. **Phase 13 — Control Plane / Agent Runtime v1** (implemented, `PB-V09-CONTROL-PLANE-001`; hardening continues)  
     First-class policy/approval/mutation-boundary architecture that gates privileged execution and keeps agents above (not inside) the deterministic substrate.
-14. **Phase 14 — Review + Execution Orchestration** (`PB-V09-EXECUTION-ORCHESTRATION-001`, in progress)  
+14. **Phase 14 — Review + Execution Orchestration** (`PB-V09-EXECUTION-ORCHESTRATION-001`, archived 2026-11-27; shipped `orchestrate`/`agent` stay live)  
     Policy-gated orchestration that consumes repository intelligence + AI contracts + session/evidence + control-plane checks while preserving deterministic mutation workflow.
 15. **Phase 15 — Knowledge Query / Inspection Surfaces (Read Runtime) - implemented (hardening)**  
     Deterministic, provenance-preserving read-runtime inspection of repository memory and promoted knowledge so humans/CI can query, compare, and audit candidate/promoted/stale states before broader automation consumption.
@@ -1702,11 +1712,11 @@ Phase 16 allowed vs forbidden input examples:
     - Pattern: outcome feedback -> learning signals -> policy improvement candidates -> human-reviewed promotion.
     - Failure Mode: Outcome feedback that exists only as an internal artifact never becomes an operator-visible learning loop.
     - Failure Mode: Treating outcome learning as direct policy mutation bypasses the same review boundaries the rest of the system already enforces.
-18. **Phase 18 — Governed Cross-Repo Pattern Promotion / Transfer** (`PB-V09-MULTI-REPO-TRANSFER-001`, in progress)  
+18. **Phase 18 — Governed Cross-Repo Pattern Promotion / Transfer** (`PB-V09-MULTI-REPO-TRANSFER-001`, archived 2026-11-27; shipped read-only transfer commands stay live)  
     Controlled compounding of reusable engineering knowledge across repositories through explicit, provenance-preserving, sanitization-verified, compatibility-gated transfer packages. Imported patterns are candidate inputs until locally reviewed; no hidden telemetry or automatic global sync.
-19. **Phase 19 — Governed Interface / API Surfaces for Multi-Repo Control Planes** (`PB-V09-GOVERNED-INTERFACE-API-001`, in progress)  
+19. **Phase 19 — Governed Interface / API Surfaces for Multi-Repo Control Planes** (`PB-V09-GOVERNED-INTERFACE-API-001`, archived 2026-11-27)  
     Optional interface expansion that exposes validated server/API action surfaces over the same deterministic runtime, preserving per-repo policy/provenance boundaries while enabling coordinated multi-repo control-plane workflows.
-20. **Phase 20 — Workspace / Tenant Governance + Optional Hosted Deployment Model** (`PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`, in progress)  
+20. **Phase 20 — Workspace / Tenant Governance + Optional Hosted Deployment Model** (`PB-V09-WORKSPACE-TENANT-GOVERNANCE-001`, archived 2026-11-27)  
     Optional workspace/tenant governance and deployment packaging layer over the same deterministic runtime, defining policy inheritance, per-repo accountability, and hosted/self-hosted parity without making cloud connectivity mandatory.
 21. **Phase 21 — Autonomous Maintenance (Policy-Gated)**  
     Recurring maintenance execution modes with approval and policy controls, layered after governed synthesis, outcome-feedback, cross-repo transfer, governed control-plane interface contracts, and workspace/tenant governance boundaries.
@@ -2689,7 +2699,7 @@ Future enhancement:
 
 ## Feature: PB-V1-DEMO-REFRESH-001 — PR-based demo repository refresh automation
 
-Status: `planned-later` (owner decision 2026-11-14: the demo refresh is dropped from the v1 scope; the existing script and workflows stay as they are and nothing new is scheduled).
+Status: `archived` (2026-11-27; earlier `planned-later` by owner decision 2026-11-14: the demo refresh is dropped from the v1 scope; the existing script and workflows stay as they are and nothing new is scheduled).
 
 Goal: keep committed demo artifacts/docs in `fawxzzy/playbook-demo` synchronized using the branch-accurate local Playbook CLI build without polluting correctness CI.
 

@@ -197,3 +197,37 @@ test('does not treat docs/commands/README.md as a command family', () => {
   );
   assert.equal(result.status, 0, result.stderr);
 });
+
+const archivedFields = {
+  archived_on: '2026-11-27',
+  archived_reason: 'No consumer.',
+  reopen_when: 'A consumer needs it.'
+};
+
+test('accepts an archived feature with all archive fields, even with a command that is not live', () => {
+  const result = runWithFeatureOverrides({ status: 'archived', commands: ['verify', 'ghost-command'], tests: ['tests/gone.test.ts'], ...archivedFields });
+  assert.equal(result.status, 0, result.stderr);
+});
+
+test('fails when an archived feature is missing archived_on, archived_reason or reopen_when', () => {
+  for (const field of Object.keys(archivedFields)) {
+    const { [field]: _omit, ...partial } = archivedFields;
+    const result = runWithFeatureOverrides({ status: 'archived', ...partial });
+    assert.notEqual(result.status, 0, field);
+    assert.ok(result.stderr.includes('archived status requires'), result.stderr);
+    assert.ok(result.stderr.includes(field), result.stderr);
+  }
+});
+
+test('fails when archived_on is not a YYYY-MM-DD date or a reason is blank', () => {
+  assert.notEqual(runWithFeatureOverrides({ status: 'archived', ...archivedFields, archived_on: 'yesterday' }).status, 0);
+  assert.notEqual(runWithFeatureOverrides({ status: 'archived', ...archivedFields, reopen_when: '  ' }).status, 0);
+});
+
+test('fails when a non-archived feature carries archive fields', () => {
+  for (const field of Object.keys(archivedFields)) {
+    const result = runWithFeatureOverrides({ status: 'planned', [field]: archivedFields[field] });
+    assert.notEqual(result.status, 0, field);
+    assert.ok(result.stderr.includes(field + ' is only allowed on a feature with status "archived"'), result.stderr);
+  }
+});
