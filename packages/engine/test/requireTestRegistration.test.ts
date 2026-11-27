@@ -109,8 +109,17 @@ describe('requireTestRegistration', () => {
     const noTests = { registries: ['package.json'] } as unknown as typeof entry;
     const noRegistries = { tests: ['tests/**/*.test.ts'] } as unknown as typeof entry;
     expect(requireTestRegistration(root, [added('tests/a.test.ts')], [noTests])).toEqual([]);
-    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [noRegistries]).map((failure) => failure.message)).toEqual([
-      'None of the configured CI test lists exists, so new test files cannot be checked.'
+    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [noRegistries]).map((failure) => [failure.message, failure.evidence])).toEqual([
+      ['None of the configured CI test lists exists, so new test files cannot be checked.', '(no registries configured)']
+    ]);
+    // A string where a list belongs is a wrong config too, not a crash.
+    const stringTests = { tests: 'tests/**/*.test.ts', registries: ['package.json'] } as unknown as typeof entry;
+    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [stringTests])).toEqual([]);
+
+    // A Windows-style separator before the path continues a longer path, so it does not register it.
+    write(root, 'package.json', 'sub\\tests/a.test.ts\n');
+    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [entry])).toEqual([
+      expectedFailure('tests/a.test.ts', entry.registries)
     ]);
   });
 

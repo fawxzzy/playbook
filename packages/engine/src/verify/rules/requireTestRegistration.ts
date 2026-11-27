@@ -13,7 +13,7 @@ export type RequireTestRegistrationRule = {
 // A match only counts as the whole path: the text around it must not continue a longer one
 // (so `xtests/a.test.ts`, `sub/tests/a.test.ts`, `tests/a.test.tsx` or `tests/a.test.ts.snap`
 // never registers `tests/a.test.ts`). A leading `./` is the same repo-relative path and counts.
-const PATH_CHARACTER = /[A-Za-z0-9_./-]/;
+const PATH_CHARACTER = /[A-Za-z0-9_./\\-]/;
 const NAME_CHARACTER = /[A-Za-z0-9_/-]/;
 
 const startsPath = (text: string, index: number): boolean => {
@@ -76,9 +76,9 @@ export const requireTestRegistration = (
 
   for (const rule of rules) {
     // The config is not schema-validated, so a hand-written entry may miss a key: treat it as empty.
-    const tests = rule.tests ?? [];
-    const registries = rule.registries ?? [];
-    const covered = rule.covered ?? [];
+    const tests = Array.isArray(rule.tests) ? rule.tests : [];
+    const registries = Array.isArray(rule.registries) ? rule.registries : [];
+    const covered = Array.isArray(rule.covered) ? rule.covered : [];
     if (!tests.length) continue;
 
     const candidates = changes
@@ -93,7 +93,7 @@ export const requireTestRegistration = (
       failures.push({
         id: 'requireTestRegistration',
         message: 'None of the configured CI test lists exists, so new test files cannot be checked.',
-        evidence: registries.join(', '),
+        evidence: registries.join(', ') || '(no registries configured)',
         fix: 'Correct "registries" in verify.rules.requireTestRegistration so it names the files that list the CI tests.'
       });
       continue;

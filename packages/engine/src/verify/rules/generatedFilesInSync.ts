@@ -28,8 +28,8 @@ export const generatedFilesInSync = (
 
   for (const rule of rules) {
     // The config is not schema-validated, so a hand-written entry may miss a key: treat it as empty.
-    const inputGlobs = rule.inputs ?? [];
-    const outputGlobs = rule.outputs ?? [];
+    const inputGlobs = Array.isArray(rule.inputs) ? rule.inputs : [];
+    const outputGlobs = Array.isArray(rule.outputs) ? rule.outputs : [];
     if (!inputGlobs.length || !outputGlobs.length) continue;
 
     let outputChanged = false;
