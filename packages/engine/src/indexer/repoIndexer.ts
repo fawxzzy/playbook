@@ -145,30 +145,38 @@ const listModuleDirectoryNames = (projectRoot: string, directoryPath: string): s
     .sort();
 };
 
-const detectModuleNames = (
-  projectRoot: string,
-  architecture: string
-): {
-  moduleNames: string[];
-  moduleRootPath: string;
-} => {
+type SourceModuleRoot = {
+  name: string;
+  rootPath: string;
+  isFeature: boolean;
+};
+
+const compareByName = (left: SourceModuleRoot, right: SourceModuleRoot): number =>
+  left.name < right.name ? -1 : left.name > right.name ? 1 : 0;
+
+const detectModuleRoots = (projectRoot: string, architecture: string): SourceModuleRoot[] => {
   const srcPath = path.join(projectRoot, 'src');
   const featureModulesPath = path.join(srcPath, 'features');
+  const toRoots = (parentPath: string, names: string[], isFeature: boolean): SourceModuleRoot[] =>
+    names.map((name) => ({ name, rootPath: path.join(parentPath, name), isFeature }));
 
   if (architecture === 'modular-monolith') {
     const featureModuleNames = listModuleDirectoryNames(projectRoot, featureModulesPath);
     if (featureModuleNames.length > 0) {
-      return {
-        moduleNames: featureModuleNames,
-        moduleRootPath: featureModulesPath
-      };
+      // Feature modules win name collisions: a top-level src/<name> directory that shares its name
+      // with a feature module is skipped, so the feature keeps the name and module names stay unique.
+      const featureNames = new Set(featureModuleNames);
+      const siblingModuleNames = listModuleDirectoryNames(projectRoot, srcPath).filter(
+        (name) => name !== 'features' && !featureNames.has(name)
+      );
+      return [
+        ...toRoots(featureModulesPath, featureModuleNames, true),
+        ...toRoots(srcPath, siblingModuleNames, false)
+      ].sort(compareByName);
     }
   }
 
-  return {
-    moduleNames: listModuleDirectoryNames(projectRoot, srcPath),
-    moduleRootPath: srcPath
-  };
+  return toRoots(srcPath, listModuleDirectoryNames(projectRoot, srcPath), false);
 };
 
 const listModuleFiles = (projectRoot: string, moduleRoot: string): string[] => {
@@ -206,17 +214,13 @@ const listModuleFiles = (projectRoot: string, moduleRoot: string): string[] => {
   return files.sort((a, b) => a.localeCompare(b));
 };
 
-const detectModuleDependenciesFromSrc = (
-  projectRoot: string,
-  moduleNames: string[],
-  moduleRootPath: string
-): RepositoryModule[] => {
+const detectModuleDependenciesFromSrc = (projectRoot: string, moduleRoots: SourceModuleRoot[]): RepositoryModule[] => {
   const srcPath = path.join(projectRoot, 'src');
-  const moduleSet = new Set(moduleNames);
+  const moduleSet = new Set(moduleRoots.map((moduleRoot) => moduleRoot.name));
 
-  return moduleNames.map((moduleName) => {
+  return moduleRoots.map(({ name: moduleName, rootPath }) => {
     const dependencies = new Set<string>();
-    const moduleFiles = listModuleFiles(projectRoot, path.join(moduleRootPath, moduleName));
+    const moduleFiles = listModuleFiles(projectRoot, rootPath);
 
     for (const filePath of moduleFiles) {
       const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -263,7 +267,10 @@ const detectModuleDependenciesFromSrc = (
   });
 };
 
-const detectModules = (projectRoot: string, architecture: string): RepositoryModule[] => {
+const detectModules = (
+  projectRoot: string,
+  architecture: string
+): { modules: RepositoryModule[]; featureModuleNames: ReadonlySet<string> } => {
   const explicitIgnoreRules = parsePlaybookIgnore(projectRoot)
     .filter((rule) => !rule.negated)
     .map((rule) => rule.pattern);
@@ -293,16 +300,22 @@ const detectModules = (projectRoot: string, architecture: string): RepositoryMod
       depMap.get(edge.from)?.add(edge.to);
     }
 
-    return workspaceGraph.workspaces
-      .map((workspace) => ({
-        name: workspace.name,
-        dependencies: Array.from(depMap.get(workspace.name) ?? []).sort((a, b) => a.localeCompare(b))
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      modules: workspaceGraph.workspaces
+        .map((workspace) => ({
+          name: workspace.name,
+          dependencies: Array.from(depMap.get(workspace.name) ?? []).sort((a, b) => a.localeCompare(b))
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      featureModuleNames: new Set<string>()
+    };
   }
 
-  const { moduleNames, moduleRootPath } = detectModuleNames(projectRoot, architecture);
-  return detectModuleDependenciesFromSrc(projectRoot, moduleNames, moduleRootPath);
+  const moduleRoots = detectModuleRoots(projectRoot, architecture);
+  return {
+    modules: detectModuleDependenciesFromSrc(projectRoot, moduleRoots),
+    featureModuleNames: new Set(moduleRoots.filter((moduleRoot) => moduleRoot.isFeature).map((moduleRoot) => moduleRoot.name))
+  };
 };
 
 const detectDatabase = (projectRoot: string): string => {
@@ -465,7 +478,12 @@ const inferArchitectureRoles = (workspace: RepositoryWorkspaceNode[]): Repositor
   };
 };
 
-const detectTests = (projectRoot: string, modules: RepositoryModule[], workspace: RepositoryWorkspaceNode[]): RepositoryTestCoverage[] => {
+const detectTests = (
+  projectRoot: string,
+  modules: RepositoryModule[],
+  workspace: RepositoryWorkspaceNode[],
+  featureModuleNames: ReadonlySet<string>
+): RepositoryTestCoverage[] => {
   const workspacePathByName = new Map(workspace.map((entry) => [entry.name, entry.path]));
 
   const hasModuleTests = (moduleName: string): boolean => {
@@ -483,7 +501,14 @@ const detectTests = (projectRoot: string, modules: RepositoryModule[], workspace
       path.join(projectRoot, 'src', moduleName, 'test'),
       path.join(projectRoot, 'src', moduleName, '__tests__'),
       path.join(projectRoot, 'tests', moduleName),
-      path.join(projectRoot, 'test', moduleName)
+      path.join(projectRoot, 'test', moduleName),
+      ...(featureModuleNames.has(moduleName)
+        ? [
+            path.join(projectRoot, 'src', 'features', moduleName, 'tests'),
+            path.join(projectRoot, 'src', 'features', moduleName, 'test'),
+            path.join(projectRoot, 'src', 'features', moduleName, '__tests__')
+          ]
+        : [])
     ];
 
     return srcCandidates.some((testPath) => fs.existsSync(testPath));
@@ -538,7 +563,7 @@ const detectConfigs = (projectRoot: string): RepositoryConfigEntry[] => {
 
 export const generateRepositoryIndex = (projectRoot: string): RepositoryIndex => {
   const architecture = detectArchitecture(projectRoot);
-  const modules = detectModules(projectRoot, architecture);
+  const { modules, featureModuleNames } = detectModules(projectRoot, architecture);
   const workspace = detectWorkspace(projectRoot);
   const architectureRoleInference = inferArchitectureRoles(workspace);
 
@@ -550,7 +575,7 @@ export const generateRepositoryIndex = (projectRoot: string): RepositoryIndex =>
     modules,
     dependencies: extractDependencyEdges(projectRoot),
     workspace,
-    tests: detectTests(projectRoot, modules, workspace),
+    tests: detectTests(projectRoot, modules, workspace, featureModuleNames),
     configs: detectConfigs(projectRoot),
     database: detectDatabase(projectRoot),
     rules: detectRules(projectRoot),

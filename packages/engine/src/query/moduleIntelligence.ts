@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryIndex, RepositoryModule } from '../indexer/repoIndexer.js';
+import { resolveIndexedModulePath } from '../indexer/modulePath.js';
 import { queryRisk } from './risk.js';
 import { resolveRepositoryTarget } from '../intelligence/targetResolver.js';
 import { readModuleDigest } from '../context/moduleDigests.js';
@@ -138,7 +139,7 @@ export const resolveIndexedModuleContext = (
   return {
     module: {
       name: targetModule.name,
-      path: `src/${targetModule.name}`,
+      path: resolveIndexedModulePath(projectRoot, index, targetModule.name),
       type: 'module'
     },
     impact: {

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { RepositoryIndex } from '../indexer/repoIndexer.js';
 import type { RepositoryGraph } from '../graph/repoGraph.js';
+import { resolveIndexedModulePath } from '../indexer/modulePath.js';
 import { queryRisk } from '../query/risk.js';
 
 export const MODULE_CONTEXT_DIR_RELATIVE_PATH = '.playbook/context/modules' as const;
@@ -228,7 +229,7 @@ export const buildModuleContextDigests = (
         generatedAt: generatedAt.toISOString(),
         module: {
           name: moduleEntry.name,
-          path: `src/${moduleEntry.name}`,
+          path: resolveIndexedModulePath(projectRoot, index, moduleEntry.name),
           type: 'module'
         },
         files: {

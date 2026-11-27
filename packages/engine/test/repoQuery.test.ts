@@ -463,6 +463,27 @@ describe('queryRepositoryIndex', () => {
 
 
 
+  it('reports the feature folder as the impact module path when the module lives under src/features', () => {
+    const repo = createRepo('playbook-repo-query-impact-feature-path');
+    writeRepoIndex(repo, {
+      schemaVersion: '1.0',
+      framework: 'node',
+      language: 'typescript',
+      architecture: 'modular-monolith',
+      modules: [
+        { name: 'app', dependencies: ['day-editor'] },
+        { name: 'day-editor', dependencies: [] }
+      ],
+      database: 'none',
+      rules: []
+    });
+    fs.mkdirSync(path.join(repo, 'src', 'app'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'src', 'features', 'day-editor'), { recursive: true });
+
+    expect(queryImpact(repo, 'day-editor').module).toEqual({ name: 'day-editor', path: 'src/features/day-editor', type: 'module' });
+    expect(queryImpact(repo, 'app').module).toEqual({ name: 'app', path: 'src/app', type: 'module' });
+  });
+
   it('returns low risk payloads for isolated modules', () => {
     const repo = createRepo('playbook-repo-query-risk-low');
     writeRepoIndex(repo, {
