@@ -173,19 +173,19 @@ export const readApplyChangeScope = (repoRoot: string): ApplyChangeScope | null 
 export const assertApplyChangeScopeBinding = (scope: ApplyChangeScope, planArtifactDigest: string): void => {
   if (scope.source.command !== 'plan') {
     throw new Error(
-      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} was written by "${scope.source.command}", not by the plan being applied. Re-run \`playbook plan --json\` (it rewrites ${CHANGE_SCOPE_RELATIVE_PATH} and .playbook/plan.json together), or remove ${CHANGE_SCOPE_RELATIVE_PATH}.`
+      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} was written by "${scope.source.command}", not by the plan being applied. Re-run \`playbook plan --json\` (it rewrites ${CHANGE_SCOPE_RELATIVE_PATH} and .playbook/plan.json together).`
     );
   }
 
   if (!scope.source.artifactDigest) {
     throw new Error(
-      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} has no plan digest (written before artifact binding). Re-run \`playbook plan --json\` to regenerate it, or remove ${CHANGE_SCOPE_RELATIVE_PATH}.`
+      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} has no plan digest (written before artifact binding). Re-run \`playbook plan --json\` to regenerate it.`
     );
   }
 
   if (scope.source.artifactDigest !== planArtifactDigest) {
     throw new Error(
-      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} was derived from a different plan (digest ${scope.source.artifactDigest}, applying ${planArtifactDigest}). Re-run \`playbook plan --json\` (then apply the regenerated .playbook/plan.json), or remove ${CHANGE_SCOPE_RELATIVE_PATH}.`
+      `Change-scope binding failed for ${scope.scopeId}: ${CHANGE_SCOPE_RELATIVE_PATH} was derived from a different plan (digest ${scope.source.artifactDigest}, applying ${planArtifactDigest}). Re-run \`playbook plan --json\` (then apply the regenerated .playbook/plan.json).`
     );
   }
 };

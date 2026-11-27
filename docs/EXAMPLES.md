@@ -54,7 +54,7 @@ Writes `.playbook/failure-taxonomy.json` and prints prevention suggestions. See 
 ## Apply a plan with a Level 3 override
 
 ```bash
-pnpm playbook plan
+pnpm playbook plan --json
 pnpm playbook apply --from-plan .playbook/plan.json --allow-level 3 --reason "update CI workflow permissions"
 ```
 

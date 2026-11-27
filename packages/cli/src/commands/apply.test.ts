@@ -322,6 +322,15 @@ describe('runApply', () => {
     fs.rmSync(repoDir, { recursive: true, force: true });
   });
 
+  // A `plan` artifact applies only with its change-scope file present (TM-GAP-13); the binding itself is mocked here.
+  const boundPlanScope = {
+    scopeId: 'scope-fixture',
+    source: { command: 'plan', artifactPath: '.playbook/plan.json', artifactDigest: 'sha256:fixture' },
+    allowedFiles: [],
+    patchSizeBudget: { maxFiles: 10, maxHunks: 10, maxAddedLines: 100, maxRemovedLines: 100 },
+    boundaryChecks: ['no-mutation-authority-escalation', 'writes-must-stay-inside-allowedFiles']
+  };
+
   describe('change-level override (--allow-level 3 --reason)', () => {
     const level3Task = { id: 'task-l3', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', action: 'edit workflow', autoFix: true };
 
@@ -481,6 +490,44 @@ describe('runApply', () => {
         expect(applyExecutionPlan).not.toHaveBeenCalled();
       } finally {
         assertApplyChangeScopeBinding.mockReset();
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
+    });
+
+    it('fails closed before enforcing or mutating when a `plan` artifact has no change-scope file (TM-GAP-13)', async () => {
+      const { runApply } = await import('./apply.js');
+      const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-scope-missing-'));
+      try {
+        writePlanFile(repoDir, { schemaVersion: '1.0', command: 'plan', remediation: { status: 'ready', totalSteps: 1, unresolvedFailures: 0 }, tasks: [scopeTask] });
+        parsePlanArtifact.mockReturnValue({ tasks: [scopeTask] });
+        loadVerifyRules.mockResolvedValue([]);
+        readApplyChangeScope.mockReturnValue(null);
+
+        await expect(runApply(repoDir, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' })).rejects.toThrow(
+          /change-scope\.json is missing.*playbook plan --json/
+        );
+        expect(assertApplyChangeScopeBinding).not.toHaveBeenCalled();
+        expect(enforceApplyChangeScope).not.toHaveBeenCalled();
+        expect(applyExecutionPlan).not.toHaveBeenCalled();
+      } finally {
+        fs.rmSync(repoDir, { recursive: true, force: true });
+      }
+    });
+
+    it('still applies regenerated tasks (no --from-plan) when no change-scope file exists', async () => {
+      const { runApply } = await import('./apply.js');
+      const repoDir = fs.mkdtempSync(path.join(os.tmpdir(), 'playbook-apply-scope-absent-regen-'));
+      try {
+        generatePlanContract.mockReturnValue({ verify: { ok: false, summary: { failures: 1, warnings: 0 } }, tasks: [scopeTask] });
+        loadVerifyRules.mockResolvedValue([]);
+        readApplyChangeScope.mockReturnValue(null);
+        applyExecutionPlan.mockResolvedValue(appliedResult);
+
+        const exitCode = await runApply(repoDir, { format: 'json', ci: false, quiet: false });
+
+        expect(exitCode).toBe(ExitCode.Success);
+        expect(enforceApplyChangeScope).not.toHaveBeenCalled();
+      } finally {
         fs.rmSync(repoDir, { recursive: true, force: true });
       }
     });
@@ -925,6 +972,7 @@ describe('runApply', () => {
 
     parsePlanArtifact.mockReturnValue({ tasks: [{ id: 'task-from-file', ruleId: 'plugin.failure', file: 'docs/PLUGIN.md', action: 'create plugin doc', autoFix: true }] });
     loadVerifyRules.mockResolvedValue([]);
+    readApplyChangeScope.mockReturnValue(boundPlanScope);
     applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
 
     await runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' });
@@ -946,6 +994,7 @@ describe('runApply', () => {
 
     parsePlanArtifact.mockReturnValue({ tasks: [{ id: 'task-from-file', ruleId: 'plugin.failure', file: 'docs/PLUGIN.md', action: 'create plugin doc', autoFix: true }] });
     loadVerifyRules.mockResolvedValue([]);
+    readApplyChangeScope.mockReturnValue(boundPlanScope);
     applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
 
     await runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' });
@@ -966,6 +1015,7 @@ describe('runApply', () => {
 
     parsePlanArtifact.mockReturnValue({ tasks: [{ id: 'task-from-file', ruleId: 'plugin.failure', file: 'docs/PLUGIN.md', action: 'create plugin doc', autoFix: true }] });
     loadVerifyRules.mockResolvedValue([]);
+    readApplyChangeScope.mockReturnValue(boundPlanScope);
     applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
 
     await runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' });
@@ -986,6 +1036,7 @@ describe('runApply', () => {
 
     parsePlanArtifact.mockReturnValue({ tasks: [{ id: 'task-from-file', ruleId: 'plugin.failure', file: 'docs/PLUGIN.md', action: 'create plugin doc', autoFix: true }] });
     loadVerifyRules.mockResolvedValue([]);
+    readApplyChangeScope.mockReturnValue(boundPlanScope);
     applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
 
     await runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' });
@@ -1035,6 +1086,7 @@ describe('runApply', () => {
       ]
     });
     loadVerifyRules.mockResolvedValue([]);
+    readApplyChangeScope.mockReturnValue(boundPlanScope);
     applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
 
     await runApply(tmpRoot, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json', tasks: ['task-2'] });
@@ -1071,6 +1123,7 @@ describe('runApply', () => {
       ]
     });
     loadVerifyRules.mockResolvedValue([]);
+    readApplyChangeScope.mockReturnValue(boundPlanScope);
     applyExecutionPlan.mockResolvedValue({ results: [], summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 } });
 
     await runApply(tmpRoot, {

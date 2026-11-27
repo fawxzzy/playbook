@@ -935,6 +935,10 @@ export const runApply = async (cwd, options) => {
     // check; release, fix and maintenance plans never use the file, so a leftover plan-sourced scope cannot block them.
     const scopeApplies = options.fromPlan ? plan.isPlanArtifact === true : true;
     const declaredScope = scopeApplies ? engine.readApplyChangeScope(cwd) : null;
+    if (options.fromPlan && plan.isPlanArtifact === true && !declaredScope) {
+        // TM-GAP-13: `plan --json` always writes the scope next to the plan. A missing scope file must not silently remove the limit.
+        throw new Error('Change-scope binding failed: .playbook/change-scope.json is missing for the plan artifact being applied, so its file and patch-size limits cannot be enforced. Re-run `playbook plan --json` (it rewrites .playbook/change-scope.json and .playbook/plan.json together); a deleted scope file is not treated as no limit.');
+    }
     if (declaredScope) {
         if (options.fromPlan) {
             engine.assertApplyChangeScopeBinding(declaredScope, engine.computePlanArtifactDigest(plan.tasks));

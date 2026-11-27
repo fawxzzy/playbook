@@ -276,3 +276,80 @@ describe('ceiling validity (fail closed)', () => {
     expect(() => enforceChangeLevelCeiling([{ id: 't', ruleId: 'plugin.workflow', file: '.github/workflows/ci.yml', autoFix: true }], Number.NaN as never)).toThrow();
   });
 });
+
+describe('extended Level 3 path list (TM-GAP-04)', () => {
+  const NEW_LEVEL_3 = [
+    'playbook.config.json',
+    'packages/web/playbook.config.json',
+    'vercel.json',
+    'apps/web/vercel.json',
+    '.github/CODEOWNERS',
+    'CODEOWNERS',
+    'docs/CODEOWNERS',
+    '.gitmodules',
+    '.vercel/project.json',
+    '.vercel/output/config.json',
+    'supabase/config.toml',
+    'supabase/functions/x/index.ts',
+    'apps/api/supabase/migrations/001_init.sql',
+    'supabase/migrations/001_init.sql',
+    // case, separator, dot-segment and trailing-dot/space variants
+    'PLAYBOOK.CONFIG.JSON',
+    'Vercel.JSON',
+    'vercel.json.',
+    'vercel.json ',
+    'playbook.config.json..',
+    'docs/../vercel.json',
+    './/playbook.config.json',
+    'a\\..\\codeowners',
+    '.GITMODULES',
+    '.gitmodules.',
+    '.VERCEL/project.json',
+    '.vercel./project.json',
+    'Supabase/config.toml',
+    'supabase./config.toml',
+    'docs/../supabase/seed.sql',
+    'APPS/API/Supabase/Migrations/001.sql',
+    'apps/api/supabase./migrations/001.sql',
+    'apps\\api\\supabase\\migrations\\001.sql'
+  ];
+
+  it.each(NEW_LEVEL_3)('classifies task path %s as level 3', (file) => {
+    expect(classifyTaskChangeLevel({ ruleId: 'docs-consolidation.managed-write', file }).level).toBe(3);
+  });
+
+  it.each(NEW_LEVEL_3)('classifies handler-reported write %s as level 3', (file) => {
+    expect(classifyPathChangeLevel(file)).toBe(3);
+    expect(() => assertReportedWritesWithinCeiling([file])).toThrow(ChangeLevelWriteViolationError);
+    expect(() => assertReportedWritesWithinCeiling([file], 3)).not.toThrow();
+  });
+
+  it('rejects a plan containing a newly listed path at plan time, before any handler runs', () => {
+    for (const file of ['playbook.config.json', 'vercel.json', 'CODEOWNERS', '.gitmodules', '.vercel/project.json', 'supabase/config.toml', 'x/supabase/migrations/1.sql']) {
+      expect(() => enforceChangeLevelCeiling([{ id: 't', ruleId: 'plugin.x', file, autoFix: true }])).toThrow(/level 3/);
+    }
+  });
+
+  it.each([
+    'src/lib/supabase/client.ts',
+    'docs/vercel.json.md',
+    'my-playbook.config.json',
+    'playbook.config.json.md',
+    'docs/supabase.md',
+    'supabase-notes/a.md',
+    'docs/codeowners.md',
+    'docs/gitmodules.md',
+    'vercel-json/a.md',
+    'docs/.vercel-notes/a.md',
+    'apps/web/supabase/client.ts'
+  ])('keeps near miss %s below level 3', (file) => {
+    expect(classifyTaskChangeLevel({ ruleId: 'docs-consolidation.managed-write', file }).level).toBe(1);
+    expect(classifyPathChangeLevel(file)).toBe(1);
+  });
+
+  it('keeps every built-in handler write target below level 3', () => {
+    for (const file of ['package.json', 'packages/cli/package.json', 'docs/PLAYBOOK_NOTES.md', '.playbookignore', '.gitignore', 'CHANGELOG.md', 'docs/CHANGELOG.md', 'README.md']) {
+      expect(classifyPathChangeLevel(file)).toBe(1);
+    }
+  });
+});
