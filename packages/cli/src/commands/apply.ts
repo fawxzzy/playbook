@@ -1054,7 +1054,14 @@ const resolveRunId = (cwd: string, requestedRunId: string | undefined): string =
   return engine.createExecutionRun(cwd, intent).id;
 };
 
-export const runApply = async (cwd: string, options: ApplyOptions): Promise<number> => {
+/**
+ * Tracks whether `runApply` is still in its refusal window: every check before the execution run exists
+ * (option validation, routing, plan load, ceiling/scope checks). Set by construction at the phase boundary,
+ * never by matching messages. Once closed, failures may follow writes and must surface untouched.
+ */
+type ApplyRefusalWindow = { open: boolean; remediation?: PlanRemediation };
+
+export const runApply = async (cwd: string, options: ApplyOptions, refusalWindow?: ApplyRefusalWindow): Promise<number> => {
   if (options.help) {
     printApplyHelp();
     return ExitCode.Success;
@@ -1064,10 +1071,12 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
   validateApplyOptions(options, mode);
 
   if (mode === 'policy-check') {
+    if (refusalWindow) refusalWindow.open = false;
     return runPolicyCheckFlow(cwd, options);
   }
 
   if (mode === 'policy') {
+    if (refusalWindow) refusalWindow.open = false;
     return runPolicyApplyFlow(cwd, options);
   }
 
@@ -1100,6 +1109,8 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
         };
       })();
 
+  if (refusalWindow) refusalWindow.remediation = plan.remediation;
+
   // Reject before resolveRunId so a refused request creates no execution run.
   if (changeLevelOverride && plan.maintenanceExecution) {
     throw new Error(
@@ -1121,6 +1132,8 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
     engine.assertApplyChangeScopeBinding(planArtifactScope, engine.computePlanArtifactDigest(plan.tasks));
   }
 
+  // Last pre-run point: from here an execution run exists or may be created, so failures are no longer clean refusals.
+  if (refusalWindow) refusalWindow.open = false;
   const runId = resolveRunId(cwd, options.runId);
   const applyPrecondition = remediationToApplyPrecondition(plan.remediation);
 
@@ -1348,15 +1361,21 @@ export const runApply = async (cwd: string, options: ApplyOptions): Promise<numb
 };
 
 /**
- * Registered `apply` entry point. Every refusal `runApply` raises as an Error (change-scope binding or
- * missing scope, Level 2 ceiling, unknown task id, invalid plan, ...) is reported here as a failure result
- * instead of escaping to the process as an uncaught stack. Exit code stays `ExitCode.Failure`. Internal
- * callers (for example `release sync`) keep calling `runApply` directly and keep their behavior.
+ * Registered `apply` entry point. A refusal raised while `runApply` is still in its refusal window (before any
+ * execution run exists: change-scope binding or missing scope, Level 3 flag conflicts, unknown task id, invalid plan,
+ * option conflicts) is reported as a failure result instead of an uncaught Node stack; exit code stays
+ * `ExitCode.Failure` and nothing has been written. Any error raised after the window closes (at or after run
+ * creation, possibly after writes) is rethrown untouched, exactly as before. Internal callers (for example
+ * `release sync`) keep calling `runApply` directly.
  */
 export const runApplyCommand = async (cwd: string, options: ApplyOptions): Promise<number> => {
+  const refusalWindow: ApplyRefusalWindow = { open: true };
   try {
-    return await runApply(cwd, options);
+    return await runApply(cwd, options, refusalWindow);
   } catch (error) {
+    if (!refusalWindow.open) {
+      throw error;
+    }
     const message = error instanceof Error ? error.message : String(error);
     if (options.format === 'json') {
       const payload: ApplyJsonResult = {
@@ -1364,7 +1383,7 @@ export const runApplyCommand = async (cwd: string, options: ApplyOptions): Promi
         command: 'apply',
         ok: false,
         exitCode: ExitCode.Failure,
-        remediation: { status: 'unavailable', totalSteps: 0, unresolvedFailures: 0, reason: message },
+        remediation: refusalWindow.remediation ?? { status: 'unavailable', totalSteps: 0, unresolvedFailures: 0, reason: message },
         message,
         results: [],
         summary: { applied: 0, skipped: 0, unsupported: 0, failed: 0 }

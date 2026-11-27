@@ -240,6 +240,9 @@ describe('apply change-scope binding (real engine)', () => {
     beforeEach(() => {
       errSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     });
+    afterEach(() => {
+      errSpy.mockRestore();
+    });
 
     const fromPlanCommand = (format: 'json' | 'text') =>
       runApplyCommand(repoDir, { format, ci: false, quiet: false, fromPlan: 'plan.json', skipReleaseGovernanceBoundary: true });
@@ -278,6 +281,45 @@ describe('apply change-scope binding (real engine)', () => {
       expect(line).toMatch(/^playbook apply: Change-scope binding failed/);
       expect(line).not.toMatch(/\n/);
       expect(repoFiles()).toEqual(before);
+    });
+
+    it('carries the loaded plan remediation in the envelope of a pre-run refusal', async () => {
+      writePlan([notesTask]);
+      fs.rmSync(path.join(repoDir, '.playbook', 'change-scope.json'));
+
+      await fromPlanCommand('json');
+
+      const payload = JSON.parse(String(logSpy.mock.calls[0]?.[0]));
+      expect(payload.remediation).toMatchObject({ status: 'ready', totalSteps: 1, unresolvedFailures: 0 });
+    });
+
+    it('does not turn a failure after the run exists into a clean refusal (Cannot apply remediation is unchanged)', async () => {
+      writePlan([notesTask]);
+      const planPath = path.join(repoDir, 'plan.json');
+      const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+      plan.remediation = { status: 'unavailable', totalSteps: 0, unresolvedFailures: 1, reason: 'nothing to do' };
+      fs.writeFileSync(planPath, JSON.stringify(plan));
+
+      await expect(fromPlanCommand('json')).rejects.toThrow(/Cannot apply remediation: nothing to do/);
+
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(errSpy.mock.calls.some((call) => String(call[0]).startsWith('playbook apply:'))).toBe(false);
+    });
+
+    it('does not turn a release-boundary failure after writes into a clean envelope', async () => {
+      writePlan([]);
+      const planPath = path.join(repoDir, 'plan.json');
+      const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'));
+      plan.remediation = { status: 'not_needed', totalSteps: 0, unresolvedFailures: 0, reason: 'No verify failures were detected.' };
+      fs.writeFileSync(planPath, JSON.stringify(plan));
+
+      // skipReleaseGovernanceBoundary is deliberately unset: the boundary runs after the run and artifacts are written.
+      await expect(
+        runApplyCommand(repoDir, { format: 'json', ci: false, quiet: false, fromPlan: 'plan.json' })
+      ).rejects.toThrow(/playbook release plan:/);
+
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(fs.existsSync(path.join(repoDir, '.playbook', 'runs'))).toBe(true);
     });
   });
 });
