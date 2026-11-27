@@ -134,6 +134,12 @@ describe('generatedFilesInSync', () => {
     expect(generatedFilesInSync([{ status: 'M', path: 'schemas/user.json' }], [])).toEqual([]);
   });
 
+  it('treats an entry with a missing key as empty instead of throwing', () => {
+    const noInputs = { outputs: ['generated/**'] } as unknown as typeof contractEntry;
+    const noOutputs = { inputs: ['schemas/**'] } as unknown as typeof contractEntry;
+    expect(generatedFilesInSync([{ status: 'M', path: 'schemas/user.json' }], [noInputs, noOutputs])).toEqual([]);
+  });
+
   it('is off by default', () => {
     expect(defaultConfig.verify.rules.generatedFilesInSync).toEqual([]);
   });

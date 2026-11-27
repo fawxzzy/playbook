@@ -27,21 +27,24 @@ export const generatedFilesInSync = (
   const failures: ReportFailure[] = [];
 
   for (const rule of rules) {
-    if (!rule.inputs.length || !rule.outputs.length) continue;
+    // The config is not schema-validated, so a hand-written entry may miss a key: treat it as empty.
+    const inputGlobs = rule.inputs ?? [];
+    const outputGlobs = rule.outputs ?? [];
+    if (!inputGlobs.length || !outputGlobs.length) continue;
 
     let outputChanged = false;
     const changedInputs: string[] = [];
     for (const changedPath of changedPaths) {
-      if (matchesAny(changedPath, rule.outputs)) {
+      if (matchesAny(changedPath, outputGlobs)) {
         outputChanged = true;
         break;
       }
-      if (matchesAny(changedPath, rule.inputs)) changedInputs.push(changedPath);
+      if (matchesAny(changedPath, inputGlobs)) changedInputs.push(changedPath);
     }
 
     if (outputChanged || !changedInputs.length) continue;
 
-    const outputs = rule.outputs.join(', ');
+    const outputs = outputGlobs.join(', ');
     failures.push({
       id: 'generatedFilesInSync',
       message: `Generator input changed but the generated file was not regenerated: ${outputs}`,

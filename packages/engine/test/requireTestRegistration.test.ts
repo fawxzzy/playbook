@@ -87,9 +87,30 @@ describe('requireTestRegistration', () => {
     write(root, 'scripts/ci-tests.txt', 'tests/a.test.ts\n');
     expect(requireTestRegistration(root, [added('tests/a.test.ts')], [entry])).toEqual([]);
 
+  });
+
+  it('reports a wrong config once when none of the registries exists', () => {
     const emptyRoot = makeRoot();
-    expect(requireTestRegistration(emptyRoot, [added('tests/a.test.ts')], [entry])).toEqual([
-      expectedFailure('tests/a.test.ts', entry.registries)
+    expect(requireTestRegistration(emptyRoot, [added('tests/a.test.ts'), added('tests/b.test.ts')], [entry])).toEqual([
+      {
+        id: 'requireTestRegistration',
+        message: 'None of the configured CI test lists exists, so new test files cannot be checked.',
+        evidence: 'package.json, scripts/ci-tests.txt',
+        fix: 'Correct "registries" in verify.rules.requireTestRegistration so it names the files that list the CI tests.'
+      }
+    ]);
+    // Nothing to check means nothing to report, even with a wrong registry path.
+    expect(requireTestRegistration(emptyRoot, [added('src/a.ts')], [entry])).toEqual([]);
+  });
+
+  it('treats an entry with a missing key as empty instead of throwing', () => {
+    const root = makeRoot();
+    write(root, 'package.json', '{}\n');
+    const noTests = { registries: ['package.json'] } as unknown as typeof entry;
+    const noRegistries = { tests: ['tests/**/*.test.ts'] } as unknown as typeof entry;
+    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [noTests])).toEqual([]);
+    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [noRegistries]).map((failure) => failure.message)).toEqual([
+      'None of the configured CI test lists exists, so new test files cannot be checked.'
     ]);
   });
 
@@ -105,7 +126,7 @@ describe('requireTestRegistration', () => {
 
   it('matches the path exactly, not as part of a longer path', () => {
     const root = makeRoot();
-    write(root, 'package.json', 'xtests/a.test.ts sub/tests/a.test.ts my_tests/a.test.ts ./tests/b.test.ts\n');
+    write(root, 'package.json', 'xtests/a.test.ts sub/tests/a.test.ts my_tests/a.test.ts ../tests/b.test.ts x./tests/b.test.ts\n');
     expect(requireTestRegistration(root, [added('tests/a.test.ts')], [entry])).toEqual([
       expectedFailure('tests/a.test.ts', entry.registries)
     ]);
@@ -115,6 +136,18 @@ describe('requireTestRegistration', () => {
     expect(requireTestRegistration(root, [added('tests/b.test.ts')], [entry])).toEqual([
       expectedFailure('tests/b.test.ts', entry.registries)
     ]);
+
+    // The text after the match must not continue a longer path either.
+    write(root, 'package.json', 'tests/a.test.tsx tests/a.test.ts.snap tests/a.test.ts-old tests/a.test.ts/x tests/a.test.ts_2\n');
+    expect(requireTestRegistration(root, [added('tests/a.test.ts')], [entry])).toEqual([
+      expectedFailure('tests/a.test.ts', entry.registries)
+    ]);
+
+    // A leading "./" is the same repo-relative path; sentence punctuation after the path is fine.
+    for (const text of ['node --test ./tests/a.test.ts\n', './tests/a.test.ts', '"./tests/a.test.ts"', 'run tests/a.test.ts.\n', 'tests/a.test.ts, tests/b.test.ts', 'tests/a.test.ts']) {
+      write(root, 'package.json', text);
+      expect(requireTestRegistration(root, [added('tests/a.test.ts')], [entry])).toEqual([]);
+    }
 
     write(root, 'package.json', 'xtests/a.test.ts "tests/a.test.ts"\n');
     expect(requireTestRegistration(root, [added('tests/a.test.ts')], [entry])).toEqual([]);
